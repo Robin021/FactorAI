@@ -6,6 +6,8 @@ import RealTimeProgressDashboard from '@/components/Analysis/RealTimeProgressDas
 import AnalysisResults from '@/components/Analysis/AnalysisResults';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import './Analysis.css';
+import '@/styles/themes.css';
+import '@/styles/theme-override.css';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -16,7 +18,10 @@ const Analysis: React.FC = () => {
 
   // Auto-switch to progress tab when analysis starts
   React.useEffect(() => {
-    if (currentAnalysis && (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending')) {
+    if (
+      currentAnalysis &&
+      (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending')
+    ) {
       setActiveTab('progress');
     }
   }, [currentAnalysis]);
@@ -26,7 +31,7 @@ const Analysis: React.FC = () => {
       <Col xs={24} sm={24} md={10} lg={8} xl={8}>
         <AnalysisForm />
       </Col>
-      
+
       <Col xs={24} sm={24} md={14} lg={16} xl={16}>
         <AnalysisResults analysis={currentAnalysis} />
       </Col>
@@ -34,10 +39,12 @@ const Analysis: React.FC = () => {
   );
 
   const renderProgressContent = () => {
-    if (!currentAnalysis || (currentAnalysis.status !== 'running' && currentAnalysis.status !== 'pending')) {
+    if (!currentAnalysis) {
       return (
         <div className="no-progress-message">
-          <Title level={4} type="secondary">暂无进行中的分析任务</Title>
+          <Title level={4} type="secondary">
+            暂无分析任务
+          </Title>
           <p>请先在分析页面开始一个新的分析任务</p>
         </div>
       );
@@ -49,7 +56,7 @@ const Analysis: React.FC = () => {
         onComplete={() => {
           setActiveTab('analysis');
         }}
-        onError={(error) => {
+        onError={error => {
           console.error('Analysis error:', error);
           setActiveTab('analysis');
         }}
@@ -69,7 +76,7 @@ const Analysis: React.FC = () => {
         </div>
       ) : (
         <div className="history-list">
-          {analysisHistory.map((analysis) => (
+          {analysisHistory.map(analysis => (
             <AnalysisResults key={analysis.id} analysis={analysis} />
           ))}
         </div>
@@ -79,50 +86,42 @@ const Analysis: React.FC = () => {
 
   return (
     <div className="analysis-page">
-      <div className="analysis-header">
-        <Title level={2}>股票分析平台</Title>
-      </div>
-      
-      <Tabs 
-        activeKey={activeTab} 
-        onChange={setActiveTab}
-        className="analysis-tabs"
-        size="large"
-      >
-        <TabPane 
+      <Tabs activeKey={activeTab} onChange={setActiveTab} className="analysis-tabs" size="large">
+        <TabPane
           tab={
             <span>
               <BarChartOutlined />
               分析与结果
             </span>
-          } 
+          }
           key="analysis"
         >
           {renderAnalysisContent()}
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <SettingOutlined />
               实时进度
-              {currentAnalysis && (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending') && (
-                <span className="progress-indicator" />
-              )}
+              {currentAnalysis &&
+                (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending') && (
+                  <span className="progress-indicator" />
+                )}
             </span>
-          } 
+          }
           key="progress"
         >
           {renderProgressContent()}
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <HistoryOutlined />
               历史记录
             </span>
-          } 
+          }
           key="history"
         >
           {renderHistoryContent()}

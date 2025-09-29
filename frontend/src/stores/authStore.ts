@@ -143,8 +143,17 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
+// Track if auth has been initialized to prevent multiple calls
+let isInitialized = false;
+
 // Initialize auth state on app start
 export const initializeAuth = async () => {
+  if (isInitialized) {
+    console.log('Auth already initialized, skipping...');
+    return;
+  }
+  
+  isInitialized = true;
   const { getCurrentUser, setLoading } = useAuthStore.getState();
   
   setLoading(true);

@@ -18,18 +18,60 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ant Design customizations */
-.ant-layout {
-  background: #f0f2f5;
+/* Ant Design customizations - 主题系统 */
+[data-theme] .ant-layout {
+  background: var(--primary-bg);
+  color: var(--text-primary);
 }
 
-.ant-card {
+[data-theme] .ant-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme] .ant-btn {
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.ant-btn {
-  border-radius: 6px;
+[data-theme] .ant-btn-primary {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+}
+
+[data-theme] .ant-btn-primary:hover {
+  background: var(--accent-hover);
+  color: white;
+}
+
+[data-theme] .ant-input,
+[data-theme] .ant-select-selector {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme] .ant-input:focus,
+[data-theme] .ant-select-focused .ant-select-selector {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--shadow-color);
+}
+
+[data-theme] .ant-menu {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+[data-theme] .ant-menu-item:hover {
+  background: var(--shadow-color);
+}
+
+[data-theme] .ant-menu-item-selected {
+  background: var(--accent-color);
+  color: white;
 }
 
 /* Utility classes */
@@ -76,17 +118,27 @@ body {
   }
 }
 
-/* Theme variables */
+/* 青瓷雅韵主题变量 */
+:root {
+  --primary-bg: linear-gradient(135deg, #e8f4f8 0%, #f8fdff 100%);
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --text-primary: #2d5016;
+  --text-secondary: rgba(45, 80, 22, 0.7);
+  --border-color: rgba(127, 176, 105, 0.2);
+  --accent-color: #7fb069;
+  --accent-hover: #6fa055;
+}
+
 :root[data-theme='light'] {
-  --bg-color: #ffffff;
-  --text-color: #000000;
-  --border-color: #d9d9d9;
+  --bg-color: #f4f1de;
+  --text-color: #2c1810;
+  --border-color: rgba(44, 24, 16, 0.15);
 }
 
 :root[data-theme='dark'] {
-  --bg-color: #141414;
-  --text-color: #ffffff;
-  --border-color: #434343;
+  --bg-color: #2c1810;
+  --text-color: #f4f1de;
+  --border-color: rgba(244, 241, 222, 0.15);
 }
 
 /* Scrollbar styling */

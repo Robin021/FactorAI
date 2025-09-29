@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/stores/authStore';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -14,7 +14,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   requireAuth = true, 
   redirectTo = '/login' 
 }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  // Use store directly to avoid triggering useAuth effects
+  const { isAuthenticated, isLoading } = useAuthStore();
   const location = useLocation();
 
   // Show loading spinner while checking authentication

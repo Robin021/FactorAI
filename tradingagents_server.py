@@ -482,7 +482,13 @@ async def authing_callback(code: str, state: str = None):
                 "redirect_uri": authing_redirect_uri
             }
             
+            logger.info(f"正在调用 Authing Token API: {token_url}")
+            logger.info(f"Token 请求数据: {token_data}")
+            
             token_response = requests.post(token_url, data=token_data)
+            logger.info(f"Token API 响应状态: {token_response.status_code}")
+            logger.info(f"Token API 响应内容: {token_response.text}")
+            
             if not token_response.ok:
                 raise Exception(f"获取token失败: {token_response.text}")
             
@@ -496,53 +502,113 @@ async def authing_callback(code: str, state: str = None):
             userinfo_url = f"{authing_app_host}/oidc/me"
             headers = {"Authorization": f"Bearer {access_token}"}
             
+            logger.info(f"正在调用 Authing UserInfo API: {userinfo_url}")
+            logger.info(f"UserInfo 请求头: {headers}")
+            
             userinfo_response = requests.get(userinfo_url, headers=headers)
+            logger.info(f"UserInfo API 响应状态: {userinfo_response.status_code}")
+            logger.info(f"UserInfo API 响应内容: {userinfo_response.text}")
+            
             if not userinfo_response.ok:
                 raise Exception(f"获取用户信息失败: {userinfo_response.text}")
             
             user_info = userinfo_response.json()
+            logger.info(f"解析后的用户信息: {user_info}")
             
-            # 提取用户信息
+            # 提取用户信息 - 使用标准化的逻辑确保一致性
+            sub = user_info.get("sub")
+            if not sub:
+                raise Exception("用户信息中缺少 sub 字段")
+            
+            # 用户名优先级：preferred_username > username > 手机号 > sub
+            # 改进：如果用户名相关字段都为空，使用手机号作为用户名
+            username = (
+                user_info.get("preferred_username") or 
+                user_info.get("username") or 
+                user_info.get("phone_number") or 
+                sub
+            )
+            
+            # 显示名称优先级：name > nickname > 手机号 > username
+            display_name = (
+                user_info.get("name") or 
+                user_info.get("nickname") or 
+                user_info.get("phone_number") or 
+                username
+            )
+            
+            # 邮箱处理 - 改进：如果邮箱为空，使用手机号生成邮箱
+            email = user_info.get("email")
+            if not email:
+                phone = user_info.get("phone_number")
+                if phone:
+                    # 使用手机号生成邮箱
+                    email = f"{phone}@authing.demo"
+                else:
+                    # 最后回退到用户名生成邮箱
+                    email = f"{username}@authing.demo"
+            
             authing_user_info = {
-                "sub": user_info.get("sub"),
-                "username": user_info.get("preferred_username") or user_info.get("username") or user_info.get("sub"),
-                "email": user_info.get("email"),
-                "name": user_info.get("name") or user_info.get("nickname"),
-                "phone": user_info.get("phone_number"),
-                "avatar": user_info.get("picture")
+                "sub": sub,  # 唯一标识符
+                "username": username,  # 用户名
+                "display_name": display_name,  # 显示名称
+                "email": email,  # 邮箱
+                "name": display_name,  # 兼容性字段
+                "phone": user_info.get("phone_number"),  # 手机号
+                "avatar": user_info.get("picture"),  # 头像
+                "roles": user_info.get("roles", []),  # 角色列表
+                "extended_fields": user_info.get("extended_fields", {})  # 扩展字段
             }
             
         except Exception as e:
             logger.error(f"Authing API调用失败: {e}")
-            # 如果API调用失败，使用稳定的模拟数据（基于code的hash而不是随机）
-            import hashlib
-            stable_id = hashlib.md5(code.encode()).hexdigest()[:8]
-            authing_user_info = {
-                "sub": f"authing_user_{stable_id}",
-                "username": f"authing_user_{stable_id}",
-                "email": f"user_{stable_id}@demo.authing.cn",
-                "name": "Authing Demo 用户"
-            }
+            # 返回错误页面而不是使用模拟数据
+            error_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>SSO 登录失败</title>
+                <meta charset="UTF-8">
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; }}
+                    .error {{ color: #d32f2f; }}
+                    .details {{ background: #f5f5f5; padding: 20px; margin: 20px; border-radius: 5px; }}
+                </style>
+            </head>
+            <body>
+                <h2 class="error">SSO 登录失败</h2>
+                <p>Authing API 调用失败</p>
+                <div class="details">
+                    <strong>错误详情:</strong><br>
+                    {str(e)}
+                </div>
+                <p>请检查:</p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>Authing 应用配置是否正确</li>
+                    <li>用户是否存在并已激活</li>
+                    <li>网络连接是否正常</li>
+                </ul>
+                <button onclick="window.location.href='http://localhost:3000/login'">返回登录</button>
+            </body>
+            </html>
+            """
+            return HTMLResponse(content=error_html)
         
-        # 创建或更新本地用户
-        # 优先使用邮箱，如果没有邮箱就使用手机号，都没有就生成默认邮箱
-        email = authing_user_info.get("email")
-        if not email:
-            phone = authing_user_info.get("phone")
-            if phone:
-                email = f"{phone}@phone.user"
-            else:
-                email = f"{authing_user_info['username']}@authing.demo"
-        
+        # 创建或更新本地用户 - 使用标准化的用户信息
         user_data = {
             "username": authing_user_info["username"],
-            "email": email,
-            "name": authing_user_info.get("name", ""),
+            "email": authing_user_info["email"],
+            "name": authing_user_info["display_name"],
             "phone": authing_user_info.get("phone", ""),
-            "sub": authing_user_info["sub"],  # 添加唯一标识符
-            "role": "user",
+            "sub": authing_user_info["sub"],  # 唯一标识符
+            "avatar": authing_user_info.get("avatar", ""),
+            "roles": authing_user_info.get("roles", []),
+            "extended_fields": authing_user_info.get("extended_fields", {}),
+            "role": "user",  # 默认角色
             "permissions": ["read"],
-            "is_active": True
+            "is_active": True,
+            "auth_type": "sso",
+            "auth_provider": "authing"
         }
         
         # 将用户添加到模拟数据库（实际使用时应该存储到真实数据库）
@@ -723,6 +789,139 @@ async def get_analysis_progress(analysis_id: str, current_user: dict = Depends(g
     
     return progress_data
 
+# 取消分析接口
+@app.post("/api/v1/analysis/{analysis_id}/cancel")
+async def cancel_analysis(analysis_id: str, current_user: dict = Depends(get_current_user)):
+    """取消分析任务"""
+    
+    progress_data = analysis_progress_store.get(analysis_id)
+    if not progress_data:
+        raise HTTPException(status_code=404, detail="分析任务未找到")
+    
+    # 检查分析是否已经完成
+    if progress_data.get("status") in ["completed", "failed", "cancelled"]:
+        return {"message": f"分析已经{progress_data.get('status')}，无法取消"}
+    
+    # 更新状态为已取消
+    progress_data["status"] = "cancelled"
+    progress_data["message"] = "分析已被用户取消"
+    progress_data["end_time"] = time.time()
+    
+    # 更新存储
+    analysis_progress_store[analysis_id] = progress_data
+    
+    return {"message": "分析已成功取消"}
+
+# PDF报告下载接口
+@app.get("/api/v1/analysis/{analysis_id}/download/pdf")
+async def download_analysis_pdf(analysis_id: str, current_user: dict = Depends(get_current_user)):
+    """下载分析报告PDF"""
+    from fastapi.responses import FileResponse
+    import os
+    from pathlib import Path
+    
+    progress_data = analysis_progress_store.get(analysis_id)
+    if not progress_data:
+        raise HTTPException(status_code=404, detail="分析未找到")
+    
+    if progress_data.get("status") != "completed":
+        raise HTTPException(status_code=400, detail="分析尚未完成")
+    
+    # 查找PDF文件
+    symbol = progress_data.get("symbol", "UNKNOWN")
+    results_dir = Path("results") / symbol / "2025-09-29" / "reports"
+    
+    # 查找PDF文件
+    pdf_files = list(results_dir.glob("*.pdf"))
+    if not pdf_files:
+        # 如果没有PDF，尝试查找markdown文件并提示
+        md_files = list(results_dir.glob("*.md"))
+        if md_files:
+            raise HTTPException(status_code=404, detail="PDF文件未生成，但有Markdown报告可用")
+        else:
+            raise HTTPException(status_code=404, detail="报告文件未找到")
+    
+    # 返回第一个找到的PDF文件
+    pdf_file = pdf_files[0]
+    if not pdf_file.exists():
+        raise HTTPException(status_code=404, detail="PDF文件不存在")
+    
+    return FileResponse(
+        path=str(pdf_file),
+        filename=f"{symbol}_analysis_report.pdf",
+        media_type="application/pdf"
+    )
+
+# 获取报告文件列表
+@app.get("/api/v1/analysis/{analysis_id}/files")
+async def get_analysis_files(analysis_id: str, current_user: dict = Depends(get_current_user)):
+    """获取分析报告文件列表"""
+    
+    progress_data = analysis_progress_store.get(analysis_id)
+    if not progress_data:
+        raise HTTPException(status_code=404, detail="分析未找到")
+    
+    if progress_data.get("status") != "completed":
+        raise HTTPException(status_code=400, detail="分析尚未完成")
+    
+    # 查找报告文件
+    symbol = progress_data.get("symbol", "UNKNOWN")
+    results_dir = Path("results") / symbol / "2025-09-29" / "reports"
+    
+    files = []
+    if results_dir.exists():
+        for file_path in results_dir.iterdir():
+            if file_path.is_file():
+                files.append({
+                    "name": file_path.name,
+                    "type": file_path.suffix.lower(),
+                    "size": file_path.stat().st_size,
+                    "url": f"/api/v1/analysis/{analysis_id}/download/{file_path.name}"
+                })
+    
+    return {"files": files}
+
+# 下载任意报告文件
+@app.get("/api/v1/analysis/{analysis_id}/download/{filename}")
+async def download_analysis_file(analysis_id: str, filename: str, current_user: dict = Depends(get_current_user)):
+    """下载指定的分析报告文件"""
+    from fastapi.responses import FileResponse
+    import os
+    from pathlib import Path
+    
+    progress_data = analysis_progress_store.get(analysis_id)
+    if not progress_data:
+        raise HTTPException(status_code=404, detail="分析未找到")
+    
+    # 安全检查：防止路径遍历攻击
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="无效的文件名")
+    
+    # 查找文件
+    symbol = progress_data.get("symbol", "UNKNOWN")
+    results_dir = Path("results") / symbol / "2025-09-29" / "reports"
+    file_path = results_dir / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="文件不存在")
+    
+    # 确定媒体类型
+    media_type = "application/octet-stream"
+    if filename.endswith(".pdf"):
+        media_type = "application/pdf"
+    elif filename.endswith(".md"):
+        media_type = "text/markdown"
+    elif filename.endswith(".txt"):
+        media_type = "text/plain"
+    elif filename.endswith(".json"):
+        media_type = "application/json"
+    
+    return FileResponse(
+        path=str(file_path),
+        filename=filename,
+        media_type=media_type
+    )
+
 # 启动真实分析
 def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysis_type: str, username: str):
     """启动真实的股票分析"""
@@ -739,52 +938,152 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
             
             # 进度回调函数
             def progress_callback(message, step=None, total_steps=None):
+                # 检查是否已被取消
+                if analysis_progress_store[analysis_id].get("status") == "cancelled":
+                    logger.info(f"Analysis {analysis_id} was cancelled, stopping execution")
+                    raise Exception("Analysis was cancelled by user")
+                    
                 current_time = time.time()
                 start_time = analysis_progress_store[analysis_id].get("start_time", current_time)
                 elapsed_time = current_time - start_time
                 
-                # 估算进度百分比
-                if step and total_steps:
-                    progress_percentage = int((step / total_steps) * 100)
+                # 计算进度百分比
+                if step is not None and total_steps is not None and total_steps > 0:
+                    # 使用传入的步骤信息计算精确进度
+                    progress_percentage = min((step / total_steps), 1.0)  # 返回0-1之间的小数
+                    current_step_num = step
+                    total_step_num = total_steps
                 else:
-                    # 根据消息内容估算进度
-                    if "验证" in message or "预获取" in message:
-                        progress_percentage = 5
-                    elif "环境" in message or "配置" in message:
-                        progress_percentage = 15
-                    elif "成本" in message:
-                        progress_percentage = 20
-                    elif "初始化" in message or "引擎" in message:
-                        progress_percentage = 25
-                    elif "分析师" in message or "分析" in message:
-                        progress_percentage = 70
-                    elif "风险" in message or "讨论" in message:
-                        progress_percentage = 85
-                    elif "整理" in message or "报告" in message:
-                        progress_percentage = 95
+                    # 根据消息内容估算进度（返回0-1之间的小数）
+                    current_progress = analysis_progress_store[analysis_id].get("progress_percentage", 0)
+                    
+                    # 更全面的消息匹配逻辑 - 详细进度步骤
+                    if "验证" in message or "预获取" in message or "股票代码" in message:
+                        progress_percentage = 0.05
+                        current_step_num = 1
+                    elif "数据准备完成" in message or "✅ 数据准备完成" in message:
+                        progress_percentage = 0.08
+                        current_step_num = 1
+                    elif "开始股票分析" in message:
+                        progress_percentage = 0.1
+                        current_step_num = 2
+                    elif "预估分析成本" in message or "成本" in message:
+                        progress_percentage = 0.12
+                        current_step_num = 2
+                    elif "环境变量" in message or "检查环境变量" in message:
+                        progress_percentage = 0.15
+                        current_step_num = 2
+                    elif "环境变量验证通过" in message:
+                        progress_percentage = 0.18
+                        current_step_num = 2
+                    elif "配置分析参数" in message or "配置" in message:
+                        progress_percentage = 0.2
+                        current_step_num = 3
+                    elif "创建必要的目录" in message or "📁" in message:
+                        progress_percentage = 0.22
+                        current_step_num = 3
+                    elif "准备分析" in message and ("A股" in message or "港股" in message or "美股" in message):
+                        progress_percentage = 0.25
+                        current_step_num = 3
+                    elif "初始化分析引擎" in message or "初始化" in message or "引擎" in message:
+                        progress_percentage = 0.3
+                        current_step_num = 4
+                    elif "开始分析" in message and "股票" in message:
+                        progress_percentage = 0.35
+                        current_step_num = 4
+                    # 新增：更详细的分析步骤识别
+                    elif "市场分析师" in message or "市场数据" in message or "技术指标" in message:
+                        progress_percentage = 0.4
+                        current_step_num = 5
+                    elif "基本面分析师" in message or "财务数据" in message or "财务比率" in message:
+                        progress_percentage = 0.5
+                        current_step_num = 6
+                    elif "技术分析师" in message or "技术形态" in message or "MACD" in message or "RSI" in message:
+                        progress_percentage = 0.6
+                        current_step_num = 7
+                    elif "情绪分析师" in message or "新闻分析" in message or "情绪" in message:
+                        progress_percentage = 0.65
+                        current_step_num = 7
+                    elif "智能体" in message or "协作分析" in message or "多智能体" in message:
+                        progress_percentage = 0.7
+                        current_step_num = 8
+                    elif "分析完成，正在整理结果" in message or "整理结果" in message:
+                        progress_percentage = 0.75
+                        current_step_num = 8
+                    elif "生成图表" in message or "可视化" in message:
+                        progress_percentage = 0.8
+                        current_step_num = 9
+                    elif "编写报告" in message or "生成报告" in message:
+                        progress_percentage = 0.85
+                        current_step_num = 9
+                    elif "记录使用成本" in message:
+                        progress_percentage = 0.88
+                        current_step_num = 9
+                    elif "正在保存分析报告" in message or "保存分析报告" in message:
+                        progress_percentage = 0.9
+                        current_step_num = 9
+                    elif "报告已保存" in message or "本地报告已保存" in message:
+                        progress_percentage = 0.95
+                        current_step_num = 10
+                    elif "分析成功完成" in message or "✅ 分析成功完成" in message:
+                        progress_percentage = 1.0
+                        current_step_num = 10
                     elif "完成" in message:
-                        progress_percentage = 100
+                        progress_percentage = 1.0
+                        current_step_num = 10
                     else:
-                        # 保持当前进度
-                        progress_percentage = analysis_progress_store[analysis_id].get("progress_percentage", 0)
+                        # 根据当前进度平滑递增，避免跳跃
+                        current_progress = analysis_progress_store[analysis_id].get("progress_percentage", 0)
+                        if current_progress < 0.7:  # 分析阶段，缓慢递增
+                            progress_percentage = min(current_progress + 0.02, 0.7)
+                        else:  # 后期阶段，保持当前进度
+                            progress_percentage = current_progress
+                        current_step_num = analysis_progress_store[analysis_id].get("current_step", 1)
+                    
+                    total_step_num = 10
+                
+                # 确保进度不会倒退
+                current_progress = analysis_progress_store[analysis_id].get("progress_percentage", 0)
+                progress_percentage = max(progress_percentage, current_progress)
+                
+                # 确保步骤数也不会倒退
+                current_step_stored = analysis_progress_store[analysis_id].get("current_step", 0)
+                current_step_num = max(current_step_num, current_step_stored)
+                
+                # 计算预计剩余时间
+                if progress_percentage > 0 and progress_percentage < 1.0:
+                    estimated_total_time = elapsed_time / progress_percentage
+                    estimated_remaining = max(0, estimated_total_time - elapsed_time)
+                else:
+                    estimated_remaining = 0
                 
                 # 更新进度数据
                 analysis_progress_store[analysis_id].update({
-                    "status": "running" if progress_percentage < 100 else "completed",
-                    "current_step": step or analysis_progress_store[analysis_id].get("current_step", 1),
-                    "total_steps": total_steps or 8,
-                    "progress_percentage": progress_percentage,
-                    "current_step_name": message.split("...")[0] if "..." in message else message,
-                    "current_step_description": message,
+                    "status": "running" if progress_percentage < 1.0 else "completed",
+                    "current_step": current_step_num,
+                    "total_steps": total_step_num,
+                    "progress_percentage": progress_percentage,  # 保持0-1之间的小数
+                    "current_step_name": message.split("...")[0] if "..." in message else message[:50],
+                    "message": message,
                     "elapsed_time": elapsed_time,
-                    "estimated_total_time": 300.0,  # 预估5分钟
-                    "remaining_time": max(0, 300.0 - elapsed_time),
-                    "last_message": message,
+                    "estimated_remaining": estimated_remaining,
                     "last_update": current_time,
                     "timestamp": datetime.now().isoformat()
                 })
                 
-                logger.info(f"分析 {analysis_id} 进度: {progress_percentage}% - {message}")
+                # 记录进度变化，包括调试信息
+                progress_percent_display = int(progress_percentage * 100)
+                current_percent_display = int(current_progress * 100)
+                
+                # 如果进度有变化，记录详细日志
+                if progress_percent_display != current_percent_display:
+                    logger.info(f"分析 {analysis_id} 进度更新: {current_percent_display}% -> {progress_percent_display}% - {message}")
+                elif progress_percent_display % 20 == 0 or progress_percentage >= 1.0:
+                    # 每20%或完成时记录一次
+                    logger.info(f"分析 {analysis_id} 进度: {progress_percent_display}% - {message}")
+                else:
+                    # 其他情况只记录debug级别
+                    logger.debug(f"分析 {analysis_id} 进度保持: {progress_percent_display}% - {message}")
             
             # 设置分析参数
             analysis_date = datetime.now().strftime("%Y-%m-%d")
@@ -805,6 +1104,11 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
             analysis_progress_store[analysis_id]["start_time"] = time.time()
             
             logger.info(f"开始真实分析: {symbol} ({market_type_name}) - 用户: {username}")
+            
+            # 在开始分析前检查是否已被取消
+            if analysis_progress_store[analysis_id].get("status") == "cancelled":
+                logger.info(f"Analysis {analysis_id} was cancelled before execution")
+                return
             
             # 执行真实分析
             result = run_stock_analysis(

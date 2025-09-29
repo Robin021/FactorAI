@@ -19,6 +19,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useNotificationCenter } from '@/components/Common/NotificationCenter';
 import { useTheme } from '@/components/Common/ThemeProvider';
 import './MainLayout.css';
+import '@/styles/themes.css';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -117,8 +118,8 @@ const MainLayout: React.FC = () => {
               type="text"
               icon={themeMode === 'dark' ? <SunOutlined /> : <MoonOutlined />}
               onClick={toggleTheme}
-              style={{ color: 'white', marginRight: 8 }}
-              title={themeMode === 'dark' ? '切换到浅色主题' : '切换到深色主题'}
+              style={{ color: 'var(--text-primary)', marginRight: 8 }}
+              title={themeMode === 'dark' ? '切换到白天模式' : '切换到黑夜模式'}
             />
             
             <Button

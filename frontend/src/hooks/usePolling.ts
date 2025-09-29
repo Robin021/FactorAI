@@ -23,8 +23,8 @@ export const usePolling = (
   const {
     onData,
     onError,
-    interval = 15000, // 默认15秒轮询一次
-    enabled = true,
+    interval = 60000, // 默认60秒（1分钟）轮询一次，适合长时间分析任务
+    enabled = false, // 默认禁用轮询，避免疯狂刷新
   } = options;
 
   const [isPolling, setIsPolling] = useState(false);
@@ -51,7 +51,11 @@ export const usePolling = (
       if (!response.ok) {
         if (response.status === 404) {
           // 分析不存在，停止轮询
-          stopPolling();
+          setIsPolling(false);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           return;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -64,13 +68,17 @@ export const usePolling = (
 
       // 智能轮询：根据状态调整频率
       if (data.status === 'completed' || data.status === 'failed') {
-        console.log(`分析 ${data.analysis_id} 已${data.status === 'completed' ? '完成' : '失败'}，停止轮询`);
-        stopPolling();
-      } else if (data.status === 'running' && data.progress_percentage > 80) {
-        // 接近完成时，稍微提高频率
+        console.log(`分析已${data.status === 'completed' ? '完成' : '失败'}，停止轮询`);
+        setIsPolling(false);
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
-          intervalRef.current = setInterval(fetchData, Math.max(interval * 0.7, 3000));
+          intervalRef.current = null;
+        }
+      } else if (data.status === 'running' && data.progress > 80) {
+        // 接近完成时，稍微提高频率（从60秒减少到30秒）
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = setInterval(fetchData, Math.max(interval * 0.5, 30000));
         }
       }
     } catch (err) {
@@ -79,7 +87,7 @@ export const usePolling = (
       onError?.(error);
       console.error('Polling error:', error);
     }
-  }, [url, isAuthenticated, onData, onError]);
+  }, [url, isAuthenticated, onData, onError, interval]);
 
   const startPolling = useCallback(() => {
     if (!enabled || !isAuthenticated) {

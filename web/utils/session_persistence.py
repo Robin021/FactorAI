@@ -170,8 +170,8 @@ def get_persistent_analysis_id() -> Optional[str]:
                 return analysis_id
         
         # 3. 最后从Redis/文件恢复最新分析
-        from .async_progress_tracker import get_latest_analysis_id
-        latest_id = get_latest_analysis_id()
+        # 分析ID恢复功能已简化
+        latest_id = None
         if latest_id:
             st.session_state.current_analysis_id = latest_id
             return latest_id

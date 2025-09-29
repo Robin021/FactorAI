@@ -1,27 +1,27 @@
 import React from 'react';
-import { 
-  Card, 
-  Typography, 
-  Empty, 
-  Tabs, 
-  Button, 
-  Space, 
-  Tag, 
+import {
+  Card,
+  Typography,
+  Empty,
+  Tabs,
+  Button,
+  Space,
+  Tag,
   Descriptions,
   Alert,
   Spin,
-  message
+  message,
 } from 'antd';
-import { 
-  BarChartOutlined, 
-  FileTextOutlined, 
+import {
+  BarChartOutlined,
+  FileTextOutlined,
   DownloadOutlined,
   ShareAltOutlined,
   ReloadOutlined,
   TrophyOutlined,
   DollarOutlined,
   LineChartOutlined,
-  EyeOutlined
+  EyeOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { Analysis } from '@/types';
@@ -40,11 +40,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState('overview');
 
+  // 自动获取分析结果
   React.useEffect(() => {
     if (analysis && analysis.status === 'completed' && !analysis.resultData) {
+      console.log('Analysis completed, fetching results for:', analysis.id);
       getAnalysisResult(analysis.id);
     }
-  }, [analysis?.id, analysis?.status, analysis?.resultData]);
+  }, [analysis?.id, analysis?.status, analysis?.resultData, getAnalysisResult]);
 
   const handleExport = async () => {
     if (!analysis?.resultData) {
@@ -172,10 +174,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
   if (!analysis.resultData) {
     return (
       <Card className="results-card analysis-results-container">
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="分析尚未完成"
-        />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="分析尚未完成" />
       </Card>
     );
   }
@@ -185,7 +184,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
   const renderOverview = () => {
     const traderPlan = resultData.trader_investment_plan || '';
     const decision = resultData.decision || {};
-    
+
     const getRecommendation = () => {
       if (traderPlan.includes('卖出')) return '卖出';
       if (traderPlan.includes('买入')) return '买入';
@@ -207,7 +206,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
 
     return (
       <div className="overview-section">
-        <div className="summary-cards" style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+        <div
+          className="summary-cards"
+          style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}
+        >
           <Card size="small" style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <TrophyOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
@@ -234,10 +236,31 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
 
           <Card size="small" style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <LineChartOutlined style={{ fontSize: '24px', color: getRecommendation() === '买入' ? '#52c41a' : getRecommendation() === '卖出' ? '#ff4d4f' : '#1890ff' }} />
+              <LineChartOutlined
+                style={{
+                  fontSize: '24px',
+                  color:
+                    getRecommendation() === '买入'
+                      ? '#52c41a'
+                      : getRecommendation() === '卖出'
+                        ? '#ff4d4f'
+                        : '#1890ff',
+                }}
+              />
               <div>
                 <Text type="secondary">投资建议</Text>
-                <Title level={4} style={{ margin: 0, color: getRecommendation() === '买入' ? '#52c41a' : getRecommendation() === '卖出' ? '#ff4d4f' : '#1890ff' }}>
+                <Title
+                  level={4}
+                  style={{
+                    margin: 0,
+                    color:
+                      getRecommendation() === '买入'
+                        ? '#52c41a'
+                        : getRecommendation() === '卖出'
+                          ? '#ff4d4f'
+                          : '#1890ff',
+                  }}
+                >
                   {getRecommendation()}
                 </Title>
               </div>
@@ -273,32 +296,32 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
         key: 'fundamentals',
         title: '📊 基本面分析',
         content: resultData.fundamentals_report,
-        icon: <DollarOutlined />
+        icon: <DollarOutlined />,
       },
       {
         key: 'technical',
         title: '📈 技术面分析',
         content: resultData.market_report,
-        icon: <LineChartOutlined />
+        icon: <LineChartOutlined />,
       },
       {
         key: 'sentiment',
         title: '💭 市场情绪分析',
         content: resultData.sentiment_report,
-        icon: <BarChartOutlined />
+        icon: <BarChartOutlined />,
       },
       {
         key: 'risk',
         title: '⚠️ 风险评估',
         content: resultData.risk_assessment,
-        icon: <EyeOutlined />
-      }
+        icon: <EyeOutlined />,
+      },
     ];
 
     return (
       <div className="analyst-reports">
         {reports.map(report => (
-          <Card 
+          <Card
             key={report.key}
             title={
               <span>
@@ -324,7 +347,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
           {resultData.investment_plan || '暂无投资决策分析'}
         </Paragraph>
       </Card>
-      
+
       {resultData.final_trade_decision && (
         <Card title="🎯 最终交易决策" style={{ marginTop: 16 }}>
           <Paragraph style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
@@ -332,7 +355,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
           </Paragraph>
         </Card>
       )}
-      
+
       {!resultData.investment_plan && !resultData.final_trade_decision && (
         <Empty description="暂无图表数据" />
       )}
@@ -347,10 +370,11 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             {analysis.stockCode} 分析结果
           </Title>
           <Text type="secondary">
-            分析完成时间: {analysis.completedAt ? new Date(analysis.completedAt).toLocaleString() : 'N/A'}
+            分析完成时间:{' '}
+            {analysis.completedAt ? new Date(analysis.completedAt).toLocaleString() : 'N/A'}
           </Text>
         </div>
-        
+
         <Space>
           <Button icon={<EyeOutlined />} onClick={() => navigate(`/analysis/${analysis.id}`)}>
             详细报告
@@ -368,37 +392,37 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
       </div>
 
       <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane 
+        <TabPane
           tab={
             <span>
               <BarChartOutlined />
               概览
             </span>
-          } 
+          }
           key="overview"
         >
           {renderOverview()}
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <FileTextOutlined />
               分析师报告
             </span>
-          } 
+          }
           key="reports"
         >
           {renderAnalystReports()}
         </TabPane>
-        
-        <TabPane 
+
+        <TabPane
           tab={
             <span>
               <LineChartOutlined />
               图表分析
             </span>
-          } 
+          }
           key="charts"
         >
           {renderCharts()}

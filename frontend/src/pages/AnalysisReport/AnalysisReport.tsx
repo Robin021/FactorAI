@@ -39,10 +39,12 @@ import {
   RiseOutlined,
   InfoCircleOutlined,
   ExportOutlined,
-  MoreOutlined
+  MoreOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { Analysis } from '@/types';
 import { useAnalysisStore } from '@/stores/analysisStore';
+import { analysisService } from '@/services/analysis';
 import ChartViewer from '@/components/Charts/ChartViewer';
 import './AnalysisReport.css';
 
@@ -51,13 +53,13 @@ const { TabPane } = Tabs;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-interface AnalysisReportProps {}
+interface AnalysisReportProps { }
 
 const AnalysisReport: React.FC<AnalysisReportProps> = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
-  
+
   const {
     currentAnalysis,
     analysisHistory,
@@ -72,6 +74,47 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
   const [historyVisible, setHistoryVisible] = useState(false);
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+
+  // 辅助函数
+  const getScoreColor = (score: number) => {
+    if (score >= 8) return '#52c41a';
+    if (score >= 6) return '#faad14';
+    if (score >= 4) return '#fa8c16';
+    return '#f5222d';
+  };
+
+  const getRiskColor = (risk: number) => {
+    if (risk <= 3) return '#52c41a';
+    if (risk <= 5) return '#faad14';
+    if (risk <= 7) return '#fa8c16';
+    return '#f5222d';
+  };
+
+  const getRecommendationColor = (recommendation: string) => {
+    const rec = recommendation?.toLowerCase();
+    if (rec?.includes('买入') || rec?.includes('buy')) return 'green';
+    if (rec?.includes('卖出') || rec?.includes('sell')) return 'red';
+    if (rec?.includes('持有') || rec?.includes('hold')) return 'blue';
+    return 'default';
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'success';
+      case 'running': return 'processing';
+      case 'failed': return 'error';
+      default: return 'default';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'completed': return '已完成';
+      case 'running': return '进行中';
+      case 'failed': return '失败';
+      default: return '未知';
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -124,7 +167,17 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
   }
 
   const analysis = currentAnalysis;
-  const resultData = analysis.resultData || {};
+  const resultData = analysis?.resultData || {};
+
+  // 从后端返回的数据结构中提取信息
+  const decision = resultData.decision || {};
+  const reports = {
+    market: resultData.market_report || '',
+    technical: resultData.market_report || '', // 技术分析包含在市场报告中
+    fundamental: resultData.fundamentals_report || '',
+    sentiment: resultData.sentiment_report || '',
+    news: resultData.news_report || ''
+  };
 
   // 报告分类和组织
   const reportSections = {
@@ -132,120 +185,157 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       title: '概览',
       icon: <BarChartOutlined />,
       data: {
-        overallScore: resultData.overallScore,
-        targetPrice: resultData.targetPrice,
-        recommendation: resultData.recommendation,
-        summary: resultData.summary
+        overallScore: (decision.confidence || 0) * 10, // 将0-1的置信度转换为0-10分
+        targetPrice: decision.target_price || 0,
+        recommendation: decision.action || '暂无建议',
+        summary: decision.reasoning || '暂无分析摘要',
+        riskScore: (decision.risk_score || 0) * 10
       }
     },
     fundamental: {
       title: '基本面分析',
       icon: <LineChartOutlined />,
-      data: resultData.fundamentalAnalysis || {}
+      data: {
+        report: reports.fundamental,
+        summary: '基本面分析报告'
+      }
     },
     technical: {
       title: '技术分析',
       icon: <RiseOutlined />,
-      data: resultData.technicalAnalysis || {}
+      data: {
+        report: reports.technical,
+        summary: '技术分析报告'
+      }
     },
     market: {
       title: '市场分析',
       icon: <PieChartOutlined />,
-      data: resultData.marketAnalysis || {}
+      data: {
+        report: reports.market,
+        summary: '市场分析报告'
+      }
     },
-    news: {
-      title: '新闻分析',
+    sentiment: {
+      title: '情绪分析',
       icon: <FileTextOutlined />,
-      data: resultData.newsAnalysis || {}
+      data: {
+        report: reports.sentiment,
+        summary: '市场情绪分析报告'
+      }
     }
   };
 
-  const renderOverview = () => (
-    <div className="report-overview">
-      <Row gutter={[16, 16]} className="overview-stats">
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <Statistic
-              title="综合评分"
-              value={resultData.overallScore || 0}
-              precision={1}
-              suffix="/10"
-              valueStyle={{ color: getScoreColor(resultData.overallScore) }}
-              prefix={<TrophyOutlined />}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <Statistic
-              title="目标价格"
-              value={resultData.targetPrice || 0}
-              precision={2}
-              prefix="¥"
-              valueStyle={{ color: '#faad14' }}
-              suffix={
-                <Tooltip title="基于分析师预测的目标价格">
-                  <InfoCircleOutlined />
-                </Tooltip>
-              }
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <div className="recommendation-stat">
-              <Text type="secondary">投资建议</Text>
-              <Tag 
-                color={getRecommendationColor(resultData.recommendation)}
-                className="recommendation-tag"
-              >
-                {resultData.recommendation || '暂无建议'}
-              </Tag>
-            </div>
-          </Card>
-        </Col>
-      </Row>
+  const renderOverview = () => {
+    const overviewData = reportSections.overview.data;
 
-      <Card title="分析摘要" className="summary-card">
-        <Paragraph className="summary-text">
-          {resultData.summary || '暂无分析摘要'}
-        </Paragraph>
-      </Card>
+    return (
+      <div className="report-overview">
+        <Row gutter={[16, 16]} className="overview-stats">
+          <Col xs={24} sm={6}>
+            <Card className="stat-card">
+              <Statistic
+                title="置信度评分"
+                value={overviewData.overallScore}
+                precision={1}
+                suffix="/10"
+                valueStyle={{ color: getScoreColor(overviewData.overallScore) }}
+                prefix={<TrophyOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card className="stat-card">
+              <Statistic
+                title="目标价格"
+                value={overviewData.targetPrice}
+                precision={2}
+                prefix="$"
+                valueStyle={{ color: '#faad14' }}
+                suffix={
+                  <Tooltip title="基于分析师预测的目标价格">
+                    <InfoCircleOutlined />
+                  </Tooltip>
+                }
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card className="stat-card">
+              <Statistic
+                title="风险评分"
+                value={overviewData.riskScore}
+                precision={1}
+                suffix="/10"
+                valueStyle={{ color: getRiskColor(overviewData.riskScore) }}
+                prefix={<ExclamationCircleOutlined />}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Card className="stat-card">
+              <div className="recommendation-stat">
+                <Text type="secondary">投资建议</Text>
+                <Tag
+                  color={getRecommendationColor(overviewData.recommendation)}
+                  className="recommendation-tag"
+                >
+                  {overviewData.recommendation}
+                </Tag>
+              </div>
+            </Card>
+          </Col>
+        </Row>
 
-      <Card title="基本信息">
-        <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }}>
-          <Descriptions.Item label="股票代码">{analysis.stockCode}</Descriptions.Item>
-          <Descriptions.Item label="分析时间">
-            {new Date(analysis.createdAt).toLocaleString()}
-          </Descriptions.Item>
-          <Descriptions.Item label="完成时间">
-            {analysis.completedAt ? new Date(analysis.completedAt).toLocaleString() : 'N/A'}
-          </Descriptions.Item>
-          <Descriptions.Item label="分析状态">
-            <Tag color={getStatusColor(analysis.status)}>{getStatusText(analysis.status)}</Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="分析师">
-            {resultData.analysts?.join(', ') || '未指定'}
-          </Descriptions.Item>
-          <Descriptions.Item label="数据源">
-            {resultData.dataSources?.join(', ') || '未指定'}
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
-    </div>
-  );
+        <Card title="分析摘要" className="summary-card">
+          <Paragraph className="summary-text">
+            {overviewData.summary}
+          </Paragraph>
+        </Card>
+
+        <Card title="基本信息">
+          <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }}>
+            <Descriptions.Item label="股票代码">{analysis?.stockCode}</Descriptions.Item>
+            <Descriptions.Item label="分析时间">
+              {analysis?.createdAt ? new Date(analysis.createdAt).toLocaleString() : 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="完成时间">
+              {analysis?.completedAt ? new Date(analysis.completedAt).toLocaleString() : 'N/A'}
+            </Descriptions.Item>
+            <Descriptions.Item label="分析状态">
+              <Tag color={getStatusColor(analysis?.status || 'unknown')}>{getStatusText(analysis?.status || 'unknown')}</Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="分析师">
+              {resultData.analysts?.join(', ') || '未指定'}
+            </Descriptions.Item>
+            <Descriptions.Item label="数据源">
+              {resultData.dataSources?.join(', ') || '未指定'}
+            </Descriptions.Item>
+          </Descriptions>
+        </Card>
+      </div>
+    );
+  };
 
   const renderDetailedAnalysis = (sectionKey: string) => {
     const section = reportSections[sectionKey as keyof typeof reportSections];
     if (!section) return <Empty description="暂无数据" />;
 
-    const data = section.data;
-    
+    const data = section.data as any; // 使用 any 类型避免类型检查问题
+
     return (
       <div className="detailed-analysis">
         {data.summary && (
           <Card title="分析摘要" className="analysis-summary">
             <Paragraph>{data.summary}</Paragraph>
+          </Card>
+        )}
+
+        {data.report && (
+          <Card title="详细报告">
+            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+              {data.report}
+            </div>
           </Card>
         )}
 
@@ -255,19 +345,13 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
               {Object.entries(data.keyMetrics).map(([key, value]: [string, any]) => (
                 <Col xs={12} sm={8} md={6} key={key}>
                   <Statistic
-                    title={getMetricName(key)}
+                    title={key}
                     value={value}
                     precision={2}
                   />
                 </Col>
               ))}
             </Row>
-          </Card>
-        )}
-
-        {data.analysis && (
-          <Card title="详细分析">
-            <Paragraph>{data.analysis}</Paragraph>
           </Card>
         )}
 
@@ -331,7 +415,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
                 if (e.target.checked) {
                   setSelectedAnalyses([...selectedAnalyses, record.id]);
                 } else {
-                  setSelectedAnalyses(selectedAnalyses.filter(id => id !== record.id));
+                  setSelectedAnalyses(selectedAnalyses.filter((id: string) => id !== record.id));
                 }
               }}
             >
@@ -348,12 +432,12 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
           <Space>
             <RangePicker placeholder={['开始日期', '结束日期']} />
             <Select placeholder="选择股票代码" style={{ width: 120 }}>
-              {Array.from(new Set(analysisHistory.map(a => a.stockCode))).map(code => (
+              {Array.from(new Set(analysisHistory.map((a: Analysis) => a.stockCode))).map((code: string) => (
                 <Option key={code} value={code}>{code}</Option>
               ))}
             </Select>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               disabled={selectedAnalyses.length < 2}
               onClick={() => console.log('Compare analyses:', selectedAnalyses)}
             >
@@ -377,66 +461,54 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
     window.print();
   };
 
-  const handleExport = (format: string) => {
-    // TODO: Implement export functionality
-    message.success(`正在导出为 ${format} 格式...`);
-    setExportModalVisible(false);
-  };
-
-  const handleShare = (method: string) => {
-    // TODO: Implement share functionality
-    message.success(`正在通过 ${method} 分享...`);
+  const handleShare = (key: string) => {
+    message.info(`分享功能正在开发中: ${key}`);
     setShareModalVisible(false);
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 8) return '#52c41a';
-    if (score >= 6) return '#faad14';
-    return '#ff4d4f';
-  };
+  const handleExport = async (format: string) => {
+    if (!id) return;
 
-  const getRecommendationColor = (recommendation: string) => {
-    const colors: Record<string, string> = {
-      '强烈买入': 'green',
-      '买入': 'blue',
-      '持有': 'orange',
-      '卖出': 'red',
-      '强烈卖出': 'red',
-    };
-    return colors[recommendation] || 'default';
-  };
+    try {
+      message.loading(`正在导出为 ${format} 格式...`, 0);
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: 'processing',
-      running: 'processing',
-      completed: 'success',
-      failed: 'error',
-    };
-    return colors[status] || 'default';
-  };
+      if (format === 'pdf') {
+        // 下载PDF
+        const blob = await analysisService.downloadAnalysisPDF(id);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${analysis?.stockCode || 'analysis'}_report.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.destroy();
+        message.success('PDF 报告下载成功');
+      } else if (format === 'json') {
+        // 导出JSON数据
+        const jsonData = JSON.stringify(analysis?.resultData || {}, null, 2);
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${analysis?.stockCode || 'analysis'}_data.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        message.destroy();
+        message.success('JSON 数据导出成功');
+      } else {
+        message.destroy();
+        message.warning(`${format} 格式导出功能正在开发中`);
+      }
 
-  const getStatusText = (status: string) => {
-    const texts: Record<string, string> = {
-      pending: '等待中',
-      running: '分析中',
-      completed: '已完成',
-      failed: '失败',
-    };
-    return texts[status] || status;
-  };
-
-  const getMetricName = (key: string) => {
-    const names: Record<string, string> = {
-      pe: '市盈率',
-      pb: '市净率',
-      roe: 'ROE',
-      roa: 'ROA',
-      revenue: '营收',
-      profit: '净利润',
-      // Add more metric names as needed
-    };
-    return names[key] || key;
+      setExportModalVisible(false);
+    } catch (error: any) {
+      message.destroy();
+      message.error(`导出失败: ${error.message}`);
+    }
   };
 
   const exportMenu = (
@@ -474,8 +546,8 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
     <div className="analysis-report" ref={printRef}>
       <div className="report-header no-print">
         <div className="header-left">
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => navigate('/analysis')}
             className="back-button"
           >
@@ -493,13 +565,13 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
         <div className="header-actions">
           <Space>
-            <Button 
+            <Button
               icon={<HistoryOutlined />}
               onClick={() => setHistoryVisible(true)}
             >
               历史记录
             </Button>
-            <Button 
+            <Button
               icon={<PrinterOutlined />}
               onClick={handlePrint}
             >
@@ -523,19 +595,19 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       </div>
 
       <div className="report-content">
-        <Tabs 
-          activeKey={activeTab} 
+        <Tabs
+          activeKey={activeTab}
           onChange={setActiveTab}
           className="report-tabs"
           tabPosition="top"
         >
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <BarChartOutlined />
                 概览
               </span>
-            } 
+            }
             key="overview"
           >
             {renderOverview()}
@@ -554,13 +626,29 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
               {renderDetailedAnalysis(key)}
             </TabPane>
           ))}
+
+          <TabPane
+            tab={
+              <span>
+                <FileTextOutlined />
+                原始数据
+              </span>
+            }
+            key="raw"
+          >
+            <Card title="原始分析数据">
+              <pre style={{ background: '#f5f5f5', padding: '16px', borderRadius: '4px', overflow: 'auto' }}>
+                {JSON.stringify(resultData, null, 2)}
+              </pre>
+            </Card>
+          </TabPane>
         </Tabs>
       </div>
 
       {/* 历史记录对话框 */}
       <Modal
         title="历史分析记录"
-        visible={historyVisible}
+        open={historyVisible}
         onCancel={() => setHistoryVisible(false)}
         width={1000}
         footer={null}
@@ -572,7 +660,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       {/* 导出对话框 */}
       <Modal
         title="导出分析报告"
-        visible={exportModalVisible}
+        open={exportModalVisible}
         onCancel={() => setExportModalVisible(false)}
         footer={null}
       >
@@ -598,7 +686,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       {/* 分享对话框 */}
       <Modal
         title="分享分析报告"
-        visible={shareModalVisible}
+        open={shareModalVisible}
         onCancel={() => setShareModalVisible(false)}
         footer={null}
       >

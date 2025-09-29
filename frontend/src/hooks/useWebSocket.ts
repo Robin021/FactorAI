@@ -43,8 +43,8 @@ export const useWebSocket = (
 
   const getWebSocketUrl = useCallback(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // 直接连接到后端 WebSocket，不通过代理
-    const baseUrl = `${protocol}//localhost:8000/api/v1/ws`;
+    const host = window.location.host;
+    const baseUrl = `${protocol}//${host}/api/v1`;
     return `${baseUrl}${url}`;
   }, [url]);
 

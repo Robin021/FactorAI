@@ -126,19 +126,58 @@ async def get_analysis_status(
         )
     
     # Get real-time progress from Redis if available
-    progress_data = await redis_client.get(f"analysis_progress:{analysis_id}")
+    # 尝试多种Redis键格式，兼容Streamlit版本和React版本
+    progress_data = None
+    redis_keys_to_try = [
+        f"analysis_progress:{analysis_id}",  # React版本格式
+        f"progress:{analysis_id}",           # Streamlit版本格式
+        f"task_progress:analysis_{analysis_id}"  # TaskQueue格式
+    ]
+    
+    for key in redis_keys_to_try:
+        progress_data = await redis_client.get(key)
+        if progress_data:
+            break
+    
     if progress_data:
         try:
             import json
             progress_info = json.loads(progress_data)
+            
+            # 兼容不同的数据格式
+            status_value = progress_info.get("status", analysis.status.value)
+            if isinstance(status_value, str):
+                # 确保状态值正确映射
+                status_mapping = {
+                    'running': 'running',
+                    'completed': 'completed', 
+                    'failed': 'failed',
+                    'pending': 'pending',
+                    'cancelled': 'cancelled'
+                }
+                status_value = status_mapping.get(status_value, analysis.status.value)
+            
+            # 兼容不同的进度字段名
+            progress_value = progress_info.get("progress") or progress_info.get("progress_percentage", analysis.progress)
+            
+            # 兼容不同的步骤字段名
+            current_step = progress_info.get("current_step") or progress_info.get("current_step_name")
+            
+            # 兼容不同的消息字段名
+            message = progress_info.get("message") or progress_info.get("last_message")
+            
+            # 兼容不同的时间字段名
+            estimated_time_remaining = progress_info.get("estimated_time_remaining") or progress_info.get("remaining_time")
+            
             return AnalysisProgress(
-                status=AnalysisStatus(progress_info.get("status", analysis.status.value)),
-                progress=progress_info.get("progress", analysis.progress),
-                current_step=progress_info.get("current_step"),
-                message=progress_info.get("message"),
-                estimated_time_remaining=progress_info.get("estimated_time_remaining")
+                status=AnalysisStatus(status_value),
+                progress=progress_value,
+                current_step=current_step,
+                message=message,
+                estimated_time_remaining=estimated_time_remaining
             )
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to parse progress data: {e}")
             pass
     
     # Fallback to database data

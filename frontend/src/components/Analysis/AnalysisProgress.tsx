@@ -1,11 +1,11 @@
 import React from 'react';
 import { Card, Progress, Typography, Steps, Button, Alert, Space, Tag } from 'antd';
-import { 
-  LoadingOutlined, 
-  ClockCircleOutlined, 
+import {
+  LoadingOutlined,
+  ClockCircleOutlined,
   StopOutlined,
   CheckCircleOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { Analysis } from '@/types';
 import { useAnalysis } from '@/hooks/useAnalysis';
@@ -46,42 +46,12 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analysis }) => {
     ],
   });
 
-  // 轮询获取分析进度
-  const { isPolling, error: pollingError } = usePolling(`/analysis/${analysis.id}/progress`, {
-    onData: (data) => {
-      setProgressData(prev => ({
-        ...prev,
-        progress: data.progress_percentage || 0,
-        currentStep: data.current_step || 0,
-        totalSteps: data.total_steps || 7,
-        message: data.last_message || '分析中...',
-        elapsedTime: data.elapsed_time || 0,
-        estimatedTimeRemaining: data.remaining_time || 0,
-        currentStepName: data.current_step_name || '',
-        currentStepDescription: data.current_step_description || '',
-      }));
-
-      // 更新步骤状态
-      if (data.current_step && data.total_steps) {
-        setProgressData(prev => ({
-          ...prev,
-          steps: prev.steps.map((step, index) => {
-            if (index < data.current_step - 1) {
-              return { ...step, status: 'finish' };
-            } else if (index === data.current_step - 1) {
-              return { ...step, status: 'process', description: data.current_step_description };
-            } else {
-              return { ...step, status: 'wait' };
-            }
-          }),
-        }));
-      }
-    },
-    onError: (error) => {
-      console.error('Progress polling error:', error);
-    },
-    interval: 20000, // 每20秒轮询一次
-  });
+  // 彻底禁用轮询，避免疯狂刷新
+  // const { isPolling, error: pollingError } = usePolling(`/analysis/${analysis.id}/status`, {
+  //   // ... 轮询逻辑已禁用
+  // });
+  const isPolling = false; // 强制禁用轮询
+  const pollingError = null;
 
   const handleCancel = async () => {
     try {
@@ -150,16 +120,16 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analysis }) => {
               </Text>
             </div>
           </Space>
-          
+
           <Space>
             <Tag color={getStatusColor(analysis.status)}>
-              {analysis.status === 'running' ? '运行中' : 
-               analysis.status === 'pending' ? '等待中' : 
-               analysis.status}
+              {analysis.status === 'running'
+                ? '运行中'
+                : analysis.status === 'pending'
+                  ? '等待中'
+                  : analysis.status}
             </Tag>
-            {!isPolling && (
-              <Tag color="red">{pollingError ? '连接异常' : '已停止'}</Tag>
-            )}
+            {!isPolling && <Tag color="red">{pollingError ? '连接异常' : '已停止'}</Tag>}
           </Space>
         </div>
 
@@ -174,7 +144,7 @@ const AnalysisProgress: React.FC<AnalysisProgressProps> = ({ analysis }) => {
               }}
               size="default"
             />
-            
+
             <div className="progress-info">
               <Text>{progressData.message}</Text>
               {progressData.estimatedTimeRemaining && (

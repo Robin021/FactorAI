@@ -359,10 +359,13 @@
             };
             
             // 构建 Authing 登录 URL
+            // 使用完整的 scope 来确保获取稳定的用户信息
+            const scope = 'openid profile email phone username roles unionid external_id extended_fields';
+            
             const authUrl = `${authingConfig.appHost}/oidc/auth?` + new URLSearchParams({
                 client_id: authingConfig.appId,
                 response_type: 'code',
-                scope: 'openid profile email',
+                scope: scope,
                 redirect_uri: authingConfig.redirectUri,
                 state: Math.random().toString(36).substring(7)
             });

@@ -27,7 +27,7 @@ interface ThemeProviderProps {
 const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('theme-mode');
-    return (saved as ThemeMode) || 'light';
+    return (saved as ThemeMode) || 'dark';
   });
 
   useEffect(() => {
@@ -35,6 +35,7 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     
     // Update document class for CSS variables
     document.documentElement.setAttribute('data-theme', themeMode);
+    console.log('Theme changed to:', themeMode);
   }, [themeMode]);
 
   const toggleTheme = () => {
@@ -44,29 +45,29 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const themeConfig: ThemeConfig = {
     algorithm: themeMode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
-      colorPrimary: '#1890ff',
-      borderRadius: 6,
+      colorPrimary: themeMode === 'dark' ? '#00d4aa' : '#4a6cf7',
+      borderRadius: 8,
       wireframe: false,
     },
     components: {
       Layout: {
-        headerBg: themeMode === 'dark' ? '#001529' : '#001529',
-        siderBg: themeMode === 'dark' ? '#001529' : '#001529',
-        bodyBg: themeMode === 'dark' ? '#141414' : '#f0f2f5',
+        headerBg: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
+        siderBg: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.85)',
+        bodyBg: themeMode === 'dark' ? 'linear-gradient(135deg, #000000 0%, #1a1a1a 100%)' : 'linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%)',
       },
       Menu: {
-        darkItemBg: '#001529',
-        darkSubMenuItemBg: '#000c17',
-        darkItemSelectedBg: '#1890ff',
+        darkItemBg: 'rgba(255, 255, 255, 0.05)',
+        darkSubMenuItemBg: 'rgba(255, 255, 255, 0.03)',
+        darkItemSelectedBg: '#00d4aa',
       },
       Card: {
-        borderRadiusLG: 8,
+        borderRadiusLG: 12,
       },
       Button: {
-        borderRadius: 6,
+        borderRadius: 8,
       },
       Input: {
-        borderRadius: 6,
+        borderRadius: 8,
       },
     },
   };

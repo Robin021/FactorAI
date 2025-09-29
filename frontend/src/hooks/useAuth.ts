@@ -17,12 +17,13 @@ export const useAuth = () => {
     hasRememberedCredentials,
   } = useAuthStore();
 
-  // Initialize auth state on mount
+  // Initialize auth state on mount - only check once
   useEffect(() => {
-    if (!isAuthenticated && localStorage.getItem('auth_token')) {
+    const token = localStorage.getItem('auth_token');
+    if (!isAuthenticated && token) {
       getCurrentUser();
     }
-  }, [isAuthenticated, getCurrentUser]);
+  }, []); // Remove dependencies to prevent repeated calls
 
   const handleLogin = async (credentials: LoginCredentials) => {
     try {

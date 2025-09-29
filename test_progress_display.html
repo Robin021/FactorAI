@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析进度测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1890ff, #52c41a);
+            transition: width 0.3s ease;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #d9d9d9;
+        }
+        .step.pending {
+            background-color: #f9f9f9;
+            border-left-color: #d9d9d9;
+        }
+        .step.running {
+            background-color: #e6f7ff;
+            border-left-color: #1890ff;
+        }
+        .step.completed {
+            background-color: #f6ffed;
+            border-left-color: #52c41a;
+        }
+        .step.error {
+            background-color: #fff2f0;
+            border-left-color: #ff4d4f;
+        }
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .step-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .step-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-pending { background-color: #f0f0f0; color: #666; }
+        .status-running { background-color: #e6f7ff; color: #1890ff; }
+        .status-completed { background-color: #f6ffed; color: #52c41a; }
+        .status-error { background-color: #fff2f0; color: #ff4d4f; }
+        .step-message {
+            color: #666;
+            margin: 8px 0;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #40a9ff;
+        }
+        button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 6px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1890ff;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 股票分析进度监控</h1>
+        
+        <div class="controls">
+            <button onclick="startAnalysis()" id="startBtn">🚀 开始分析</button>
+            <button onclick="refreshProgress()" id="refreshBtn">🔄 刷新进度</button>
+            <button onclick="cancelAnalysis()" id="cancelBtn" disabled>⏹️ 取消分析</button>
+        </div>
+
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-value" id="overallProgress">0%</div>
+                <div class="metric-label">总体进度</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="elapsedTime">00:00</div>
+                <div class="metric-label">已用时间</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="currentStep">-</div>
+                <div class="metric-label">当前步骤</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="analysisStatus">待开始</div>
+                <div class="metric-label">分析状态</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+
+        <div id="stepsContainer">
+            <!-- 步骤将在这里动态生成 -->
+        </div>
+
+        <div id="logContainer" style="margin-top: 20px;">
+            <h3>📝 实时日志</h3>
+            <div id="logMessages" style="background: #f9f9f9; padding: 15px; border-radius: 6px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 14px;">
+                等待开始分析...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAnalysisId = null;
+        let pollingInterval = null;
+        let startTime = null;
+
+        const steps = [
+            { id: 'data_validation', name: '数据验证', status: 'pending' },
+            { id: 'env_setup', name: '环境准备', status: 'pending' },
+            { id: 'cost_estimation', name: '成本预估', status: 'pending' },
+            { id: 'param_config', name: '参数配置', status: 'pending' },
+            { id: 'engine_init', name: '引擎初始化', status: 'pending' },
+            { id: 'market_analysis', name: '市场分析师分析', status: 'pending' },
+            { id: 'fundamentals_analysis', name: '基本面分析师分析', status: 'pending' },
+            { id: 'technical_analysis', name: '技术分析师分析', status: 'pending' },
+            { id: 'result_processing', name: '结果整理', status: 'pending' }
+        ];
+
+        function renderSteps() {
+            const container = document.getElementById('stepsContainer');
+            container.innerHTML = steps.map(step => `
+                <div class="step ${step.status}" id="step-${step.id}">
+                    <div class="step-header">
+                        <div class="step-name">${step.name}</div>
+                        <div class="step-status status-${step.status}">
+                            ${step.status === 'pending' ? '等待中' : 
+                              step.status === 'running' ? '进行中' : 
+                              step.status === 'completed' ? '已完成' : '错误'}
+                        </div>
+                    </div>
+                    <div class="step-message" id="message-${step.id}">
+                        ${step.message || '等待开始...'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStep(stepIndex, status, message) {
+            if (stepIndex >= 0 && stepIndex < steps.length) {
+                steps[stepIndex].status = status;
+                steps[stepIndex].message = message;
+                
+                const stepElement = document.getElementById(`step-${steps[stepIndex].id}`);
+                const messageElement = document.getElementById(`message-${steps[stepIndex].id}`);
+                
+                if (stepElement && messageElement) {
+                    stepElement.className = `step ${status}`;
+                    messageElement.textContent = message;
+                    
+                    const statusElement = stepElement.querySelector('.step-status');
+                    if (statusElement) {
+                        statusElement.className = `step-status status-${status}`;
+                        statusElement.textContent = 
+                            status === 'pending' ? '等待中' : 
+                            status === 'running' ? '进行中' : 
+                            status === 'completed' ? '已完成' : '错误';
+                    }
+                }
+            }
+        }
+
+        function addLog(message) {
+            const logMessages = document.getElementById('logMessages');
+            const timestamp = new Date().toLocaleTimeString();
+            logMessages.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logMessages.scrollTop = logMessages.scrollHeight;
+        }
+
+        function updateMetrics(data) {
+            const progress = (data.progress_percentage || 0) * 100;
+            document.getElementById('overallProgress').textContent = `${progress.toFixed(1)}%`;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            
+            if (data.current_step_name) {
+                document.getElementById('currentStep').textContent = data.current_step_name;
+            }
+            
+            if (data.status) {
+                const statusMap = {
+                    'pending': '等待中',
+                    'running': '运行中',
+                    'completed': '已完成',
+                    'failed': '失败',
+                    'cancelled': '已取消'
+                };
+                document.getElementById('analysisStatus').textContent = statusMap[data.status] || data.status;
+            }
+
+            // 更新已用时间
+            if (startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('elapsedTime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        async function startAnalysis() {
+            try {
+                addLog('🚀 正在启动分析...');
+                
+                const response = await fetch('http://localhost:8001/api/analysis/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        stock_symbol: '000001',
+                        market_type: 'A股',
+                        analysis_date: new Date().toISOString().split('T')[0],
+                        analysts: ['market', 'fundamentals', 'technical'],
+                        research_depth: 2,
+                        llm_provider: 'dashscope',
+                        llm_model: 'qwen-plus'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    currentAnalysisId = result.analysis_id;
+                    startTime = Date.now();
+                    
+                    addLog(`✅ 分析已启动，ID: ${currentAnalysisId}`);
+                    
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('cancelBtn').disabled = false;
+                    
+                    // 开始轮询
+                    startPolling();
+                } else {
+                    const error = await response.json();
+                    addLog(`❌ 启动失败: ${error.detail || '未知错误'}`);
+                }
+            } catch (error) {
+                addLog(`❌ 网络错误: ${error.message}`);
+            }
+        }
+
+        async function refreshProgress() {
+            if (!currentAnalysisId) {
+                addLog('⚠️ 没有正在进行的分析');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8001/api/analysis/${currentAnalysisId}/progress`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    handleProgressUpdate(data);
+                    addLog('🔄 进度已刷新');
+                } else {
+                    addLog(`❌ 获取进度失败: ${response.status}`);
+                }
+            } catch (error) {
+                addLog(`❌ 刷新错误: ${error.message}`);
+            }
+        }
+
+        async function cancelAnalysis() {
+            if (!currentAnalysisId) return;
+
+            try {
+                const response = await fetch(`http://localhost:8001/api/analysis/${currentAnalysisId}/cancel`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    addLog('⏹️ 分析已取消');
+                    stopPolling();
+                } else {
+                    addLog('❌ 取消失败');
+                }
+            } catch (error) {
+                addLog(`❌ 取消错误: ${error.message}`);
+            }
+        }
+
+        function handleProgressUpdate(data) {
+            updateMetrics(data);
+            
+            if (data.message) {
+                addLog(`📍 ${data.message}`);
+            }
+
+            // 更新步骤状态
+            const currentStepIndex = data.current_step || 0;
+            
+            // 标记之前的步骤为完成
+            for (let i = 0; i < currentStepIndex; i++) {
+                updateStep(i, 'completed', '已完成');
+            }
+            
+            // 更新当前步骤
+            if (currentStepIndex < steps.length) {
+                updateStep(currentStepIndex, 'running', data.message || '正在执行...');
+            }
+
+            // 检查是否完成
+            if (data.status === 'completed' || data.status === 'failed' || data.status === 'cancelled') {
+                stopPolling();
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('cancelBtn').disabled = true;
+                
+                if (data.status === 'completed') {
+                    // 标记所有步骤为完成
+                    steps.forEach((_, index) => updateStep(index, 'completed', '已完成'));
+                    addLog('🎉 分析成功完成！');
+                } else {
+                    addLog(`❌ 分析${data.status}: ${data.message}`);
+                }
+            }
+        }
+
+        function startPolling() {
+            if (pollingInterval) return;
+            
+            pollingInterval = setInterval(refreshProgress, 2000); // 每2秒轮询一次
+            addLog('🔄 开始自动轮询进度...');
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                addLog('⏸️ 停止自动轮询');
+            }
+        }
+
+        // 初始化页面
+        renderSteps();
+        
+        // 定时更新已用时间
+        setInterval(() => {
+            if (startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('elapsedTime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

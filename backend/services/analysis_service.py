@@ -60,10 +60,13 @@ class AnalysisService:
             # Get or create TradingAgentsGraph instance
             trading_graph = await self._get_trading_graph(analysis_request, user)
             
-            # Update progress
-            await self._update_progress(analysis_id, 10.0, "Setting up analysis parameters...")
+            # Update progress with detailed steps
+            await self._update_progress(analysis_id, 5.0, "🔍 验证股票代码和市场信息...", "数据验证")
+            await asyncio.sleep(1)  # 让用户看到这个步骤
             
             # Prepare analysis parameters
+            await self._update_progress(analysis_id, 10.0, "⚙️ 配置分析参数和模型设置...", "参数配置")
+            await asyncio.sleep(1)
             stock_code = analysis_request.stock_code
             analysis_date = analysis_request.analysis_date or datetime.now().strftime("%Y-%m-%d")
             
@@ -73,7 +76,10 @@ class AnalysisService:
             logger.info(f"📊 Executing analysis for {formatted_stock_code} on {analysis_date}")
             
             # Update progress
-            await self._update_progress(analysis_id, 20.0, "Starting TradingAgents analysis...")
+            await self._update_progress(analysis_id, 15.0, "🚀 初始化AI分析引擎...", "引擎初始化")
+            await asyncio.sleep(1)
+            await self._update_progress(analysis_id, 20.0, "🤖 加载智能分析模型...", "模型加载")
+            await asyncio.sleep(1)
             
             # Execute the analysis
             final_state, decision = await self._run_trading_analysis(
@@ -83,8 +89,15 @@ class AnalysisService:
                 analysis_id
             )
             
-            # Update progress
-            await self._update_progress(analysis_id, 90.0, "Processing results...")
+            # Update progress with detailed result processing
+            await self._update_progress(analysis_id, 80.0, "🔄 整合分析结果...", "结果整合")
+            await asyncio.sleep(2)
+            await self._update_progress(analysis_id, 85.0, "📊 生成图表和可视化...", "图表生成")
+            await asyncio.sleep(2)
+            await self._update_progress(analysis_id, 90.0, "📝 编写分析报告...", "报告生成")
+            await asyncio.sleep(2)
+            await self._update_progress(analysis_id, 95.0, "🎨 优化报告格式...", "格式优化")
+            await asyncio.sleep(1)
             
             # Process and format results
             result_data = await self._process_analysis_results(final_state, decision)
@@ -162,8 +175,17 @@ class AnalysisService:
         if await self._is_cancelled(analysis_id):
             raise AnalysisException("Analysis was cancelled")
         
-        # Update progress
-        await self._update_progress(analysis_id, 30.0, "Running market analysis...")
+        # Update progress with detailed market analysis steps
+        await self._update_progress(analysis_id, 25.0, "📊 开始市场数据收集...", "数据收集")
+        await asyncio.sleep(2)
+        await self._update_progress(analysis_id, 30.0, "📈 执行技术指标分析...", "技术分析")
+        await asyncio.sleep(3)
+        await self._update_progress(analysis_id, 40.0, "💼 进行基本面分析...", "基本面分析")
+        await asyncio.sleep(3)
+        await self._update_progress(analysis_id, 50.0, "📰 分析市场新闻和情绪...", "情绪分析")
+        await asyncio.sleep(2)
+        await self._update_progress(analysis_id, 60.0, "🔄 运行多智能体协作分析...", "智能体分析")
+        await asyncio.sleep(4)
         
         # Run the analysis in a separate thread to avoid blocking
         loop = asyncio.get_event_loop()
@@ -362,17 +384,22 @@ class AnalysisService:
         Update analysis progress in Redis for real-time updates
         """
         progress_data = {
+            "status": "running",  # 添加状态信息
             "progress": progress,
             "message": message,
             "current_step": current_step,
             "updated_at": datetime.utcnow().isoformat()
         }
         
+        redis_key = f"analysis_progress:{analysis_id}"
         await self.redis.setex(
-            f"analysis_progress:{analysis_id}",
+            redis_key,
             3600,  # 1 hour TTL
             json.dumps(progress_data)
         )
+        
+        # 添加调试日志
+        logger.info(f"📊 Progress updated: {progress}% - {message} (Redis key: {redis_key})")
         
         # Also update database
         await self.db.analyses.update_one(

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试分析报告显示</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>分析报告显示测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 测试获取分析结果</h2>
+        <button onclick="testGetAnalysisResult()">获取分析结果</button>
+        <div id="result1"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 测试下载PDF</h2>
+        <button onclick="testDownloadPDF()">下载PDF</button>
+        <div id="result2"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 测试获取文件列表</h2>
+        <button onclick="testGetFiles()">获取文件列表</button>
+        <div id="result3"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let authToken = '';
+        
+        // 先登录获取token
+        async function login() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+                const data = await response.json();
+                authToken = data.access_token;
+                return true;
+            } catch (error) {
+                console.error('Login failed:', error);
+                return false;
+            }
+        }
+        
+        async function testGetAnalysisResult() {
+            const resultDiv = document.getElementById('result1');
+            resultDiv.innerHTML = '正在测试...';
+            
+            if (!authToken && !(await login())) {
+                resultDiv.innerHTML = '<span class="error">登录失败</span>';
+                return;
+            }
+            
+            try {
+                // 先获取分析历史
+                const historyResponse = await fetch(`${API_BASE}/analysis/history`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const historyData = await historyResponse.json();
+                
+                if (historyData.analyses && historyData.analyses.length > 0) {
+                    const analysisId = historyData.analyses[0].analysis_id;
+                    
+                    // 获取分析结果
+                    const resultResponse = await fetch(`${API_BASE}/analysis/${analysisId}/results`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    const resultData = await resultResponse.json();
+                    
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ 获取成功</span>
+                        <pre>${JSON.stringify(resultData, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<span class="error">没有找到已完成的分析</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 错误: ${error.message}</span>`;
+            }
+        }
+        
+        async function testDownloadPDF() {
+            const resultDiv = document.getElementById('result2');
+            resultDiv.innerHTML = '正在测试...';
+            
+            if (!authToken && !(await login())) {
+                resultDiv.innerHTML = '<span class="error">登录失败</span>';
+                return;
+            }
+            
+            try {
+                // 先获取分析历史
+                const historyResponse = await fetch(`${API_BASE}/analysis/history`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const historyData = await historyResponse.json();
+                
+                if (historyData.analyses && historyData.analyses.length > 0) {
+                    const analysisId = historyData.analyses[0].analysis_id;
+                    
+                    // 尝试下载PDF
+                    const pdfResponse = await fetch(`${API_BASE}/analysis/${analysisId}/download/pdf`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    
+                    if (pdfResponse.ok) {
+                        resultDiv.innerHTML = '<span class="success">✅ PDF下载接口可用</span>';
+                    } else {
+                        const errorText = await pdfResponse.text();
+                        resultDiv.innerHTML = `<span class="error">❌ PDF下载失败: ${errorText}</span>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = '<span class="error">没有找到已完成的分析</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 错误: ${error.message}</span>`;
+            }
+        }
+        
+        async function testGetFiles() {
+            const resultDiv = document.getElementById('result3');
+            resultDiv.innerHTML = '正在测试...';
+            
+            if (!authToken && !(await login())) {
+                resultDiv.innerHTML = '<span class="error">登录失败</span>';
+                return;
+            }
+            
+            try {
+                // 先获取分析历史
+                const historyResponse = await fetch(`${API_BASE}/analysis/history`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const historyData = await historyResponse.json();
+                
+                if (historyData.analyses && historyData.analyses.length > 0) {
+                    const analysisId = historyData.analyses[0].analysis_id;
+                    
+                    // 获取文件列表
+                    const filesResponse = await fetch(`${API_BASE}/analysis/${analysisId}/files`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    const filesData = await filesResponse.json();
+                    
+                    resultDiv.innerHTML = `
+                        <span class="success">✅ 获取成功</span>
+                        <pre>${JSON.stringify(filesData, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<span class="error">没有找到已完成的分析</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ 错误: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

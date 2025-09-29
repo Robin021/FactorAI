@@ -168,7 +168,7 @@ const AnalysisForm: React.FC = () => {
         className="analysis-form"
       >
         <Row gutter={16}>
-          <Col span={24}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               name="marketType"
               label={
@@ -186,19 +186,14 @@ const AnalysisForm: React.FC = () => {
               >
                 {marketOptions.map((option) => (
                   <Option key={option.value} value={option.value}>
-                    <div>
-                      <div>{option.label}</div>
-                      <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {option.description}
-                      </Text>
-                    </div>
+                    {option.label}
                   </Option>
                 ))}
               </Select>
             </Form.Item>
           </Col>
 
-          <Col span={24}>
+          <Col xs={24} sm={24} md={12}>
             <Form.Item
               name="stockCode"
               label={

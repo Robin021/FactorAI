@@ -24,10 +24,9 @@ export const useAnalysis = () => {
 
   // Load analysis history on mount
   useEffect(() => {
-    if (analysisHistory.length === 0) {
-      loadAnalysisHistory();
-    }
-  }, [analysisHistory.length]); // 移除 loadAnalysisHistory 依赖
+    // 总是尝试加载最新的历史记录，不依赖本地缓存
+    loadAnalysisHistory();
+  }, []); // 只在组件挂载时执行一次
 
   const handleStartAnalysis = async (request: AnalysisRequest) => {
     try {

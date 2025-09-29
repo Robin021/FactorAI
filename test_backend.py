@@ -598,6 +598,12 @@ async def get_supported_markets():
         ]
     }
 
+# 取消分析接口
+@app.post("/api/v1/analysis/{analysis_id}/cancel")
+async def cancel_analysis(analysis_id: str, current_user: dict = Depends(get_current_user)):
+    """取消分析任务"""
+    return {"message": "分析已成功取消"}
+
 if __name__ == "__main__":
     import uvicorn
     print("🚀 启动 TradingAgents-CN 框架迁移测试服务器")

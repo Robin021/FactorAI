@@ -1,0 +1,301 @@
+/* 主题切换系统 */
+
+/* 白天模式 - 月白清雅 */
+[data-theme="light"] {
+  --primary-bg: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --text-primary: #1a237e;
+  --text-secondary: rgba(26, 35, 126, 0.8);
+  --border-color: rgba(74, 108, 247, 0.3);
+  --accent-color: #4a6cf7;
+  --accent-hover: #3b5bf0;
+  --input-bg: rgba(255, 255, 255, 0.7);
+  --shadow-color: rgba(74, 108, 247, 0.1);
+}
+
+/* 黑夜模式 - 极夜黑曜 */
+[data-theme="dark"] {
+  --primary-bg: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-color: #00d4aa;
+  --accent-hover: #00b894;
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --shadow-color: rgba(0, 212, 170, 0.2);
+}
+
+/* 应用主题变量 - 使用更高优先级 */
+html[data-theme] .auth-content {
+  background: var(--primary-bg) !important;
+}
+
+/* 强制应用到body和html */
+html[data-theme] body {
+  background: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] {
+  background: var(--primary-bg) !important;
+}
+
+html[data-theme] .login-card {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 8px 32px var(--shadow-color) !important;
+}
+
+[data-theme] .brand-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .brand-subtitle {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper,
+[data-theme] .login-card .ant-input {
+  border-color: var(--border-color) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  height: 44px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  padding: 0 20px !important;
+  line-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper .ant-input,
+[data-theme] .login-card .ant-input-password .ant-input,
+[data-theme] .login-card input {
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 0 16px !important;
+  line-height: 20px !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper .ant-input,
+[data-theme] .login-card .ant-input-password .ant-input {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .login-card .ant-input::placeholder,
+[data-theme] .login-card .ant-input-password .ant-input::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper:hover,
+[data-theme] .login-card .ant-input:hover {
+  border-color: var(--accent-color) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper:hover .ant-input,
+[data-theme] .login-card .ant-input:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper:focus,
+[data-theme] .login-card .ant-input:focus,
+[data-theme] .login-card .ant-input-affix-wrapper-focused {
+  border-color: var(--accent-color) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: 0 0 0 2px var(--shadow-color) !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper-focused .ant-input,
+[data-theme] .login-card .ant-input-affix-wrapper:focus .ant-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-theme] .login-card .ant-input-affix-wrapper .anticon,
+[data-theme] .login-card .ant-input-password .anticon {
+  color: var(--text-secondary) !important;
+  margin-right: 16px !important;
+  margin-left: 4px !important;
+}
+
+[data-theme] .ant-btn-primary {
+  background: var(--accent-color) !important;
+  box-shadow: 0 2px 8px var(--shadow-color) !important;
+  color: white !important;
+  height: 42px !important;
+  border-radius: 6px !important;
+  font-size: 15px !important;
+}
+
+[data-theme] .ant-btn-primary:hover {
+  background: var(--accent-hover) !important;
+  color: white !important;
+}
+
+[data-theme] .ant-checkbox-wrapper {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme] .ant-checkbox-inner {
+  border-color: var(--border-color) !important;
+  background: transparent !important;
+}
+
+[data-theme] .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+[data-theme] .ant-btn-link {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme] .ant-btn-link:hover {
+  color: var(--accent-color) !important;
+}
+
+/* SSO按钮样式 */
+[data-theme] .sso-button {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  height: 40px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+}
+
+[data-theme] .sso-button:hover {
+  border-color: var(--accent-color) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 全局文字颜
+色控制 */
+[data-theme] body,
+[data-theme] .ant-typography,
+[data-theme] .ant-typography h1,
+[data-theme] .ant-typography h2,
+[data-theme] .ant-typography h3,
+[data-theme] .ant-typography h4,
+[data-theme] .ant-typography h5,
+[data-theme] .ant-typography h6,
+[data-theme] .ant-typography p,
+[data-theme] .ant-typography div,
+[data-theme] .ant-typography span,
+[data-theme] .ant-table,
+[data-theme] .ant-table-tbody>tr>td,
+[data-theme] .ant-table-thead>tr>th,
+[data-theme] .ant-descriptions-item-label,
+[data-theme] .ant-descriptions-item-content,
+[data-theme] .ant-form-item-label>label,
+[data-theme] .ant-select-selection-item,
+[data-theme] .ant-select-selection-placeholder,
+[data-theme] .ant-picker-input>input {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .ant-table {
+  background: var(--card-bg) !important;
+}
+
+[data-theme] .ant-table-thead>tr>th {
+  background: var(--shadow-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme] .ant-table-tbody>tr>td {
+  border-color: var(--border-color) !important;
+}
+
+[data-theme] .ant-table-tbody>tr:hover>td {
+  background: var(--shadow-color) !important;
+}
+
+[data-theme] .ant-descriptions {
+  background: var(--card-bg) !important;
+}
+
+[data-theme] .ant-descriptions-bordered .ant-descriptions-item-label {
+  background: var(--shadow-color) !important;
+}
+
+[data-theme] .ant-descriptions-bordered .ant-descriptions-item-content {
+  background: var(--card-bg) !important;
+}
+
+/* 特殊组件文字颜色 */
+[data-theme] .ant-empty-description,
+[data-theme] .ant-result-title,
+[data-theme] .ant-result-subtitle,
+[data-theme] .ant-statistic-title,
+[data-theme] .ant-statistic-content,
+[data-theme] .ant-progress-text,
+[data-theme] .ant-alert-message,
+[data-theme] .ant-alert-description {
+  color: var(--text-primary) !important;
+}
+
+/*
+ 菜单和导航样式修复 */
+[data-theme] .ant-menu {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .ant-menu-item {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .ant-menu-item:hover {
+  background: var(--shadow-color) !important;
+  color: var(--accent-color) !important;
+}
+
+[data-theme] .ant-menu-item-selected {
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+[data-theme] .ant-menu-item .anticon {
+  color: inherit !important;
+}
+
+/* Header和按钮样式修复 */
+[data-theme] .ant-btn-text {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .ant-btn-text:hover {
+  color: var(--accent-color) !important;
+  background: var(--shadow-color) !important;
+}
+
+/* 统计卡片文字修复 */
+[data-theme] .ant-statistic-title {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme] .ant-statistic-content {
+  color: var(--text-primary) !important;
+}
+
+/* 标题文字修复 */
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] h4,
+[data-theme] h5,
+[data-theme] h6 {
+  color: var(--text-primary) !important;
+}

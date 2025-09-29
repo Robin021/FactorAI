@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, Typography, Tabs } from 'antd';
 import { SettingOutlined, ApiOutlined, DatabaseOutlined } from '@ant-design/icons';
+import '@/styles/themes.css';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;

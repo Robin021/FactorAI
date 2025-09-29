@@ -6,6 +6,7 @@ import {
   ClockCircleOutlined,
   UserOutlined 
 } from '@ant-design/icons';
+import '@/styles/themes.css';
 
 const { Title } = Typography;
 

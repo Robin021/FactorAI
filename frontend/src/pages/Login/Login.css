@@ -3,87 +3,56 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-attachment: fixed;
   padding: 20px;
-  position: relative;
 }
 
 .login-card {
   width: 100%;
-  max-width: 450px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-  border-radius: 20px;
-  background: white;
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
+  max-width: 380px;
+  background: rgba(255, 255, 255, 0.85) !important;
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(74, 108, 247, 0.2);
+  border-radius: 12px;
+  padding: 32px 28px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px rgba(74, 108, 247, 0.1);
 }
 
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
-  background-size: 200% 100%;
-  animation: gradientShift 3s ease-in-out infinite;
+.login-card .ant-card-body {
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 0 !important;
 }
 
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
+
 
 .login-header {
   text-align: center;
   margin-bottom: 32px;
-  padding-top: 20px;
 }
 
 .logo-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .logo-icon {
-  font-size: 32px;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  font-size: 40px;
+  margin-bottom: 12px;
 }
 
 .brand-title {
   margin: 0 !important;
-  color: #667eea !important;
-  font-weight: 700 !important;
-  font-size: 28px !important;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #2940ab !important;
+  font-weight: 600 !important;
+  font-size: 24px !important;
+  margin-bottom: 4px !important;
 }
 
 .brand-subtitle {
-  color: #666;
+  color: rgba(41, 64, 171, 0.7);
   margin: 0 0 16px 0;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.feature-tags {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  font-size: 14px;
+  font-weight: 400;
 }
 
 .feature-tag {
@@ -96,82 +65,75 @@
   border: 1px solid rgba(102, 126, 234, 0.2);
 }
 
-/* Enhanced form styling */
-.ant-form-item {
+.login-card .ant-form-item {
   margin-bottom: 20px;
 }
 
-.ant-form-item:last-child {
-  margin-bottom: 0;
+/* 输入框样式由主题系统控制 */
+
+/* 所有输入框样式由主题系统统一控制 */
+
+.login-card .ant-input-affix-wrapper .anticon,
+.login-card .ant-input-password .anticon {
+  color: rgba(41, 64, 171, 0.6) !important;
+  margin-right: 12px !important;
 }
 
-.ant-input-affix-wrapper,
-.ant-input {
-  border-radius: 12px;
-  border: 2px solid #e1e5e9;
-  transition: all 0.3s ease;
-  height: 48px;
-  background: #f8f9fa;
-}
-
-.ant-input-affix-wrapper:hover,
-.ant-input:hover {
-  border-color: #667eea;
-  background: white;
-}
-
-.ant-input-affix-wrapper:focus,
-.ant-input:focus,
-.ant-input-affix-wrapper-focused {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  background: white;
+.login-card .ant-input-affix-wrapper-prefix {
+  margin-right: 8px !important;
 }
 
 .ant-btn-primary {
-  border-radius: 12px;
+  border-radius: 8px;
   height: 48px;
   font-size: 16px;
   font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #4a6cf7;
+  color: white;
   border: none;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.ant-btn-primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(74, 108, 247, 0.3);
 }
 
 .ant-btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #7c8cff 0%, #8a5cb8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-
-.ant-btn-primary:hover:not(:disabled)::before {
-  left: 100%;
+  background: #3b5bf0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.4);
 }
 
 .sso-button {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-  color: #495057 !important;
-  border: 2px solid #dee2e6 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   margin-bottom: 24px !important;
+  backdrop-filter: blur(8px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.sso-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .sso-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%) !important;
-  border-color: #667eea !important;
-  color: #667eea !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.sso-button:hover:not(:disabled)::before {
+  opacity: 1;
 }
 
 .ant-btn-primary:disabled {
@@ -271,30 +233,34 @@
   margin-bottom: 0;
 }
 
-/* 复选框样式 */
 .ant-checkbox-wrapper {
-  color: #666;
+  color: rgba(41, 64, 171, 0.8) !important;
   font-size: 14px;
   font-weight: 500;
 }
 
 .ant-checkbox-inner {
-  border-radius: 4px;
-  border-width: 2px;
+  border-radius: 4px !important;
+  border-color: rgba(74, 108, 247, 0.4) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
 }
 
 .ant-checkbox-wrapper:hover .ant-checkbox-inner {
-  border-color: #667eea;
+  border-color: #4a6cf7 !important;
+  background: rgba(255, 255, 255, 0.85) !important;
 }
 
 .ant-checkbox-checked .ant-checkbox-inner {
-  background-color: #667eea;
-  border-color: #667eea;
+  background-color: #4a6cf7 !important;
+  border-color: #4a6cf7 !important;
 }
 
-/* 链接按钮样式 */
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: white !important;
+}
+
 .ant-btn-link {
-  color: #667eea;
+  color: rgba(41, 64, 171, 0.7) !important;
   padding: 0;
   height: auto;
   font-size: 14px;
@@ -302,7 +268,7 @@
 }
 
 .ant-btn-link:hover:not(:disabled) {
-  color: #764ba2;
+  color: #4a6cf7 !important;
 }
 
 /* 警告框样式优化 */
@@ -371,4 +337,254 @@
   border-color: #d9d9d9 !important;
   color: #bfbfbf !important;
   cursor: not-allowed !important;
+}
+/* 安
+全提示区域 */
+.security-features {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 24px 0;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.security-features::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.6), rgba(34, 197, 94, 0.6));
+}
+
+.security-features h4 {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.security-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.security-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.security-item::before {
+  content: '✓';
+  color: rgba(16, 185, 129, 0.8);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* 忘记密码链接悬停效果 */
+.ant-btn-link {
+  color: #6a5af9;
+  padding: 0;
+  height: auto;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6a5af9, #4fc3f7);
+  transition: width 0.3s ease;
+}
+
+.ant-btn-link:hover:not(:disabled) {
+  color: #4fc3f7;
+}
+
+.ant-btn-link:hover:not(:disabled)::after {
+  width: 100%;
+}
+
+/* 特色标签增强 */
+
+
+/* 加载动画增强 */
+.ant-btn-loading-icon {
+  margin-right: 8px;
+}
+
+.ant-btn-primary.ant-btn-loading {
+  background: linear-gradient(135deg, #6a5af9 0%, #4fc3f7 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.ant-btn-primary.ant-btn-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: loadingShimmer 1.5s infinite;
+}
+
+@keyframes loadingShimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .login-card {
+    margin-left: 0;
+    max-width: 100%;
+  }
+  
+  .security-features {
+    margin: 16px 0;
+    padding: 12px;
+  }
+  
+  .security-list {
+    gap: 6px;
+  }
+  
+  .security-item {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 12px;
+  }
+  
+  .login-card {
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+  }
+  
+  .brand-title {
+    font-size: 28px !important;
+  }
+  
+  .brand-subtitle {
+    font-size: 13px;
+  }
+  
+  .feature-tags {
+    gap: 6px;
+  }
+  
+  .feature-tag {
+    font-size: 11px;
+    padding: 4px 12px;
+  }
+  
+  .ant-input-affix-wrapper,
+  .ant-input {
+    height: 48px;
+  }
+  
+  .ant-btn-primary {
+    height: 48px;
+  }
+  
+  .security-features {
+    padding: 12px;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .login-card {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .brand-subtitle {
+    color: #94a3b8;
+  }
+  
+  .ant-input-affix-wrapper,
+  .ant-input {
+    background: rgba(51, 65, 85, 0.8);
+    border-color: rgba(71, 85, 105, 0.8);
+    color: #f1f5f9;
+  }
+  
+  .security-features {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+  
+  .security-item {
+    color: #34d399;
+  }
+  
+  .login-footer p {
+    color: #64748b;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .login-card {
+    border: 2px solid #000;
+  }
+  
+  .ant-input-affix-wrapper,
+  .ant-input {
+    border: 2px solid #000;
+  }
+  
+  .ant-btn-primary {
+    background: #000;
+    color: #fff;
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .login-card:hover {
+    transform: none;
+  }
+  
+  .ant-btn-primary:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  .ant-input-affix-wrapper:hover,
+  .ant-input:hover {
+    transform: none;
+  }
 }

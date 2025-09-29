@@ -1594,7 +1594,13 @@ def save_analysis_result(analysis_id: str, stock_symbol: str, analysts: List[str
                         research_depth: int, result_data: Dict, status: str = "completed"):
     """保存分析结果"""
     try:
-        from web.utils.async_progress_tracker import safe_serialize
+        # 序列化功能已简化
+        import json
+        def safe_serialize(obj):
+            try:
+                return json.dumps(obj, default=str, ensure_ascii=False)
+            except:
+                return str(obj)
 
         # 创建结果条目，使用安全序列化
         result_entry = {

@@ -110,10 +110,10 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
         progress_callback: 进度回调函数，用于更新UI状态
     """
 
-    def update_progress(message, step=None, total_steps=None):
+    def update_progress(message, step=None, total_steps=10):
         """更新进度"""
         if progress_callback:
-            progress_callback(message, step, total_steps)
+            progress_callback(message, step or 0, total_steps)
         logger.info(f"[进度] {message}")
 
     # 生成会话ID用于Token跟踪和日志关联
@@ -458,6 +458,22 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
         logger.debug(f"🔍 [RUNNER DEBUG] 传递给graph.propagate的参数:")
         logger.debug(f"🔍 [RUNNER DEBUG]   symbol: '{formatted_symbol}'")
         logger.debug(f"🔍 [RUNNER DEBUG]   date: '{analysis_date}'")
+
+        # 在开始长时间运行的分析前检查取消状态
+        try:
+            update_progress("正在执行分析...")  # 这会触发取消检查
+        except Exception as e:
+            if "cancelled" in str(e).lower():
+                logger.info(f"Analysis was cancelled before graph.propagate")
+                return {
+                    'success': False,
+                    'error': 'Analysis was cancelled by user',
+                    'cancelled': True,
+                    'stock_symbol': stock_symbol,
+                    'analysis_date': analysis_date,
+                    'session_id': session_id
+                }
+            raise
 
         state, decision = graph.propagate(formatted_symbol, analysis_date)
 

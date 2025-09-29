@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { Spin, Result, Button } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import '@/styles/themes.css';
+import '@/styles/theme-override.css';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -54,12 +56,14 @@ const AuthCallback: React.FC = () => {
         alignItems: 'center', 
         minHeight: '100vh',
         flexDirection: 'column',
-        gap: '20px'
+        gap: '20px',
+        background: 'var(--primary-bg)',
+        color: 'var(--text-primary)'
       }}>
         <Spin size="large" />
         <div style={{ textAlign: 'center' }}>
-          <h3>正在处理 SSO 登录...</h3>
-          <p>请稍候，我们正在验证您的身份</p>
+          <h3 style={{ color: 'var(--text-primary)' }}>正在处理 SSO 登录...</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>请稍候，我们正在验证您的身份</p>
         </div>
       </div>
     );
@@ -67,30 +71,46 @@ const AuthCallback: React.FC = () => {
 
   if (status === 'success') {
     return (
-      <Result
-        status="success"
-        title="SSO 登录成功！"
-        subTitle="正在跳转到系统首页..."
-        extra={[
-          <Button type="primary" key="dashboard" onClick={() => navigate('/dashboard')}>
-            立即进入系统
-          </Button>
-        ]}
-      />
+      <div style={{ 
+        minHeight: '100vh', 
+        background: 'var(--primary-bg)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Result
+          status="success"
+          title="SSO 登录成功！"
+          subTitle="正在跳转到系统首页..."
+          extra={[
+            <Button type="primary" key="dashboard" onClick={() => navigate('/dashboard')}>
+              立即进入系统
+            </Button>
+          ]}
+        />
+      </div>
     );
   }
 
   return (
-    <Result
-      status="error"
-      title="SSO 登录失败"
-      subTitle={errorMessage}
-      extra={[
-        <Button type="primary" key="retry" onClick={() => navigate('/login')}>
-          返回登录页面
-        </Button>
-      ]}
-    />
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'var(--primary-bg)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <Result
+        status="error"
+        title="SSO 登录失败"
+        subTitle={errorMessage}
+        extra={[
+          <Button type="primary" key="retry" onClick={() => navigate('/login')}>
+            返回登录页面
+          </Button>
+        ]}
+      />
+    </div>
   );
 };
 

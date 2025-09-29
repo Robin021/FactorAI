@@ -1,8 +1,9 @@
 .analysis-form-card {
   height: fit-content;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid rgba(244, 241, 222, 0.15);
+  background: rgba(244, 241, 222, 0.05);
 }
 
 .form-header {
@@ -12,34 +13,37 @@
 
 .form-header h4 {
   margin-bottom: 4px;
-  color: #1890ff;
+  color: #d4a574;
 }
 
 .analysis-form .ant-form-item-label > label {
   font-weight: 500;
-  color: #262626;
+  color: #f4f1de;
 }
 
 .analysis-form .ant-select-selector,
 .analysis-form .ant-input,
 .analysis-form .ant-picker {
   border-radius: 8px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid rgba(244, 241, 222, 0.25);
+  background: rgba(244, 241, 222, 0.05);
+  color: #f4f1de;
   transition: all 0.3s ease;
 }
 
 .analysis-form .ant-select-selector:hover,
 .analysis-form .ant-input:hover,
 .analysis-form .ant-picker:hover {
-  border-color: #40a9ff;
+  border-color: rgba(244, 241, 222, 0.4);
+  background: rgba(244, 241, 222, 0.1);
 }
 
 .analysis-form .ant-select-focused .ant-select-selector,
 .analysis-form .ant-input:focus,
 .analysis-form .ant-picker:focus,
 .analysis-form .ant-picker-focused {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: #d4a574;
+  box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.2);
 }
 
 .analyst-checkbox-group {
@@ -85,15 +89,17 @@
   height: 48px;
   font-size: 16px;
   font-weight: 500;
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  background: #d4a574;
+  color: #2c1810;
   border: none;
   transition: all 0.3s ease;
 }
 
 .ant-btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+  background: #c19660;
+  color: #2c1810;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
 }
 
 /* Responsive design */

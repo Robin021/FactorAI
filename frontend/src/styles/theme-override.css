@@ -1,0 +1,485 @@
+/* 强制主题覆盖 - 最高优先级 */
+
+/* 全局背景和文字 */
+html[data-theme="light"] {
+  --primary-bg: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --text-primary: #1a237e;
+  --text-secondary: rgba(26, 35, 126, 0.8);
+  --border-color: rgba(74, 108, 247, 0.3);
+  --accent-color: #4a6cf7;
+  --accent-hover: #3b5bf0;
+  --shadow-color: rgba(74, 108, 247, 0.1);
+}
+
+html[data-theme="dark"] {
+  --primary-bg: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-color: #00d4aa;
+  --accent-hover: #00b894;
+  --shadow-color: rgba(0, 212, 170, 0.2);
+}
+
+/* 强制应用背景 */
+html[data-theme] {
+  background: var(--primary-bg) !important;
+}
+
+html[data-theme] body {
+  background: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] #root {
+  background: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+  min-height: 100vh;
+}
+
+/* 强制所有文字颜色 */
+html[data-theme] * {
+  color: var(--text-primary) !important;
+}
+
+/* Ant Design 组件强制覆盖 */
+html[data-theme] .ant-layout {
+  background: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-card {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-result {
+  background: transparent !important;
+}
+
+html[data-theme] .ant-result-title {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-result-subtitle {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme] .ant-spin-text {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-btn-primary {
+  background: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: white !important;
+}
+
+html[data-theme] .ant-btn-primary:hover {
+  background: var(--accent-hover) !important;
+  border-color: var(--accent-hover) !important;
+}
+
+/* 菜单强制覆盖 */
+html[data-theme] .ant-menu {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-menu-item {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-menu-item:hover {
+  background: var(--shadow-color) !important;
+  color: var(--accent-color) !important;
+}
+
+html[data-theme] .ant-menu-item-selected {
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+/* 图标颜色 */
+html[data-theme] .anticon {
+  color: inherit !important;
+}
+
+/* 输入框 */
+html[data-theme] .ant-input,
+html[data-theme] .ant-input-affix-wrapper {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-input::placeholder {
+  color: var(--text-secondary) !important;
+}
+
+/*
+ 强制所有页面容器背景 */
+html[data-theme] .main-content,
+html[data-theme] .content-wrapper,
+html[data-theme] .analysis-page,
+html[data-theme] .dashboard,
+html[data-theme] .config-page,
+html[data-theme] .ant-layout-content {
+  background: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 强制所有div背景透明，让主背景透出来 */
+html[data-theme] div:not(.ant-card):not(.ant-btn):not(.ant-input-affix-wrapper) {
+  background: transparent !important;
+}
+
+/* 特殊处理一些可能有白色背景的容器 */
+html[data-theme] .ant-tabs-content,
+html[data-theme] .ant-tabs-tabpane,
+html[data-theme] .ant-row,
+html[data-theme] .ant-col {
+  background: transparent !important;
+}
+
+/* 确保所有文本元素都使用主题颜色 */
+html[data-theme] .ant-typography.ant-typography-caption,
+html[data-theme] .ant-typography-caption,
+html[data-theme] .ant-tabs-tab,
+html[data-theme] .ant-tabs-tab-btn {
+  color: var(--text-primary) !important;
+}
+
+/* 选中的tab */
+html[data-theme] .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--accent-color) !important;
+}
+
+/* 表单标签 */
+html[data-theme] .ant-form-item-label>label {
+  color: var(--text-primary) !important;
+}
+
+/*
+ 覆盖分析页面的固定背景色 */
+html[data-theme] .analysis-page {
+  background: var(--primary-bg) !important;
+  color: var(--text-primary) !important;
+  padding-top: 16px !important;
+}
+
+html[data-theme] .analysis-tabs {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .analysis-header h2 {
+  color: var(--accent-color) !important;
+}
+
+html[data-theme] .analysis-form-container,
+html[data-theme] .analysis-results-container {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .no-progress-message,
+html[data-theme] .no-history-message {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme] .no-progress-message h4 {
+  color: var(--text-primary) !important;
+}
+
+/* 覆盖所有可能的白色背景 */
+html[data-theme] .ant-layout-content {
+  background: var(--primary-bg) !important;
+}
+
+html[data-theme] .main-layout {
+  background: var(--primary-bg) !important;
+}
+
+/* 强制覆盖任何白色背景 */
+html[data-theme] [style*="background: white"],
+html[data-theme] [style*="background-color: white"],
+html[data-theme] [style*="background: #fff"],
+html[data-theme] [style*="background-color: #fff"] {
+  background: var(--card-bg) !important;
+}
+
+/* 修复选
+择框和卡片内的文字颜色问题 */
+html[data-theme] .ant-checkbox-wrapper {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-checkbox-wrapper .ant-checkbox+span {
+  color: var(--text-primary) !important;
+}
+
+/* 修复分析师选择卡片 */
+html[data-theme] .analyst-checkbox {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .analyst-checkbox:hover {
+  border-color: var(--accent-color) !important;
+  background: var(--shadow-color) !important;
+}
+
+html[data-theme] .analyst-checkbox.ant-checkbox-wrapper-checked {
+  border-color: var(--accent-color) !important;
+  background: var(--shadow-color) !important;
+}
+
+/* 修复选择框内的所有文字 */
+html[data-theme] .ant-select {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-select-selector {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-select:hover .ant-select-selector {
+  border-color: var(--accent-color) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme] .ant-select-focused .ant-select-selector {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+}
+
+html[data-theme] .ant-select-selection-item {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-select-selection-placeholder,
+html[data-theme] .ant-input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* 修复下拉选项 */
+html[data-theme] .ant-select-dropdown {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+html[data-theme] .ant-select-item {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-select-item:hover {
+  background: rgba(0, 212, 170, 0.1) !important;
+  color: var(--accent-color) !important;
+}
+
+html[data-theme] .ant-select-item-option-selected {
+  background: var(--accent-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme] .ant-select-item-option-active {
+  background: rgba(0, 212, 170, 0.15) !important;
+}
+
+/* 修复表单标签 */
+html[data-theme] .ant-form-item-label>label {
+  color: var(--text-primary) !important;
+}
+
+/* 修复任何可能的白色文字 */
+html[data-theme] .ant-checkbox-wrapper,
+html[data-theme] .ant-radio-wrapper {
+  color: var(--text-primary) !important;
+}
+
+/* 确保卡片内的内容可见 */
+html[data-theme] .ant-card-body {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-card-body * {
+  color: inherit !important;
+}
+
+/* 强
+制覆盖分析表单的固定样式 */
+html[data-theme] .analysis-form .ant-form-item-label>label {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .analysis-form .ant-select-selector,
+html[data-theme] .analysis-form .ant-input,
+html[data-theme] .analysis-form .ant-picker {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .analyst-checkbox {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .analyst-checkbox:hover {
+  border-color: var(--accent-color) !important;
+  background: var(--shadow-color) !important;
+}
+
+html[data-theme] .analyst-checkbox.ant-checkbox-wrapper-checked {
+  border-color: var(--accent-color) !important;
+  background: var(--shadow-color) !important;
+}
+
+html[data-theme] .ant-slider-mark-text {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme] .ant-slider-mark-text-active {
+  color: var(--accent-color) !important;
+}
+
+/* 确保所有表单元素文字可见 */
+html[data-theme] .ant-form-item {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-form-item-control {
+  color: var(--text-primary) !important;
+}
+
+/* 修复可能的白色背景问题 */
+html[data-theme] .analysis-form-card {
+  background: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 统
+一输入框和选择框的样式 */
+html[data-theme] .ant-input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+}
+
+html[data-theme] .ant-input:hover {
+  border-color: var(--accent-color) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+html[data-theme] .ant-input:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+}
+
+/* 确保选择框高度一致和文字居中 */
+html[data-theme] .ant-select-selector {
+  height: 40px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+html[data-theme] .ant-select-selection-item {
+  line-height: 1.4 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}
+
+html[data-theme] .ant-select-selection-placeholder {
+  line-height: 1.4 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+}/* 修复日期
+选择器透明度问题 */
+html[data-theme] .ant-picker {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: var(--text-primary) !important;
+  border-radius: 8px !important;
+  height: 40px !important;
+}
+
+html[data-theme] .ant-picker:hover {
+  border-color: var(--accent-color) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+html[data-theme] .ant-picker-focused {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+}
+
+html[data-theme] .ant-picker-input > input {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-picker-input > input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+html[data-theme] .ant-picker-suffix {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* 日期选择器下拉面板 */
+html[data-theme] .ant-picker-dropdown {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+html[data-theme] .ant-picker-panel {
+  background: transparent !important;
+}
+
+html[data-theme] .ant-picker-header {
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme] .ant-picker-header button {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-picker-header button:hover {
+  color: var(--accent-color) !important;
+}
+
+html[data-theme] .ant-picker-content th,
+html[data-theme] .ant-picker-content td {
+  color: var(--text-primary) !important;
+}
+
+html[data-theme] .ant-picker-cell:hover .ant-picker-cell-inner {
+  background: rgba(0, 212, 170, 0.1) !important;
+}
+
+html[data-theme] .ant-picker-cell-selected .ant-picker-cell-inner {
+  background: var(--accent-color) !important;
+  color: white !important;
+}
+
+html[data-theme] .ant-picker-cell-today .ant-picker-cell-inner {
+  border-color: var(--accent-color) !important;
+}

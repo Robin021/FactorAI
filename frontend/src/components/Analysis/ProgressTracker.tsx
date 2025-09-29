@@ -1,13 +1,13 @@
 import React from 'react';
 import { Card, Progress, Typography, Timeline, Button, Space, Alert, Statistic } from 'antd';
-import { 
-  PlayCircleOutlined, 
-  PauseCircleOutlined, 
+import {
+  PlayCircleOutlined,
+  PauseCircleOutlined,
   StopOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
-  LoadingOutlined
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { Analysis } from '@/types';
 import { usePolling } from '@/hooks/usePolling';
@@ -81,22 +81,16 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
 
   // 不再独立轮询，避免重复请求
   // const { isPolling } = usePolling(`/analysis/${analysis.id}/progress`, {
-  //   onData: (data) => {
-  //     handleProgressUpdate(data);
-  //   },
-  //   onOpen: () => {
-  //     console.log('Progress tracker connected');
-  //   },
-  //   onClose: () => {
-  //     console.log('Progress tracker disconnected');
-  //   },
+  // 禁用轮询，因为此组件未被使用
+  // const { isPolling } = usePolling(`/analysis/${analysis.id}/status`, {
+  //   onData: handleProgressUpdate,
+  //   onError: () => console.log('Progress polling error'),
   // });
-  const isPolling = false; // 临时禁用
 
   // Timer for elapsed time
   React.useEffect(() => {
     const startTime = new Date(analysis.createdAt).getTime();
-    
+
     const timer = setInterval(() => {
       const now = Date.now();
       const elapsed = Math.floor((now - startTime) / 1000);
@@ -107,60 +101,64 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
   }, [analysis.createdAt]);
 
   const handleProgressUpdate = (data: any) => {
-    switch (data.type) {
-      case 'progress':
-        setOverallProgress(data.progress);
-        setCurrentMessage(data.message);
-        if (data.estimatedTimeRemaining) {
-          setEstimatedTime(data.estimatedTimeRemaining);
-        }
-        break;
+    // 处理后端返回的AnalysisProgress格式
+    console.log('Progress update received:', data);
 
-      case 'step_start':
-        setSteps(prev => prev.map(step => 
-          step.id === data.stepId 
-            ? { ...step, status: 'running', startTime: Date.now() }
-            : step
-        ));
-        break;
+    // 更新总体进度
+    if (data.progress !== undefined) {
+      setOverallProgress(data.progress);
+    }
 
-      case 'step_progress':
-        setSteps(prev => prev.map(step => 
-          step.id === data.stepId 
-            ? { ...step, progress: data.progress, details: data.details }
-            : step
-        ));
-        break;
+    // 更新当前消息
+    if (data.message) {
+      setCurrentMessage(data.message);
+    }
 
-      case 'step_complete':
-        setSteps(prev => prev.map(step => 
-          step.id === data.stepId 
-            ? { ...step, status: 'completed', endTime: Date.now(), progress: 100 }
-            : step
-        ));
-        break;
+    // 更新预计剩余时间
+    if (data.estimated_time_remaining) {
+      setEstimatedTime(data.estimated_time_remaining);
+    }
 
-      case 'step_error':
-        setSteps(prev => prev.map(step => 
-          step.id === data.stepId 
-            ? { ...step, status: 'error', endTime: Date.now() }
-            : step
-        ));
-        break;
+    // 处理分析状态变化
+    if (data.status) {
+      switch (data.status) {
+        case 'completed':
+          setOverallProgress(100);
+          setCurrentMessage('分析完成');
+          setCanCancel(false);
+          break;
+        case 'failed':
+          setCurrentMessage(`分析失败: ${data.message || '未知错误'}`);
+          setCanCancel(false);
+          break;
+        case 'running':
+          // 分析正在运行，继续轮询
+          break;
+        case 'pending':
+          // 分析等待中
+          break;
+        case 'cancelled':
+          // 分析被取消
+          setCanCancel(false);
+          break;
+        default:
+          console.log('Unknown analysis status:', data.status);
+      }
+    }
 
-      case 'analysis_complete':
-        setOverallProgress(100);
-        setCurrentMessage('分析完成');
-        setCanCancel(false);
-        break;
-
-      case 'analysis_error':
-        setCurrentMessage(`分析失败: ${data.error}`);
-        setCanCancel(false);
-        break;
-
-      default:
-        console.log('Unknown progress update type:', data.type);
+    // 更新步骤状态（基于当前步骤）
+    if (data.current_step) {
+      setSteps(prev =>
+        prev.map((step, index) => {
+          if (index < parseInt(data.current_step) - 1) {
+            return { ...step, status: 'completed', progress: 100 };
+          } else if (index === parseInt(data.current_step) - 1) {
+            return { ...step, status: 'running', progress: data.progress || 0 };
+          } else {
+            return { ...step, status: 'pending', progress: 0 };
+          }
+        })
+      );
     }
   };
 
@@ -222,10 +220,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
     <div className="progress-tracker">
       <Card className="progress-overview-card">
         <div className="progress-header">
-          <Title level={4}>
-            分析进度 - {analysis.stockCode}
-          </Title>
-          
+          <Title level={4}>分析进度 - {analysis.stockCode}</Title>
+
           <Space>
             <Statistic
               title="已用时间"
@@ -253,7 +249,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
             size="default"
             showInfo={true}
           />
-          
+
           <div className="progress-message">
             <Text>{currentMessage}</Text>
           </div>
@@ -278,19 +274,10 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
             >
               暂停
             </Button>
-            <Button
-              icon={<PlayCircleOutlined />}
-              disabled={!canCancel}
-              onClick={handleResume}
-            >
+            <Button icon={<PlayCircleOutlined />} disabled={!canCancel} onClick={handleResume}>
               继续
             </Button>
-            <Button
-              danger
-              icon={<StopOutlined />}
-              disabled={!canCancel}
-              onClick={handleCancel}
-            >
+            <Button danger icon={<StopOutlined />} disabled={!canCancel} onClick={handleCancel}>
               取消分析
             </Button>
           </Space>
@@ -299,7 +286,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
 
       <Card title="详细步骤" className="progress-steps-card">
         <Timeline>
-          {steps.map((step) => (
+          {steps.map(step => (
             <Timeline.Item
               key={step.id}
               dot={getStepIcon(step.status)}
@@ -312,7 +299,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ analysis, onCancel })
                     <Text type="secondary">({step.progress}%)</Text>
                   )}
                 </div>
-                
+
                 <Text type="secondary" className="step-description">
                   {step.description}
                 </Text>

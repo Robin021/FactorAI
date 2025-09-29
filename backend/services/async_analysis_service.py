@@ -319,6 +319,20 @@ class AsyncAnalysisService:
                     task_id, progress, message, current_step
                 )
                 
+                # 同时更新analysis_progress键，供前端API使用
+                progress_data = {
+                    "status": "running",
+                    "progress": progress,
+                    "message": message,
+                    "current_step": current_step,
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+                await self.redis.setex(
+                    f"analysis_progress:{analysis_id}",
+                    3600,  # 1 hour TTL
+                    json.dumps(progress_data)
+                )
+                
                 # Send WebSocket notification
                 if self.websocket_manager:
                     await self.websocket_manager.broadcast_analysis_progress(
@@ -335,6 +349,20 @@ class AsyncAnalysisService:
             
             async def patched_complete_analysis(aid, result_data):
                 await original_complete_analysis(aid, result_data)
+                
+                # 更新analysis_progress键为完成状态
+                completion_data = {
+                    "status": "completed",
+                    "progress": 100.0,
+                    "message": "分析已完成",
+                    "current_step": "完成",
+                    "updated_at": datetime.utcnow().isoformat()
+                }
+                await self.redis.setex(
+                    f"analysis_progress:{aid}",
+                    3600,  # 1 hour TTL
+                    json.dumps(completion_data)
+                )
                 
                 # Send WebSocket notification for completion
                 if self.websocket_manager:

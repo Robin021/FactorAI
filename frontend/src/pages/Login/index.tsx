@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginCredentials } from '@/types';
 import './Login.css';
+import '@/styles/themes.css';
 
 const { Title } = Typography;
 
@@ -24,7 +25,7 @@ const Login: React.FC = () => {
   React.useEffect(() => {
     const savedCredentials = localStorage.getItem('saved_credentials');
     const rememberMe = localStorage.getItem('remember_me') === 'true';
-    
+
     if (savedCredentials && rememberMe) {
       try {
         const credentials = JSON.parse(savedCredentials);
@@ -45,9 +46,9 @@ const Login: React.FC = () => {
     if (loginAttempts >= 5) {
       setIsBlocked(true);
       setBlockTimeRemaining(300); // 5 minutes block
-      
+
       const timer = setInterval(() => {
-        setBlockTimeRemaining((prev) => {
+        setBlockTimeRemaining(prev => {
           if (prev <= 1) {
             setIsBlocked(false);
             setLoginAttempts(0);
@@ -76,9 +77,12 @@ const Login: React.FC = () => {
 
       // Handle remember me functionality
       if (values.remember) {
-        localStorage.setItem('saved_credentials', JSON.stringify({
-          username: values.username,
-        }));
+        localStorage.setItem(
+          'saved_credentials',
+          JSON.stringify({
+            username: values.username,
+          })
+        );
         localStorage.setItem('remember_me', 'true');
       } else {
         localStorage.removeItem('saved_credentials');
@@ -88,17 +92,17 @@ const Login: React.FC = () => {
       // Reset login attempts on successful login
       setLoginAttempts(0);
       message.success('登录成功，正在跳转...');
-      
+
       // 延迟跳转到仪表板
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
     } catch (error: any) {
       setLoginAttempts(prev => prev + 1);
-      
+
       // Enhanced error handling with specific messages
       let errorMessage = '登录失败';
-      
+
       if (error.response?.status === 401) {
         errorMessage = '用户名或密码错误';
       } else if (error.response?.status === 403) {
@@ -108,9 +112,9 @@ const Login: React.FC = () => {
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       message.error(errorMessage);
-      
+
       // Show remaining attempts warning
       const remainingAttempts = 5 - (loginAttempts + 1);
       if (remainingAttempts > 0 && remainingAttempts <= 2) {
@@ -131,23 +135,28 @@ const Login: React.FC = () => {
     const authingConfig = {
       appId: import.meta.env.VITE_AUTHING_APP_ID || '68d3879e03d9b1907f220731',
       appHost: import.meta.env.VITE_AUTHING_APP_HOST || 'https://sxkc6t59wbj9-demo.authing.cn',
-      redirectUri: import.meta.env.VITE_AUTHING_REDIRECT_URI || 'http://localhost:3000/api/v1/auth/authing/callback'
+      redirectUri:
+        import.meta.env.VITE_AUTHING_REDIRECT_URI ||
+        'http://localhost:3000/api/v1/auth/authing/callback',
     };
-    
+
     // 构建 Authing 登录 URL
-    const authUrl = `${authingConfig.appHost}/oidc/auth?` + new URLSearchParams({
-      client_id: authingConfig.appId,
-      response_type: 'code',
-      scope: 'openid profile email',
-      redirect_uri: authingConfig.redirectUri,
-      state: Math.random().toString(36).substring(7)
-    });
-    
+    // 使用完整的 scope 来确保获取稳定的用户信息
+    const scope = 'openid profile email phone username roles unionid external_id extended_fields';
+
+    const authUrl =
+      `${authingConfig.appHost}/oidc/auth?` +
+      new URLSearchParams({
+        client_id: authingConfig.appId,
+        response_type: 'code',
+        scope: scope,
+        redirect_uri: authingConfig.redirectUri,
+        state: Math.random().toString(36).substring(7),
+      });
+
     message.info('正在跳转到 Authing SSO 登录...');
     window.location.href = authUrl;
   };
-
-
 
   return (
     <div className="login-container">
@@ -155,14 +164,11 @@ const Login: React.FC = () => {
         <div className="login-header">
           <div className="logo-container">
             <div className="logo-icon">📈</div>
-            <Title level={2} className="brand-title">TradingAgents-CN</Title>
           </div>
+          <Title level={2} className="brand-title">
+            TradingAgents-CN
+          </Title>
           <p className="brand-subtitle">智能股票分析平台</p>
-          <div className="feature-tags">
-            <span className="feature-tag">AI驱动</span>
-            <span className="feature-tag">多市场支持</span>
-            <span className="feature-tag">实时分析</span>
-          </div>
         </div>
 
         {/* Error Alert */}
@@ -199,7 +205,7 @@ const Login: React.FC = () => {
             style={{ marginBottom: 16 }}
           />
         )}
-        
+
         <Form
           form={form}
           name="login"
@@ -214,7 +220,7 @@ const Login: React.FC = () => {
               { required: true, message: '请输入用户名' },
               { min: 3, message: '用户名至少3个字符' },
               { max: 50, message: '用户名不能超过50个字符' },
-              { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' }
+              { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' },
             ]}
           >
             <Input
@@ -229,7 +235,7 @@ const Login: React.FC = () => {
             name="password"
             rules={[
               { required: true, message: '请输入密码' },
-              { min: 6, message: '密码至少6个字符' }
+              { min: 6, message: '密码至少6个字符' },
             ]}
           >
             <Input.Password
@@ -240,25 +246,18 @@ const Login: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item name="remember" valuePropName="checked">
-            <Checkbox disabled={isBlocked}>记住用户名</Checkbox>
+          <Form.Item style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Checkbox disabled={isBlocked}>记住用户名</Checkbox>
+              <Button type="link" size="small" disabled={isBlocked} style={{ padding: 0 }}>
+                忘记密码？
+              </Button>
+            </div>
           </Form.Item>
 
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isLoading}
-              disabled={isBlocked}
-              block
-            >
+            <Button type="primary" htmlType="submit" loading={isLoading} disabled={isBlocked} block>
               {isBlocked ? `锁定中 (${formatTime(blockTimeRemaining)})` : '登录'}
-            </Button>
-          </Form.Item>
-
-          <Form.Item style={{ textAlign: 'center', marginBottom: 16 }}>
-            <Button type="link" size="small" disabled={isBlocked}>
-              忘记密码？
             </Button>
           </Form.Item>
         </Form>
@@ -278,12 +277,11 @@ const Login: React.FC = () => {
           企业 SSO 登录
         </Button>
 
-        {/* 页脚信息 */}
+
+
         <div className="login-footer">
-          <p>© 2024 TradingAgents-CN. 基于多智能体的股票分析系统</p>
+          <p>© 2024 TradingAgents-CN</p>
         </div>
-
-
       </Card>
     </div>
   );

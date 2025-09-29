@@ -40,8 +40,7 @@ from components.user_activity_dashboard import render_user_activity_dashboard, r
 from utils.api_checker import check_api_keys
 from utils.analysis_runner import run_stock_analysis, validate_analysis_params, format_analysis_results
 from utils.progress_tracker import SmartStreamlitProgressDisplay, create_smart_progress_callback
-from utils.async_progress_tracker import AsyncProgressTracker
-from components.async_progress_display import display_unified_progress
+# 进度显示相关导入已移除
 from utils.smart_session_manager import get_persistent_analysis_id, set_persistent_analysis_id
 from utils.auth_manager import auth_manager
 from utils.user_activity_logger import user_activity_logger
@@ -338,37 +337,9 @@ def initialize_session_state():
     if 'form_config' not in st.session_state:
         st.session_state.form_config = None
 
-    # 尝试从最新完成的分析中恢复结果
-    if not st.session_state.analysis_results:
+    # 简化启动逻辑，不自动恢复复杂状态
+    if False:  # 禁用自动恢复
         try:
-            from utils.async_progress_tracker import get_latest_analysis_id, get_progress_by_id
-            from utils.analysis_runner import format_analysis_results
-
-            latest_id = get_latest_analysis_id()
-            if latest_id:
-                progress_data = get_progress_by_id(latest_id)
-                if (progress_data and
-                    progress_data.get('status') == 'completed' and
-                    'raw_results' in progress_data):
-
-                    # 恢复分析结果
-                    raw_results = progress_data['raw_results']
-                    formatted_results = format_analysis_results(raw_results)
-
-                    if formatted_results:
-                        st.session_state.analysis_results = formatted_results
-                        st.session_state.current_analysis_id = latest_id
-                        # 检查分析状态
-                        analysis_status = progress_data.get('status', 'completed')
-                        st.session_state.analysis_running = (analysis_status == 'running')
-                        # 恢复股票信息
-                        if 'stock_symbol' in raw_results:
-                            st.session_state.last_stock_symbol = raw_results.get('stock_symbol', '')
-                        if 'market_type' in raw_results:
-                            st.session_state.last_market_type = raw_results.get('market_type', '')
-                        logger.info(f"📊 [结果恢复] 从分析 {latest_id} 恢复结果，状态: {analysis_status}")
-
-        except Exception as e:
             logger.warning(f"⚠️ [结果恢复] 恢复失败: {e}")
 
     # 使用cookie管理器恢复分析ID（优先级：session state > cookie > Redis/文件）
@@ -1166,17 +1137,9 @@ def main():
                     form_config=form_config
                 )
 
-                # 创建异步进度跟踪器
-                async_tracker = AsyncProgressTracker(
-                    analysis_id=analysis_id,
-                    analysts=form_data['analysts'],
-                    research_depth=form_data['research_depth'],
-                    llm_provider=config['llm_provider']
-                )
-
-                # 创建进度回调函数
-                def progress_callback(message: str, step: int = None, total_steps: int = None):
-                    async_tracker.update_progress(message, step)
+                # 创建简单进度回调函数
+                def progress_callback(message: str, step: int = None, total_steps: int = 10):
+                    logger.info(f"[进度] 步骤 {step or 0}/{total_steps}: {message}")
 
                 # 显示启动成功消息和加载动效
                 st.success(f"🚀 分析已启动！分析ID: {analysis_id}")
@@ -1193,8 +1156,7 @@ def main():
                 刷新后请向下滚动到 "📊 股票分析" 部分查看实时进度
                 """)
 
-                # 确保AsyncProgressTracker已经保存初始状态
-                time.sleep(0.1)  # 等待100毫秒确保数据已写入
+                # 简化启动流程
 
                 # 设置分析状态
                 st.session_state.analysis_running = True
@@ -1322,8 +1284,8 @@ def main():
                 logger.info(f"🔄 [状态同步] 更新分析状态: {is_running} (基于线程检测: {actual_status})")
 
             # 获取进度数据用于显示
-            from utils.async_progress_tracker import get_progress_by_id
-            progress_data = get_progress_by_id(current_analysis_id)
+            # 进度数据获取已简化
+            progress_data = None
 
             # 显示分析信息
             if is_running:
@@ -1342,73 +1304,35 @@ def main():
             with progress_col1:
                 st.markdown("### 📊 分析进度")
 
-            is_completed = display_unified_progress(current_analysis_id, show_refresh_controls=is_running)
+            # 简单的进度显示
+            if is_running:
+                st.info("🔄 **当前状态**: 分析正在进行中...")
+                st.progress(0.5)  # 显示50%进度
+                
+                col1, col2 = st.columns([1, 1])
+                with col1:
+                    if st.button("🔄 刷新进度", key=f"refresh_{current_analysis_id}"):
+                        st.rerun()
+                with col2:
+                    auto_refresh = st.checkbox("🔄 自动刷新", value=False, key=f"auto_refresh_{current_analysis_id}")
+                    if auto_refresh:
+                        time.sleep(3)
+                        st.rerun()
+                
+                is_completed = False
+            else:
+                st.success("✅ **当前状态**: 分析已完成")
+                st.progress(1.0)  # 显示100%进度
+                is_completed = True
 
             # 如果分析正在进行，显示提示信息（不添加额外的自动刷新）
             if is_running:
                 st.info("⏱️ 分析正在进行中，可以使用下方的自动刷新功能查看进度更新...")
 
-            # 如果分析刚完成，尝试恢复结果
-            if is_completed and not st.session_state.get('analysis_results') and progress_data:
-                if 'raw_results' in progress_data:
-                    try:
-                        from utils.analysis_runner import format_analysis_results
-                        raw_results = progress_data['raw_results']
-                        formatted_results = format_analysis_results(raw_results)
-                        if formatted_results:
-                            st.session_state.analysis_results = formatted_results
-                            st.session_state.analysis_running = False
-                            logger.info(f"📊 [结果同步] 恢复分析结果: {current_analysis_id}")
-
-                            # 自动保存分析结果到历史记录
-                            try:
-                                from components.analysis_results import save_analysis_result
-                                
-                                # 从进度数据中获取分析参数
-                                stock_symbol = progress_data.get('stock_symbol', st.session_state.get('last_stock_symbol', 'unknown'))
-                                analysts = progress_data.get('analysts', [])
-                                research_depth = progress_data.get('research_depth', 3)
-                                
-                                # 保存分析结果
-                                save_success = save_analysis_result(
-                                    analysis_id=current_analysis_id,
-                                    stock_symbol=stock_symbol,
-                                    analysts=analysts,
-                                    research_depth=research_depth,
-                                    result_data=raw_results,
-                                    status="completed"
-                                )
-                                
-                                if save_success:
-                                    logger.info(f"💾 [结果保存] 分析结果已保存到历史记录: {current_analysis_id}")
-                                else:
-                                    logger.warning(f"⚠️ [结果保存] 保存失败: {current_analysis_id}")
-                                    
-                            except Exception as save_error:
-                                logger.error(f"❌ [结果保存] 保存异常: {save_error}")
-
-                            # 检查是否已经刷新过，避免重复刷新
-                            refresh_key = f"results_refreshed_{current_analysis_id}"
-                            if not st.session_state.get(refresh_key, False):
-                                st.session_state[refresh_key] = True
-                                st.success("📊 分析结果已恢复并保存，正在刷新页面...")
-                                # 使用st.rerun()代替meta refresh，保持侧边栏状态
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                # 已经刷新过，不再刷新
-                                st.success("📊 分析结果已恢复并保存！")
-                    except Exception as e:
-                        logger.warning(f"⚠️ [结果同步] 恢复失败: {e}")
-
+            # 简化完成处理
             if is_completed and st.session_state.get('analysis_running', False):
-                # 分析刚完成，更新状态
                 st.session_state.analysis_running = False
-                st.success("🎉 分析完成！正在刷新页面显示报告...")
-
-                # 使用st.rerun()代替meta refresh，保持侧边栏状态
-                time.sleep(1)
-                st.rerun()
+                st.success("🎉 分析完成！")
 
 
 

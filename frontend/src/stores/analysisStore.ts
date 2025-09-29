@@ -118,6 +118,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         historyError: null,
       });
     } catch (error: any) {
+      console.error('Failed to load analysis history:', error);
       set({
         historyLoading: false,
         historyError: error.message || 'Failed to load analysis history',

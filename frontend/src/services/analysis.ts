@@ -70,24 +70,71 @@ export class AnalysisService {
   // Get analysis result
   async getAnalysisResult(id: string): Promise<Analysis> {
     try {
-      const response = await apiClient.get(`/analysis/${id}/results`);
+      const response = await apiClient.get(`/analysis/${id}/result`);
       
       // 适配后端返回格式
       return {
-        id: response.analysis_id,
-        userId: response.user || 'current_user',
-        stockCode: response.symbol,
-        status: 'completed',
-        progress: 100,
-        resultData: response.results,
-        createdAt: response.created_at || new Date().toISOString(),
-        completedAt: response.completed_at || new Date().toISOString(),
+        id: response.id,
+        userId: response.user_id,
+        stockCode: response.stock_code,
+        status: response.status,
+        progress: response.progress,
+        resultData: response.result_data,
+        createdAt: response.created_at,
+        completedAt: response.completed_at,
       } as Analysis;
     } catch (error: any) {
       if (error.response?.data?.detail) {
         throw new Error(error.response.data.detail);
       }
       throw new Error(error.message || 'Failed to get analysis result');
+    }
+  }
+
+  // Download analysis PDF
+  async downloadAnalysisPDF(id: string): Promise<Blob> {
+    try {
+      const response = await apiClient.request({
+        url: `/analysis/${id}/download/pdf`,
+        method: 'GET',
+        responseType: 'blob',
+      });
+      return response;
+    } catch (error: any) {
+      if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      throw new Error(error.message || 'Failed to download PDF');
+    }
+  }
+
+  // Get analysis files
+  async getAnalysisFiles(id: string): Promise<{files: Array<{name: string, type: string, size: number, url: string}>}> {
+    try {
+      const response = await apiClient.get(`/analysis/${id}/files`);
+      return response;
+    } catch (error: any) {
+      if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      throw new Error(error.message || 'Failed to get analysis files');
+    }
+  }
+
+  // Download analysis file
+  async downloadAnalysisFile(id: string, filename: string): Promise<Blob> {
+    try {
+      const response = await apiClient.request({
+        url: `/analysis/${id}/download/${filename}`,
+        method: 'GET',
+        responseType: 'blob',
+      });
+      return response;
+    } catch (error: any) {
+      if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
+      throw new Error(error.message || 'Failed to download file');
     }
   }
 
@@ -99,28 +146,33 @@ export class AnalysisService {
     limit: number;
   }> {
     try {
-      const response = await apiClient.get(`/analysis/history?page=${page}&limit=${limit}`);
+      const response = await apiClient.get(`/analysis/history?page=${page}&page_size=${limit}`);
       
       // 转换后端数据格式为前端格式
       const analyses: Analysis[] = (response.analyses || []).map((item: any) => ({
-        id: item.analysis_id,
-        userId: 'current_user',
-        stockCode: item.symbol,
-        status: item.status === 'completed' ? 'completed' : item.status === 'failed' ? 'failed' : 'running',
-        progress: item.progress_percentage || 0,
-        createdAt: item.created_at || new Date().toISOString(),
-        marketType: item.market_type || 'CN',
-        analysisType: item.analysis_type || 'comprehensive',
-        resultData: item.status === 'completed' ? {} : null  // 已完成的分析标记为有结果数据
+        id: item.id,
+        userId: item.user_id,
+        stockCode: item.stock_code,
+        status: item.status,
+        progress: item.progress || 0,
+        createdAt: item.created_at,
+        startedAt: item.started_at,
+        completedAt: item.completed_at,
+        marketType: item.market_type,
+        analysisType: 'comprehensive', // 默认值，如果后端没有这个字段
+        config: item.config || {},
+        resultData: item.result_data,
+        errorMessage: item.error_message
       }));
       
       return {
         analyses,
         total: response.total || 0,
-        page,
-        limit,
+        page: response.page || page,
+        limit: response.page_size || limit,
       };
     } catch (error: any) {
+      console.error('Failed to get analysis history:', error);
       throw new Error(error.message || 'Failed to get analysis history');
     }
   }
@@ -138,8 +190,20 @@ export class AnalysisService {
   // Cancel running analysis
   async cancelAnalysis(id: string): Promise<void> {
     try {
-      // 目前后端没有取消接口，模拟成功
-      console.log(`Cancel analysis ${id} - not implemented`);
+      const response = await fetch(`/api/v1/analysis/${id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to cancel analysis');
+      }
+
+      console.log(`Analysis ${id} cancelled successfully`);
     } catch (error: any) {
       throw new Error(error.message || 'Failed to cancel analysis');
     }
