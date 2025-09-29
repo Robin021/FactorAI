@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingAgents-CN 框架迁移测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.loading { background: #fff3cd; color: #856404; }
+        .test-section {
+            margin: 20px 0;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 TradingAgents-CN 框架迁移测试</h1>
+        <p>FastAPI + React 架构验证平台</p>
+        <div>
+            <span class="status" id="backend-status">检查中...</span>
+            <span class="status" id="frontend-status">检查中...</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>🔧 后端 API 测试</h3>
+            <div class="test-section">
+                <button class="test-button" onclick="testHealth()">健康检查</button>
+                <button class="test-button" onclick="testConfig()">配置检查</button>
+                <button class="test-button" onclick="testMarkets()">市场列表</button>
+                <button class="test-button" onclick="testAnalysis()">分析测试</button>
+            </div>
+            <div class="result" id="api-result">点击按钮开始测试...</div>
+        </div>
+
+        <div class="card">
+            <h3>📊 股票分析测试</h3>
+            <div class="test-section">
+                <input type="text" id="symbol-input" placeholder="输入股票代码 (如: AAPL)" 
+                       style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin: 5px;">
+                <select id="market-select" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin: 5px;">
+                    <option value="US">美股</option>
+                    <option value="CN">A股</option>
+                    <option value="HK">港股</option>
+                </select>
+                <br>
+                <button class="test-button" onclick="startAnalysis()">启动分析</button>
+                <button class="test-button" onclick="getResults()">获取结果</button>
+            </div>
+            <div class="result" id="analysis-result">等待分析...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📈 系统状态监控</h3>
+        <div id="system-status">
+            <p><strong>后端服务:</strong> <span id="backend-url">http://localhost:8001</span></p>
+            <p><strong>前端服务:</strong> <span id="frontend-url">http://localhost:3001</span></p>
+            <p><strong>API文档:</strong> <a href="http://localhost:8001/api/v1/docs" target="_blank">Swagger UI</a></p>
+        </div>
+    </div>
+
+    <script>
+        let currentAnalysisId = null;
+        const API_BASE = 'http://localhost:8001';
+
+        // 页面加载时检查服务状态
+        window.onload = function() {
+            checkBackendStatus();
+            checkFrontendStatus();
+        };
+
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/health`);
+                const data = await response.json();
+                document.getElementById('backend-status').textContent = '后端正常';
+                document.getElementById('backend-status').className = 'status success';
+            } catch (error) {
+                document.getElementById('backend-status').textContent = '后端异常';
+                document.getElementById('backend-status').className = 'status error';
+            }
+        }
+
+        function checkFrontendStatus() {
+            // 如果这个页面能加载，说明前端基本正常
+            document.getElementById('frontend-status').textContent = '前端正常';
+            document.getElementById('frontend-status').className = 'status success';
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/health`);
+                const data = await response.json();
+                document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testConfig() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/config/check`);
+                const data = await response.json();
+                document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testMarkets() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/markets`);
+                const data = await response.json();
+                document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function testAnalysis() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/analysis/test-id/status`);
+                const data = await response.json();
+                document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('api-result').textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function startAnalysis() {
+            const symbol = document.getElementById('symbol-input').value || 'AAPL';
+            const market = document.getElementById('market-select').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/analysis/start`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        market_type: market,
+                        analysis_type: 'comprehensive'
+                    })
+                });
+                const data = await response.json();
+                currentAnalysisId = data.analysis_id;
+                document.getElementById('analysis-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('analysis-result').textContent = `错误: ${error.message}`;
+            }
+        }
+
+        async function getResults() {
+            if (!currentAnalysisId) {
+                document.getElementById('analysis-result').textContent = '请先启动分析';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/analysis/${currentAnalysisId}/results`);
+                const data = await response.json();
+                document.getElementById('analysis-result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('analysis-result').textContent = `错误: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

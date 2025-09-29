@@ -1,0 +1,172 @@
+.llm-config {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.llm-config-header {
+  margin-bottom: 24px;
+}
+
+.llm-config-header .ant-typography {
+  margin-bottom: 8px;
+}
+
+.llm-config-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.llm-config .ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.llm-config .ant-divider {
+  margin: 24px 0 16px 0;
+}
+
+.llm-config .ant-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.llm-config .ant-select-selection-item {
+  display: flex;
+  align-items: center;
+}
+
+.llm-config .ant-form-item-explain-error {
+  font-size: 12px;
+}
+
+.llm-config .ant-input-password {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.llm-config .ant-btn-link {
+  padding: 0;
+  height: auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .llm-config {
+    padding: 16px;
+  }
+  
+  .llm-config-actions {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .llm-config-actions > .ant-space {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .llm-config .ant-col {
+    margin-bottom: 0;
+  }
+  
+  .llm-config .ant-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .llm-config .ant-col {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Loading state */
+.llm-config .ant-spin-container {
+  min-height: 400px;
+}
+
+/* Form validation styles */
+.llm-config .ant-form-item-has-error .ant-input,
+.llm-config .ant-form-item-has-error .ant-select-selector,
+.llm-config .ant-form-item-has-error .ant-input-number {
+  border-color: #ff4d4f;
+}
+
+.llm-config .ant-form-item-has-error .ant-form-item-explain {
+  color: #ff4d4f;
+}
+
+/* Success state for test results */
+.llm-config .ant-alert-success {
+  border: 1px solid #b7eb8f;
+  background-color: #f6ffed;
+}
+
+.llm-config .ant-alert-error {
+  border: 1px solid #ffa39e;
+  background-color: #fff2f0;
+}
+
+/* Provider selection styling */
+.llm-config .ant-select-item-option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.llm-config .ant-typography-caption {
+  font-size: 11px;
+  color: #8c8c8c;
+}
+
+/* Advanced parameters section */
+.llm-config .ant-divider-horizontal.ant-divider-with-text {
+  margin: 32px 0 24px 0;
+}
+
+.llm-config .ant-divider-inner-text {
+  font-weight: 500;
+  color: #595959;
+}
+
+/* Tooltip styling */
+.llm-config .anticon-info-circle {
+  color: #8c8c8c;
+  cursor: help;
+}
+
+.llm-config .anticon-info-circle:hover {
+  color: #1890ff;
+}
+
+/* Button group styling */
+.llm-config .ant-space-item .ant-btn {
+  min-width: 100px;
+}
+
+.llm-config .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.llm-config .ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* Modal styling */
+.llm-config .ant-modal-header {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.llm-config .ant-modal-body {
+  padding: 24px;
+}
+
+.llm-config .ant-modal-footer {
+  border-top: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}

@@ -1,0 +1,30 @@
+.notification-list .notification-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 0;
+}
+
+.notification-list .notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-list .notification-item.unread {
+  background-color: #f6ffed;
+  border-left: 3px solid #52c41a;
+  padding-left: 13px;
+}
+
+.notification-list .ant-list-item-action {
+  margin-left: 8px;
+}
+
+.notification-list .ant-list-item-meta-avatar {
+  margin-right: 12px;
+}
+
+.notification-list .ant-list-item-meta-title {
+  margin-bottom: 4px;
+}
+
+.notification-list .ant-list-item-meta-description {
+  color: #666;
+}

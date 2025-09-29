@@ -1,0 +1,1852 @@
+[
+  {
+    "timestamp": "2025-09-29T01:40:35.761939",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 66,
+    "cost": 0.001225,
+    "session_id": "deepseek_3082",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:41:37.401588",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 529,
+    "output_tokens": 1463,
+    "cost": 0.004837,
+    "session_id": "deepseek_8346",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:41:40.779868",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_3493",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:42:19.384980",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 943,
+    "cost": 0.005498,
+    "session_id": "deepseek_3042",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:42:57.375062",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 899,
+    "cost": 0.004383,
+    "session_id": "deepseek_9623",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:43:01.164061",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 62,
+    "cost": 0.001212,
+    "session_id": "deepseek_2536",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:43:55.847486",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 524,
+    "output_tokens": 1344,
+    "cost": 0.004497,
+    "session_id": "deepseek_6667",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:43:59.230312",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_3258",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:44:32.504630",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 811,
+    "cost": 0.003532,
+    "session_id": "deepseek_4418",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:44:35.780134",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_7905",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:45:09.984052",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 800,
+    "cost": 0.005097,
+    "session_id": "deepseek_2958",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:45:45.414259",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 804,
+    "cost": 0.004117,
+    "session_id": "deepseek_4912",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:46:17.158618",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3243,
+    "output_tokens": 683,
+    "cost": 0.006453,
+    "session_id": "deepseek_5958",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:46:55.359147",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4619,
+    "output_tokens": 828,
+    "cost": 0.008785,
+    "session_id": "deepseek_8991",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:47:43.288231",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4810,
+    "output_tokens": 1078,
+    "cost": 0.009752,
+    "session_id": "deepseek_8723",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:48:03.651727",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1628,
+    "output_tokens": 470,
+    "cost": 0.003595,
+    "session_id": "deepseek_8393",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:48:27.206690",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3705,
+    "output_tokens": 443,
+    "cost": 0.006427,
+    "session_id": "deepseek_3157",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:48:51.270855",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4590,
+    "output_tokens": 491,
+    "cost": 0.007801,
+    "session_id": "deepseek_9354",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:49:10.323609",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5545,
+    "output_tokens": 395,
+    "cost": 0.008869,
+    "session_id": "deepseek_5538",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:49:57.524940",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2681,
+    "output_tokens": 1090,
+    "cost": 0.006805,
+    "session_id": "deepseek_820",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:50:02.341422",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1348,
+    "output_tokens": 91,
+    "cost": 0.002142,
+    "session_id": "deepseek_2147",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:50:02.344559",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_7cb86f00_20250929_014024",
+    "analysis_type": "A股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:51:54.712840",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 731,
+    "output_tokens": 61,
+    "cost": 0.001194,
+    "session_id": "deepseek_1180",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:52:47.971529",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 434,
+    "output_tokens": 1290,
+    "cost": 0.00422,
+    "session_id": "deepseek_7709",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:52:51.212797",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 788,
+    "output_tokens": 58,
+    "cost": 0.001266,
+    "session_id": "deepseek_2029",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:53:27.366282",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1299,
+    "output_tokens": 788,
+    "cost": 0.004025,
+    "session_id": "deepseek_3239",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:53:55.730335",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 592,
+    "output_tokens": 696,
+    "cost": 0.002778,
+    "session_id": "deepseek_3203",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:54:00.604077",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 730,
+    "output_tokens": 61,
+    "cost": 0.001193,
+    "session_id": "deepseek_3992",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:54:46.555761",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 433,
+    "output_tokens": 1086,
+    "cost": 0.003647,
+    "session_id": "deepseek_6472",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T01:54:50.916408",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 58,
+    "cost": 0.001259,
+    "session_id": "deepseek_6571",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:03:21.494200",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 731,
+    "output_tokens": 45,
+    "cost": 0.001149,
+    "session_id": "deepseek_7042",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:05:08.401424",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 731,
+    "output_tokens": 45,
+    "cost": 0.001149,
+    "session_id": "deepseek_5739",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:05:58.367493",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 66,
+    "cost": 0.001225,
+    "session_id": "deepseek_2332",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:06:00.141460",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 418,
+    "output_tokens": 1266,
+    "cost": 0.00413,
+    "session_id": "deepseek_1833",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:06:03.998746",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 788,
+    "output_tokens": 58,
+    "cost": 0.001266,
+    "session_id": "deepseek_5671",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:06:35.210302",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1299,
+    "output_tokens": 733,
+    "cost": 0.003871,
+    "session_id": "deepseek_8003",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:07:01.859824",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 592,
+    "output_tokens": 640,
+    "cost": 0.002621,
+    "session_id": "deepseek_3242",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:07:05.602076",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 730,
+    "output_tokens": 61,
+    "cost": 0.001193,
+    "session_id": "deepseek_559",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:07:11.551670",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 529,
+    "output_tokens": 1717,
+    "cost": 0.005548,
+    "session_id": "deepseek_65",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:07:15.780307",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_343",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:07:55.209204",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 970,
+    "cost": 0.005573,
+    "session_id": "deepseek_357",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:08:07.176790",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 433,
+    "output_tokens": 1465,
+    "cost": 0.004708,
+    "session_id": "deepseek_4702",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:08:10.964162",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 58,
+    "cost": 0.001259,
+    "session_id": "deepseek_3364",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:08:32.915408",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 885,
+    "cost": 0.004344,
+    "session_id": "deepseek_145",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:08:36.678531",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 61,
+    "cost": 0.00121,
+    "session_id": "deepseek_6551",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:08:44.320806",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 903,
+    "output_tokens": 801,
+    "cost": 0.003507,
+    "session_id": "deepseek_5984",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:08:47.888150",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 788,
+    "output_tokens": 58,
+    "cost": 0.001266,
+    "session_id": "deepseek_249",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:09:12.621046",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1299,
+    "output_tokens": 581,
+    "cost": 0.003445,
+    "session_id": "deepseek_707",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:09:40.884703",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 592,
+    "output_tokens": 666,
+    "cost": 0.002694,
+    "session_id": "deepseek_3242",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:09:45.594791",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 523,
+    "output_tokens": 1640,
+    "cost": 0.005324,
+    "session_id": "deepseek_6753",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:09:49.076548",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_8553",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:10:08.737006",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3215,
+    "output_tokens": 563,
+    "cost": 0.006077,
+    "session_id": "deepseek_1052",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:10:22.042578",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 758,
+    "cost": 0.003384,
+    "session_id": "deepseek_7288",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:10:26.425855",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_7042",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:10:41.281127",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4350,
+    "output_tokens": 664,
+    "cost": 0.007949,
+    "session_id": "deepseek_1402",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:11:00.014023",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 807,
+    "cost": 0.005117,
+    "session_id": "deepseek_3475",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:11:26.862735",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 592,
+    "cost": 0.003524,
+    "session_id": "deepseek_1396",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:11:27.074140",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4500,
+    "output_tokens": 1037,
+    "cost": 0.009204,
+    "session_id": "deepseek_41",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:11:44.979846",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1584,
+    "output_tokens": 391,
+    "cost": 0.003312,
+    "session_id": "deepseek_2254",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:12:01.888780",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3600,
+    "output_tokens": 341,
+    "cost": 0.005995,
+    "session_id": "deepseek_7723",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:12:21.376311",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3275,
+    "output_tokens": 1110,
+    "cost": 0.007693,
+    "session_id": "deepseek_1601",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:12:23.089621",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4281,
+    "output_tokens": 437,
+    "cost": 0.007217,
+    "session_id": "deepseek_8352",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:12:42.342622",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5128,
+    "output_tokens": 409,
+    "cost": 0.008324,
+    "session_id": "deepseek_8974",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:13:08.962202",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5505,
+    "output_tokens": 1063,
+    "cost": 0.010683,
+    "session_id": "deepseek_4502",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:13:16.238364",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2498,
+    "output_tokens": 758,
+    "cost": 0.00562,
+    "session_id": "deepseek_5133",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:13:22.346528",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1013,
+    "output_tokens": 97,
+    "cost": 0.00169,
+    "session_id": "deepseek_1153",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:13:22.347983",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_757d7b73_20250929_020504",
+    "analysis_type": "美股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:14:02.108573",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5503,
+    "output_tokens": 1209,
+    "cost": 0.011089,
+    "session_id": "deepseek_8464",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:14:18.670243",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1759,
+    "output_tokens": 383,
+    "cost": 0.003535,
+    "session_id": "deepseek_6222",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:14:39.624756",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3650,
+    "output_tokens": 436,
+    "cost": 0.006331,
+    "session_id": "deepseek_7129",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:15:04.675184",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4521,
+    "output_tokens": 502,
+    "cost": 0.007735,
+    "session_id": "deepseek_5315",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:15:24.169626",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5498,
+    "output_tokens": 366,
+    "cost": 0.008722,
+    "session_id": "deepseek_1281",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:15:52.085401",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2787,
+    "output_tokens": 611,
+    "cost": 0.005613,
+    "session_id": "deepseek_2947",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:15:56.024728",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 869,
+    "output_tokens": 72,
+    "cost": 0.001418,
+    "session_id": "deepseek_3676",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:15:56.028671",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_f34dc731_20250929_020547",
+    "analysis_type": "A股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:20:42.297443",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 66,
+    "cost": 0.001225,
+    "session_id": "deepseek_480",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:20:57.650170",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 60,
+    "cost": 0.001208,
+    "session_id": "deepseek_8765",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:21:40.213393",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 523,
+    "output_tokens": 1044,
+    "cost": 0.003655,
+    "session_id": "deepseek_5120",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:21:43.831700",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_3505",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:21:50.080900",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 529,
+    "output_tokens": 1618,
+    "cost": 0.005271,
+    "session_id": "deepseek_4624",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:21:53.356447",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_6452",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:22:20.495310",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 66,
+    "cost": 0.001225,
+    "session_id": "deepseek_5271",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:22:21.987989",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 905,
+    "cost": 0.005391,
+    "session_id": "deepseek_1325",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:22:35.853342",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 1045,
+    "cost": 0.005783,
+    "session_id": "deepseek_7098",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:22:56.425376",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 782,
+    "cost": 0.004056,
+    "session_id": "deepseek_4185",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:22:59.984105",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 62,
+    "cost": 0.001212,
+    "session_id": "deepseek_7285",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:23:07.250084",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 715,
+    "cost": 0.003868,
+    "session_id": "deepseek_2514",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:23:12.163193",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 62,
+    "cost": 0.001212,
+    "session_id": "deepseek_7273",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:23:25.594531",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 529,
+    "output_tokens": 1555,
+    "cost": 0.005095,
+    "session_id": "deepseek_3802",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:23:29.473309",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_3041",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:23:57.058964",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 524,
+    "output_tokens": 1424,
+    "cost": 0.004721,
+    "session_id": "deepseek_3485",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:01.666102",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_9497",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:04.823324",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 808,
+    "cost": 0.00512,
+    "session_id": "deepseek_8904",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:07.331357",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 524,
+    "output_tokens": 1361,
+    "cost": 0.004544,
+    "session_id": "deepseek_809",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:10.880078",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_5524",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:30.747400",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 689,
+    "cost": 0.003191,
+    "session_id": "deepseek_5508",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:34.024805",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_9045",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:41.499140",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 730,
+    "cost": 0.003305,
+    "session_id": "deepseek_21",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:44.963425",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_4266",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:45.162401",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 956,
+    "cost": 0.004543,
+    "session_id": "deepseek_4375",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:24:48.604008",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 62,
+    "cost": 0.001212,
+    "session_id": "deepseek_6826",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:25:12.527755",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 909,
+    "cost": 0.005403,
+    "session_id": "deepseek_9366",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:25:20.368944",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 850,
+    "cost": 0.005237,
+    "session_id": "deepseek_1066",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:25:37.616358",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 524,
+    "output_tokens": 1211,
+    "cost": 0.004124,
+    "session_id": "deepseek_1270",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:25:41.402921",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_7927",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:25:46.010843",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 784,
+    "cost": 0.004061,
+    "session_id": "deepseek_2929",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:25:51.343113",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 725,
+    "cost": 0.003896,
+    "session_id": "deepseek_913",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:26:10.494938",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 663,
+    "cost": 0.003118,
+    "session_id": "deepseek_8540",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:26:14.283711",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_9486",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:26:31.284225",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3181,
+    "output_tokens": 1030,
+    "cost": 0.007337,
+    "session_id": "deepseek_8952",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:26:32.810134",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3100,
+    "output_tokens": 927,
+    "cost": 0.006936,
+    "session_id": "deepseek_1101",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:26:50.626053",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 854,
+    "cost": 0.005249,
+    "session_id": "deepseek_3506",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:27:19.400291",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 62,
+    "cost": 0.001214,
+    "session_id": "deepseek_3521",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:27:20.398263",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 699,
+    "cost": 0.003823,
+    "session_id": "deepseek_6869",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:27:21.551461",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4964,
+    "output_tokens": 1120,
+    "cost": 0.010086,
+    "session_id": "deepseek_8270",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:27:27.196536",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5251,
+    "output_tokens": 1284,
+    "cost": 0.010947,
+    "session_id": "deepseek_2198",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:27:56.918079",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2858,
+    "output_tokens": 789,
+    "cost": 0.00621,
+    "session_id": "deepseek_4657",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:05.853534",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 525,
+    "output_tokens": 1144,
+    "cost": 0.003938,
+    "session_id": "deepseek_9566",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:09.167991",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_1550",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:09.918073",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5203,
+    "output_tokens": 1083,
+    "cost": 0.010317,
+    "session_id": "deepseek_5954",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:15.955355",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5551,
+    "output_tokens": 1127,
+    "cost": 0.010927,
+    "session_id": "deepseek_6350",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:16.253554",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 743,
+    "output_tokens": 62,
+    "cost": 0.001214,
+    "session_id": "deepseek_3481",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:26.369437",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1633,
+    "output_tokens": 372,
+    "cost": 0.003328,
+    "session_id": "deepseek_9312",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:30.101562",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4446,
+    "output_tokens": 717,
+    "cost": 0.008232,
+    "session_id": "deepseek_7400",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:37.107224",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1677,
+    "output_tokens": 490,
+    "cost": 0.00372,
+    "session_id": "deepseek_4094",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:43.063918",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 815,
+    "cost": 0.005139,
+    "session_id": "deepseek_1073",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:43.418264",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3464,
+    "output_tokens": 312,
+    "cost": 0.005723,
+    "session_id": "deepseek_5837",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:58.981828",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3663,
+    "output_tokens": 427,
+    "cost": 0.006324,
+    "session_id": "deepseek_2356",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:28:59.579030",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4087,
+    "output_tokens": 331,
+    "cost": 0.006649,
+    "session_id": "deepseek_9453",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:17.503492",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4722,
+    "output_tokens": 366,
+    "cost": 0.007636,
+    "session_id": "deepseek_5872",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:18.295957",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4516,
+    "output_tokens": 402,
+    "cost": 0.007448,
+    "session_id": "deepseek_8759",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:18.341947",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 525,
+    "output_tokens": 1502,
+    "cost": 0.004941,
+    "session_id": "deepseek_2132",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:18.505769",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4420,
+    "output_tokens": 1078,
+    "cost": 0.009206,
+    "session_id": "deepseek_1925",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:21.609467",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_1734",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:22.643957",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 932,
+    "cost": 0.004476,
+    "session_id": "deepseek_7794",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:26.074423",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 61,
+    "cost": 0.00121,
+    "session_id": "deepseek_2627",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:38.036898",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1628,
+    "output_tokens": 453,
+    "cost": 0.003548,
+    "session_id": "deepseek_3191",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:42.334124",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5293,
+    "output_tokens": 486,
+    "cost": 0.008771,
+    "session_id": "deepseek_6712",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:55.642158",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 840,
+    "cost": 0.005209,
+    "session_id": "deepseek_633",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:29:57.316431",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3303,
+    "output_tokens": 412,
+    "cost": 0.005778,
+    "session_id": "deepseek_341",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:12.356291",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2366,
+    "output_tokens": 1360,
+    "cost": 0.00712,
+    "session_id": "deepseek_2208",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:15.770041",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4126,
+    "output_tokens": 357,
+    "cost": 0.006776,
+    "session_id": "deepseek_5702",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:16.860133",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1618,
+    "output_tokens": 70,
+    "cost": 0.002461,
+    "session_id": "deepseek_8012",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:16.866351",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_f65f3cc1_20250929_022038",
+    "analysis_type": "A股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:28.233503",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 523,
+    "output_tokens": 1498,
+    "cost": 0.004927,
+    "session_id": "deepseek_3135",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:29.789727",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 809,
+    "cost": 0.004131,
+    "session_id": "deepseek_521",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:31.903676",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_3899",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:33.577851",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 742,
+    "output_tokens": 62,
+    "cost": 0.001212,
+    "session_id": "deepseek_1957",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:36.776619",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4813,
+    "output_tokens": 433,
+    "cost": 0.007951,
+    "session_id": "deepseek_2010",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:44.623051",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2716,
+    "output_tokens": 1470,
+    "cost": 0.007918,
+    "session_id": "deepseek_6891",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:49.423450",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1728,
+    "output_tokens": 72,
+    "cost": 0.002621,
+    "session_id": "deepseek_8069",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:30:49.430816",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_51f1102a_20250929_022053",
+    "analysis_type": "A股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:09.985659",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 880,
+    "cost": 0.003725,
+    "session_id": "deepseek_8182",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:13.794729",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_8580",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:34.994823",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 524,
+    "output_tokens": 1526,
+    "cost": 0.005006,
+    "session_id": "deepseek_9097",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:35.051654",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2554,
+    "output_tokens": 1348,
+    "cost": 0.00735,
+    "session_id": "deepseek_1254",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:39.088854",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 783,
+    "output_tokens": 56,
+    "cost": 0.001253,
+    "session_id": "deepseek_9462",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:40.941224",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1606,
+    "output_tokens": 94,
+    "cost": 0.002512,
+    "session_id": "deepseek_1202",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:40.948010",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_6d9c4bac_20250929_022215",
+    "analysis_type": "A股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:31:53.536845",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 945,
+    "cost": 0.005503,
+    "session_id": "deepseek_8181",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:32:08.440308",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 901,
+    "output_tokens": 706,
+    "cost": 0.003238,
+    "session_id": "deepseek_666",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:32:12.164083",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 792,
+    "output_tokens": 58,
+    "cost": 0.001271,
+    "session_id": "deepseek_242",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:32:29.574049",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 840,
+    "cost": 0.004218,
+    "session_id": "deepseek_1255",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:32:44.725719",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2041,
+    "output_tokens": 766,
+    "cost": 0.005002,
+    "session_id": "deepseek_1013",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:32:58.859398",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3503,
+    "output_tokens": 595,
+    "cost": 0.00657,
+    "session_id": "deepseek_6630",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:33:24.025273",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1333,
+    "output_tokens": 930,
+    "cost": 0.00447,
+    "session_id": "deepseek_7572",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:33:51.699169",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4703,
+    "output_tokens": 1116,
+    "cost": 0.009709,
+    "session_id": "deepseek_5449",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:33:57.873433",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3446,
+    "output_tokens": 723,
+    "cost": 0.006849,
+    "session_id": "deepseek_5365",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:34:36.037820",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5270,
+    "output_tokens": 987,
+    "cost": 0.010142,
+    "session_id": "deepseek_2696",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:34:46.380297",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4902,
+    "output_tokens": 1066,
+    "cost": 0.009848,
+    "session_id": "deepseek_9693",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:34:56.107224",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1537,
+    "output_tokens": 464,
+    "cost": 0.003451,
+    "session_id": "deepseek_1259",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:35:17.526136",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3959,
+    "output_tokens": 407,
+    "cost": 0.006682,
+    "session_id": "deepseek_5908",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:35:37.889578",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5291,
+    "output_tokens": 1129,
+    "cost": 0.010569,
+    "session_id": "deepseek_4116",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:35:38.183641",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4772,
+    "output_tokens": 439,
+    "cost": 0.00791,
+    "session_id": "deepseek_2265",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:35:52.836612",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1679,
+    "output_tokens": 312,
+    "cost": 0.003224,
+    "session_id": "deepseek_909",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:35:55.209199",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5623,
+    "output_tokens": 341,
+    "cost": 0.008827,
+    "session_id": "deepseek_7833",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:36:07.480462",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3750,
+    "output_tokens": 263,
+    "cost": 0.005986,
+    "session_id": "deepseek_333",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:36:30.320036",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 4275,
+    "output_tokens": 473,
+    "cost": 0.007309,
+    "session_id": "deepseek_9539",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:36:53.970900",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5195,
+    "output_tokens": 478,
+    "cost": 0.008611,
+    "session_id": "deepseek_2479",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:36:54.894251",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2448,
+    "output_tokens": 1403,
+    "cost": 0.007356,
+    "session_id": "deepseek_8771",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:36:59.397061",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1661,
+    "output_tokens": 77,
+    "cost": 0.002541,
+    "session_id": "deepseek_2743",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:36:59.405540",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_81d4a411_20250929_022715",
+    "analysis_type": "A股_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:37:55.007391",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 2617,
+    "output_tokens": 1438,
+    "cost": 0.00769,
+    "session_id": "deepseek_6477",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:37:59.715357",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1696,
+    "output_tokens": 83,
+    "cost": 0.002607,
+    "session_id": "deepseek_1673",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-29T02:37:59.723437",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 20000,
+    "output_tokens": 10000,
+    "cost": 0.056,
+    "session_id": "analysis_b114667c_20250929_022811",
+    "analysis_type": "A股_analysis"
+  }
+]

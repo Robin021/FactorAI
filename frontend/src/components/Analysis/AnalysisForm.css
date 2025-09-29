@@ -1,0 +1,118 @@
+.analysis-form-card {
+  height: fit-content;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+}
+
+.form-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.form-header h4 {
+  margin-bottom: 4px;
+  color: #1890ff;
+}
+
+.analysis-form .ant-form-item-label > label {
+  font-weight: 500;
+  color: #262626;
+}
+
+.analysis-form .ant-select-selector,
+.analysis-form .ant-input,
+.analysis-form .ant-picker {
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  transition: all 0.3s ease;
+}
+
+.analysis-form .ant-select-selector:hover,
+.analysis-form .ant-input:hover,
+.analysis-form .ant-picker:hover {
+  border-color: #40a9ff;
+}
+
+.analysis-form .ant-select-focused .ant-select-selector,
+.analysis-form .ant-input:focus,
+.analysis-form .ant-picker:focus,
+.analysis-form .ant-picker-focused {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.analyst-checkbox-group {
+  width: 100%;
+}
+
+.analyst-checkbox {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: #fafafa;
+}
+
+.analyst-checkbox:hover {
+  border-color: #1890ff;
+  background: #f6ffed;
+}
+
+.analyst-checkbox.ant-checkbox-wrapper-checked {
+  border-color: #1890ff;
+  background: #e6f7ff;
+}
+
+.analyst-checkbox .ant-checkbox {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.ant-slider-mark-text {
+  font-size: 12px;
+  color: #666;
+}
+
+.ant-slider-mark-text-active {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.ant-btn-primary {
+  border-radius: 8px;
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .analyst-checkbox-group .ant-col {
+    span: 24 !important;
+  }
+  
+  .analyst-checkbox {
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .analysis-form-card {
+    margin: 0 -8px;
+  }
+  
+  .form-header h4 {
+    font-size: 18px;
+  }
+}

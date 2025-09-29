@@ -329,6 +329,34 @@ class TradingAgentsGraph:
                     self.toolkit.get_simfin_income_stmt,
                 ]
             ),
+            "technical": ToolNode(
+                [
+                    # 技术分析工具，复用市场数据工具
+                    self.toolkit.get_stock_market_data_unified,
+                    self.toolkit.get_YFin_data_online,
+                    self.toolkit.get_stockstats_indicators_report_online,
+                    self.toolkit.get_YFin_data,
+                    self.toolkit.get_stockstats_indicators_report,
+                ]
+            ),
+            "sentiment": ToolNode(
+                [
+                    # 情绪分析工具，复用社交媒体工具
+                    self.toolkit.get_stock_news_openai,
+                    self.toolkit.get_reddit_stock_info,
+                    self.toolkit.get_global_news_openai,
+                    self.toolkit.get_google_news,
+                ]
+            ),
+            "risk": ToolNode(
+                [
+                    # 风险分析工具，复用基本面工具
+                    self.toolkit.get_stock_fundamentals_unified,
+                    self.toolkit.get_finnhub_company_insider_sentiment,
+                    self.toolkit.get_stock_market_data_unified,
+                    self.toolkit.get_YFin_data_online,
+                ]
+            ),
         }
 
     def propagate(self, company_name, trade_date):

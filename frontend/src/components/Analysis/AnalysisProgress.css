@@ -1,0 +1,146 @@
+.analysis-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progress-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.progress-content {
+  margin-bottom: 24px;
+}
+
+.progress-bar-section {
+  margin-bottom: 32px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.time-remaining {
+  font-size: 12px;
+}
+
+.steps-section h5 {
+  margin-bottom: 16px;
+  color: #1890ff;
+}
+
+.progress-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.analysis-details-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+}
+
+.analysis-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+/* Progress bar customization */
+.ant-progress-line {
+  margin-bottom: 8px;
+}
+
+.ant-progress-text {
+  font-weight: 500;
+}
+
+/* Steps customization */
+.ant-steps-vertical .ant-steps-item-content {
+  min-height: 48px;
+}
+
+.ant-steps-item-title {
+  font-weight: 500;
+}
+
+.ant-steps-item-description {
+  color: #666;
+  font-size: 12px;
+}
+
+/* Animation for loading states */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.progress-card .anticon-loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .progress-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .analysis-progress-container {
+    margin: 0 -8px;
+  }
+  
+  .progress-card,
+  .analysis-details-card {
+    margin: 0;
+  }
+}

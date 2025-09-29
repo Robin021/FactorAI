@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingAgents-CN 登录测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #667eea;
+            margin: 0;
+            font-size: 2rem;
+        }
+        .logo p {
+            color: #666;
+            margin: 5px 0 0 0;
+            font-size: 0.9rem;
+        }
+        .login-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .sso-btn {
+            width: 100%;
+            padding: 15px;
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .sso-btn:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .demo-accounts {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .demo-accounts h4 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 14px;
+        }
+        .demo-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .demo-account:hover {
+            background: #e3f2fd;
+        }
+        .demo-account:last-child {
+            margin-bottom: 0;
+        }
+        .demo-info {
+            flex: 1;
+        }
+        .demo-username {
+            font-weight: 600;
+            color: #333;
+        }
+        .demo-role {
+            font-size: 12px;
+            color: #666;
+        }
+        .demo-password {
+            font-family: monospace;
+            color: #667eea;
+            font-size: 14px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🚀 TradingAgents-CN</h1>
+            <p>框架迁移测试 - 登录验证</p>
+        </div>
+
+        <div class="login-tabs">
+            <div class="tab active" onclick="switchTab('password')">用户名密码</div>
+            <div class="tab" onclick="switchTab('sso')">Authing SSO</div>
+        </div>
+
+        <!-- 用户名密码登录 -->
+        <div id="password-tab" class="tab-content active">
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" placeholder="请输入密码" required>
+                </div>
+                <button type="submit" class="login-btn" id="login-btn">登录</button>
+            </form>
+
+            <div class="demo-accounts">
+                <h4>📋 测试账户 (点击快速填入)</h4>
+                <div class="demo-account" onclick="fillDemo('admin', 'admin123')">
+                    <div class="demo-info">
+                        <div class="demo-username">admin</div>
+                        <div class="demo-role">管理员账户</div>
+                    </div>
+                    <div class="demo-password">admin123</div>
+                </div>
+                <div class="demo-account" onclick="fillDemo('demo', 'demo123')">
+                    <div class="demo-info">
+                        <div class="demo-username">demo</div>
+                        <div class="demo-role">演示账户</div>
+                    </div>
+                    <div class="demo-password">demo123</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authing SSO 登录 -->
+        <div id="sso-tab" class="tab-content">
+            <button class="sso-btn" onclick="loginWithAuthing()">
+                🔐 使用 Authing SSO 登录
+            </button>
+            <div style="text-align: center; color: #666; font-size: 14px; margin-top: 15px;">
+                <p>企业级单点登录</p>
+                <p>应用ID: <code>68d3879e03d9b1907f220731</code></p>
+                <p>域名: <code>sxkc6t59wbj9-demo.authing.cn</code></p>
+            </div>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 移除所有活动状态
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 激活选中的标签页
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // 填入演示账户
+        function fillDemo(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+        }
+
+        // 显示结果
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+
+        // 用户名密码登录
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('login-btn');
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = '登录中...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`登录成功！\\n\\n用户信息:\\n${JSON.stringify(data, null, 2)}`, 'success');
+                    
+                    // 保存 token 到 localStorage
+                    localStorage.setItem('access_token', data.access_token);
+                    
+                    // 测试获取用户信息
+                    setTimeout(testUserInfo, 1000);
+                } else {
+                    showResult(`登录失败：${data.detail || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                showResult(`网络错误：${error.message}`, 'error');
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = '登录';
+            }
+        });
+
+        // 测试获取用户信息
+        async function testUserInfo() {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(`用户信息获取成功！\\n\\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult(`获取用户信息失败：${data.detail}`, 'error');
+                }
+            } catch (error) {
+                showResult(`获取用户信息错误：${error.message}`, 'error');
+            }
+        }
+
+        // Authing SSO 登录
+        function loginWithAuthing() {
+            showResult('正在跳转到 Authing SSO 登录页面...', 'info');
+            
+            // Authing 配置
+            const authingConfig = {
+                appId: '68d3879e03d9b1907f220731',
+                appHost: 'https://sxkc6t59wbj9-demo.authing.cn',
+                redirectUri: window.location.origin + '/auth/callback'
+            };
+            
+            // 构建 Authing 登录 URL
+            const authUrl = `${authingConfig.appHost}/oidc/auth?` + new URLSearchParams({
+                client_id: authingConfig.appId,
+                response_type: 'code',
+                scope: 'openid profile email',
+                redirect_uri: authingConfig.redirectUri,
+                state: Math.random().toString(36).substring(7)
+            });
+            
+            showResult(`Authing SSO 登录 URL:\\n${authUrl}\\n\\n注意：这是演示配置，实际使用需要正确配置回调地址`, 'info');
+            
+            // 在新窗口打开登录页面
+            window.open(authUrl, '_blank');
+        }
+
+        // 页面加载时检查是否有保存的 token
+        window.onload = function() {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                showResult('发现已保存的登录令牌，正在验证...', 'info');
+                testUserInfo();
+            }
+        };
+
+        // 登出功能
+        async function logout() {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+            
+            try {
+                await fetch(`${API_BASE}/api/v1/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                localStorage.removeItem('access_token');
+                showResult('已成功登出', 'info');
+            } catch (error) {
+                showResult(`登出错误：${error.message}`, 'error');
+            }
+        }
+
+        // 添加登出按钮（如果已登录）
+        if (localStorage.getItem('access_token')) {
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = '登出';
+            logoutBtn.className = 'login-btn';
+            logoutBtn.style.background = '#dc3545';
+            logoutBtn.onclick = logout;
+            document.querySelector('.login-container').appendChild(logoutBtn);
+        }
+    </script>
+</body>
+</html>

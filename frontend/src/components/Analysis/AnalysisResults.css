@@ -1,0 +1,177 @@
+.results-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  min-height: 600px;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+.overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-icon {
+  font-size: 24px;
+  padding: 8px;
+  border-radius: 50%;
+  background: #f5f5f5;
+}
+
+.summary-icon.success {
+  color: #52c41a;
+  background: #f6ffed;
+}
+
+.summary-icon.warning {
+  color: #faad14;
+  background: #fffbe6;
+}
+
+.summary-icon.info {
+  color: #1890ff;
+  background: #e6f7ff;
+}
+
+.summary-text-card {
+  border-radius: 8px;
+}
+
+.analyst-reports {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analyst-report-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.report-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.key-points ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.key-points li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.analyst-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #f5f5f5;
+}
+
+.charts-section {
+  min-height: 400px;
+}
+
+.results-tabs .ant-tabs-tab {
+  font-weight: 500;
+}
+
+.results-tabs .ant-tabs-tab-active {
+  color: #1890ff;
+}
+
+.results-tabs .ant-tabs-content-holder {
+  padding-top: 16px;
+}
+
+/* Descriptions customization */
+.ant-descriptions-bordered .ant-descriptions-item-label {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.ant-descriptions-bordered .ant-descriptions-item-content {
+  background: #fff;
+}
+
+/* Empty state customization */
+.ant-empty-description {
+  color: #999;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .summary-item {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .results-card {
+    margin: 0 -8px;
+  }
+  
+  .results-header .ant-space {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .results-header .ant-btn {
+    flex: 1;
+  }
+}

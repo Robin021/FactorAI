@@ -55,6 +55,36 @@ class ConditionalLogic:
             return "tools_fundamentals"
         return "Msg Clear Fundamentals"
 
+    def should_continue_technical(self, state: AgentState):
+        """Determine if technical analysis should continue."""
+        messages = state["messages"]
+        last_message = messages[-1]
+
+        # 只有AIMessage才有tool_calls属性
+        if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+            return "tools_technical"
+        return "Msg Clear Technical"
+
+    def should_continue_sentiment(self, state: AgentState):
+        """Determine if sentiment analysis should continue."""
+        messages = state["messages"]
+        last_message = messages[-1]
+
+        # 只有AIMessage才有tool_calls属性
+        if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+            return "tools_sentiment"
+        return "Msg Clear Sentiment"
+
+    def should_continue_risk(self, state: AgentState):
+        """Determine if risk analysis should continue."""
+        messages = state["messages"]
+        last_message = messages[-1]
+
+        # 只有AIMessage才有tool_calls属性
+        if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+            return "tools_risk"
+        return "Msg Clear Risk"
+
     def should_continue_debate(self, state: AgentState) -> str:
         """Determine if debate should continue."""
 

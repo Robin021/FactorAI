@@ -1,0 +1,179 @@
+.progress-tracker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progress-overview-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f0f0f0;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.progress-header h4 {
+  margin: 0;
+  color: #1890ff;
+}
+
+.progress-main {
+  margin-bottom: 24px;
+}
+
+.progress-message {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.progress-controls {
+  display: flex;
+  justify-content: center;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.progress-steps-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-description {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.step-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.step-detail {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.step-duration {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Timeline customization */
+.ant-timeline-item-content {
+  margin-left: 16px;
+}
+
+.ant-timeline-item-tail {
+  border-left-color: #f0f0f0;
+}
+
+/* Progress bar customization */
+.ant-progress-line {
+  margin-bottom: 0;
+}
+
+.ant-progress-text {
+  font-weight: 500;
+  color: #1890ff;
+}
+
+/* Statistic customization */
+.ant-statistic-title {
+  font-size: 12px;
+  color: #666;
+}
+
+.ant-statistic-content {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Button customization */
+.progress-controls .ant-btn {
+  min-width: 80px;
+}
+
+.progress-controls .ant-btn-dangerous {
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+}
+
+.progress-controls .ant-btn-dangerous:hover {
+  background: #ff4d4f;
+  color: white;
+}
+
+/* Animation for running steps */
+@keyframes stepPulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.ant-timeline-item-head .anticon-loading {
+  animation: stepPulse 1.5s ease-in-out infinite;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .progress-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .progress-header .ant-statistic {
+    width: 100%;
+  }
+  
+  .progress-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .progress-controls .ant-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .progress-tracker {
+    margin: 0 -8px;
+  }
+  
+  .step-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

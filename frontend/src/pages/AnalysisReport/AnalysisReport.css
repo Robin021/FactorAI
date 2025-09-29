@@ -1,0 +1,345 @@
+/* Analysis Report Styles */
+.analysis-report {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 0;
+}
+
+.analysis-report-loading,
+.analysis-report-error,
+.analysis-report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem;
+}
+
+/* Header Styles */
+.report-header {
+  background: white;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-button {
+  border: none;
+  box-shadow: none;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.report-title {
+  margin: 0 !important;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* Content Styles */
+.report-content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.report-tabs {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.report-tabs .ant-tabs-content-holder {
+  padding: 2rem;
+}
+
+.report-tabs .ant-tabs-tab {
+  padding: 12px 20px;
+  font-weight: 500;
+}
+
+/* Overview Styles */
+.report-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.overview-stats {
+  margin-bottom: 1rem;
+}
+
+.stat-card {
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.recommendation-stat {
+  padding: 1rem;
+  text-align: center;
+}
+
+.recommendation-tag {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.summary-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.summary-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Detailed Analysis Styles */
+.detailed-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.analysis-summary {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* History Comparison Styles */
+.history-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-controls {
+  padding: 1rem;
+  background: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.history-table {
+  background: white;
+  border-radius: 6px;
+}
+
+.history-modal .ant-modal-body {
+  padding: 1rem;
+}
+
+/* Export and Share Styles */
+.export-options,
+.share-options {
+  padding: 1rem 0;
+}
+
+.export-options .ant-btn,
+.share-options .ant-btn {
+  height: auto;
+  padding: 1rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .analysis-report {
+    background: white !important;
+    padding: 0 !important;
+  }
+  
+  .report-content {
+    padding: 1rem !important;
+    max-width: none !important;
+  }
+  
+  .report-tabs {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  .stat-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  .ant-tabs-tab {
+    display: none !important;
+  }
+  
+  .ant-tabs-content-holder {
+    padding: 1rem !important;
+  }
+  
+  /* Print only overview tab */
+  .ant-tabs-tabpane:not(.ant-tabs-tabpane-active) {
+    display: none !important;
+  }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .report-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .header-left {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .report-content {
+    padding: 1rem;
+  }
+  
+  .report-tabs .ant-tabs-content-holder {
+    padding: 1rem;
+  }
+  
+  .overview-stats .ant-col {
+    margin-bottom: 1rem;
+  }
+  
+  .history-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .history-controls .ant-space {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .history-controls .ant-space-item {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .header-actions .ant-space {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .header-actions .ant-btn {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.75rem;
+  }
+}
+
+/* Animation Styles */
+.stat-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.detailed-analysis > * {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Custom Scrollbar */
+.report-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.report-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.report-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.report-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Loading States */
+.analysis-report-loading .ant-spin {
+  margin-bottom: 1rem;
+}
+
+.analysis-report-loading .ant-spin-text {
+  color: #666;
+  font-size: 1rem;
+}
+
+/* Error States */
+.analysis-report-error .ant-alert {
+  max-width: 500px;
+  margin-bottom: 1rem;
+}
+
+/* Empty States */
+.analysis-report-empty .ant-empty {
+  margin-bottom: 2rem;
+}
+
+.analysis-report-empty .ant-btn {
+  margin-top: 1rem;
+}

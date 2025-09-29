@@ -1,0 +1,123 @@
+.chart-viewer {
+  width: 100%;
+}
+
+.chart-card {
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.chart-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card:hover .chart-actions {
+  opacity: 1;
+}
+
+.chart-container {
+  min-height: 400px;
+  position: relative;
+}
+
+.chart-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 4px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+.stock-price-chart .ant-card-body {
+  padding: 16px;
+}
+
+.technical-indicators-chart .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.analyst-opinions-chart .ant-statistic-title {
+  font-size: 12px;
+  color: #666;
+}
+
+.analyst-opinions-chart .ant-statistic-content {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.interactive-chart-dashboard .ant-tabs-content-holder {
+  padding-top: 16px;
+}
+
+.interactive-chart-dashboard .ant-card-extra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Chart loading overlay */
+.chart-container .ant-spin-container {
+  position: relative;
+}
+
+.chart-container .ant-spin-spinning {
+  position: relative;
+}
+
+.chart-container .ant-spin-spinning::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chart-container {
+    min-height: 300px;
+  }
+  
+  .chart-actions {
+    opacity: 1;
+    position: static;
+    background: transparent;
+    backdrop-filter: none;
+    padding: 0;
+    margin-top: 8px;
+    text-align: right;
+  }
+  
+  .interactive-chart-dashboard .ant-card-extra {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .chart-container {
+    min-height: 250px;
+  }
+  
+  .analyst-opinions-chart .ant-col {
+    margin-bottom: 16px;
+  }
+  
+  .interactive-chart-dashboard .ant-tabs-tab {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+}

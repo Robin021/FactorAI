@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authing SSO 回调处理</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .callback-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="callback-container">
+        <h2>🔐 Authing SSO 回调处理</h2>
+        <div class="spinner" id="spinner"></div>
+        <p id="status-text">正在处理 SSO 登录回调...</p>
+        <div id="status-container"></div>
+        <div id="actions" style="display: none;">
+            <button class="btn" onclick="redirectToApp()">返回应用</button>
+            <button class="btn" onclick="window.close()">关闭窗口</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取 URL 参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const state = urlParams.get('state');
+        const error = urlParams.get('error');
+        const errorDescription = urlParams.get('error_description');
+
+        async function handleCallback() {
+            const statusContainer = document.getElementById('status-container');
+            const statusText = document.getElementById('status-text');
+            const spinner = document.getElementById('spinner');
+            const actions = document.getElementById('actions');
+
+            try {
+                if (error) {
+                    throw new Error(errorDescription || error);
+                }
+
+                if (!code) {
+                    throw new Error('未收到授权码');
+                }
+
+                statusText.textContent = '正在验证授权码...';
+
+                // 调用后端 API 处理回调
+                const response = await fetch(`http://localhost:8000/api/v1/auth/authing/callback?code=${code}&state=${state || ''}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 成功
+                    spinner.style.display = 'none';
+                    statusText.textContent = 'SSO 登录成功！';
+                    statusContainer.innerHTML = `
+                        <div class="status success">
+                            <strong>登录成功</strong><br>
+                            用户: ${data.user.username}<br>
+                            邮箱: ${data.user.email}<br>
+                            角色: ${data.user.role}
+                        </div>
+                    `;
+
+                    // 保存 token 到 localStorage（如果是同域）
+                    try {
+                        localStorage.setItem('auth_token', data.access_token);
+                        localStorage.setItem('user_info', JSON.stringify(data.user));
+                    } catch (e) {
+                        console.warn('无法保存到 localStorage:', e);
+                    }
+
+                    // 显示操作按钮
+                    actions.style.display = 'block';
+
+                    // 3秒后自动跳转
+                    setTimeout(() => {
+                        redirectToApp();
+                    }, 3000);
+
+                } else {
+                    throw new Error(data.detail || 'SSO 登录失败');
+                }
+
+            } catch (error) {
+                console.error('SSO 回调处理失败:', error);
+
+                spinner.style.display = 'none';
+                statusText.textContent = 'SSO 登录失败';
+                statusContainer.innerHTML = `
+                    <div class="status error">
+                        <strong>登录失败</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+                actions.style.display = 'block';
+            }
+        }
+
+        function redirectToApp() {
+            // 跳转到主应用
+            window.location.href = 'http://localhost:3000/dashboard';
+        }
+
+        // 页面加载后开始处理
+        window.onload = handleCallback;
+    </script>
+</body>
+
+</html>

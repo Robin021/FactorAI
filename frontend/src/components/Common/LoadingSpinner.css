@@ -1,0 +1,31 @@
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  min-height: 100px;
+}
+
+.loading-message {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* Full page loading overlay */
+.loading-spinner.full-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  min-height: 100vh;
+}
+
+/* Inline loading for smaller components */
+.loading-spinner.inline {
+  padding: 12px;
+  min-height: 60px;
+}

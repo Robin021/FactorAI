@@ -136,6 +136,30 @@ class GraphSetup:
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
 
+        if "technical" in selected_analysts:
+            # 使用通用分析师模式，专注于技术分析
+            analyst_nodes["technical"] = create_market_analyst(
+                self.quick_thinking_llm, self.toolkit
+            )
+            delete_nodes["technical"] = create_msg_delete()
+            tool_nodes["technical"] = self.tool_nodes["technical"]
+
+        if "sentiment" in selected_analysts:
+            # 使用社交媒体分析师作为情绪分析师
+            analyst_nodes["sentiment"] = create_social_media_analyst(
+                self.quick_thinking_llm, self.toolkit
+            )
+            delete_nodes["sentiment"] = create_msg_delete()
+            tool_nodes["sentiment"] = self.tool_nodes["sentiment"]
+
+        if "risk" in selected_analysts:
+            # 使用基本面分析师作为风险分析师
+            analyst_nodes["risk"] = create_fundamentals_analyst(
+                self.quick_thinking_llm, self.toolkit
+            )
+            delete_nodes["risk"] = create_msg_delete()
+            tool_nodes["risk"] = self.tool_nodes["risk"]
+
         # Create researcher and manager nodes
         bull_researcher_node = create_bull_researcher(
             self.quick_thinking_llm, self.bull_memory

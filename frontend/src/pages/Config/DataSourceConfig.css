@@ -1,0 +1,316 @@
+.data-source-config {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.data-source-config-header {
+  margin-bottom: 24px;
+}
+
+.data-source-config-header .ant-typography {
+  margin-bottom: 8px;
+}
+
+.data-source-config-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.data-source-config .ant-table {
+  background: white;
+  border-radius: 6px;
+}
+
+.data-source-config .ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.data-source-config .ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* Priority controls */
+.data-source-config .ant-btn-text {
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.data-source-config .ant-btn-text:hover {
+  background: #f0f0f0;
+}
+
+/* Status tags */
+.data-source-config .ant-tag {
+  margin: 2px 0;
+}
+
+/* Modal styling */
+.data-source-config .ant-modal-header {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.data-source-config .ant-modal-body {
+  padding: 24px;
+}
+
+.data-source-config .ant-modal-footer {
+  border-top: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+/* Form styling */
+.data-source-config .ant-form-item-label > label {
+  font-weight: 500;
+}
+
+.data-source-config .ant-input-password {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.data-source-config .ant-select-selection-item {
+  display: flex;
+  align-items: center;
+}
+
+/* Alert styling */
+.data-source-config .ant-alert {
+  margin-bottom: 16px;
+}
+
+.data-source-config .ant-alert-info {
+  border: 1px solid #91d5ff;
+  background-color: #f6ffed;
+}
+
+.data-source-config .ant-alert-success {
+  border: 1px solid #b7eb8f;
+  background-color: #f6ffed;
+}
+
+.data-source-config .ant-alert-error {
+  border: 1px solid #ffa39e;
+  background-color: #fff2f0;
+}
+
+/* Table responsive */
+@media (max-width: 1200px) {
+  .data-source-config {
+    padding: 16px;
+  }
+  
+  .data-source-config .ant-table {
+    font-size: 12px;
+  }
+  
+  .data-source-config .ant-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .data-source-config-actions {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .data-source-config-actions > .ant-space {
+    justify-content: center;
+  }
+  
+  .data-source-config .ant-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .data-source-config .ant-modal {
+    margin: 0;
+    max-width: 100vw;
+  }
+}
+
+@media (max-width: 576px) {
+  .data-source-config {
+    padding: 12px;
+  }
+  
+  .data-source-config .ant-col {
+    margin-bottom: 0;
+  }
+  
+  .data-source-config .ant-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .data-source-config .ant-col {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Loading state */
+.data-source-config .ant-spin-container {
+  min-height: 300px;
+}
+
+/* Empty state */
+.data-source-config .ant-empty {
+  padding: 40px 0;
+}
+
+/* Button groups */
+.data-source-config .ant-space-item .ant-btn {
+  min-width: 80px;
+}
+
+.data-source-config .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.data-source-config .ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.data-source-config .ant-btn-danger {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+.data-source-config .ant-btn-danger:hover {
+  color: #fff;
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+/* Upload button */
+.data-source-config .ant-upload {
+  display: inline-block;
+}
+
+/* Priority indicators */
+.data-source-config .priority-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.data-source-config .priority-number {
+  font-weight: 600;
+  font-size: 16px;
+  color: #1890ff;
+}
+
+/* Market tags */
+.data-source-config .market-tag {
+  font-size: 10px;
+  padding: 0 4px;
+  line-height: 16px;
+}
+
+/* Feature list */
+.data-source-config .feature-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.data-source-config .feature-tag {
+  font-size: 10px;
+  padding: 0 4px;
+  line-height: 14px;
+  background: #f0f0f0;
+  border: none;
+  color: #666;
+}
+
+/* Configuration status indicators */
+.data-source-config .config-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.data-source-config .status-tag-configured {
+  background: #e6f7ff;
+  border-color: #91d5ff;
+  color: #1890ff;
+}
+
+.data-source-config .status-tag-missing {
+  background: #fff7e6;
+  border-color: #ffd591;
+  color: #fa8c16;
+}
+
+/* Cache and timeout info */
+.data-source-config .cache-info {
+  font-size: 12px;
+  color: #666;
+}
+
+.data-source-config .cache-info strong {
+  color: #333;
+}
+
+/* Documentation link */
+.data-source-config .doc-link {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.data-source-config .doc-link .ant-btn-link {
+  padding: 0;
+  height: auto;
+  color: #1890ff;
+}
+
+.data-source-config .doc-link .ant-btn-link:hover {
+  color: #40a9ff;
+}
+
+/* Test results */
+.data-source-config .test-result {
+  margin-top: 16px;
+}
+
+.data-source-config .test-result .ant-alert {
+  margin-bottom: 0;
+}
+
+/* Import/Export styling */
+.data-source-config .import-export-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.data-source-config .import-export-actions .ant-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Tooltip styling */
+.data-source-config .anticon-info-circle {
+  color: #8c8c8c;
+  cursor: help;
+}
+
+.data-source-config .anticon-info-circle:hover {
+  color: #1890ff;
+}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket 连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .connecting { background: #fff3cd; color: #856404; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔌 WebSocket 连接测试</h2>
+        
+        <div>
+            <label>分析ID: </label>
+            <input type="text" id="analysisId" value="test-analysis-123" placeholder="输入分析ID">
+            <label>Token: </label>
+            <input type="text" id="token" placeholder="输入JWT Token" style="width: 300px;">
+        </div>
+        
+        <div>
+            <button onclick="connect()">连接</button>
+            <button onclick="disconnect()">断开</button>
+            <button onclick="getToken()">获取Token</button>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+        
+        <div id="status" class="status disconnected">未连接</div>
+        
+        <h3>连接日志:</h3>
+        <div id="log" class="log">等待连接...</div>
+    </div>
+
+    <script>
+        let ws = null;
+        const logElement = document.getElementById('log');
+        const statusElement = document.getElementById('status');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(status, message) {
+            statusElement.textContent = message;
+            statusElement.className = `status ${status}`;
+        }
+
+        async function getToken() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+                
+                const data = await response.json();
+                if (data.access_token) {
+                    document.getElementById('token').value = data.access_token;
+                    log('✅ Token 获取成功');
+                } else {
+                    log('❌ Token 获取失败');
+                }
+            } catch (error) {
+                log(`❌ 获取Token错误: ${error.message}`);
+            }
+        }
+
+        function connect() {
+            const analysisId = document.getElementById('analysisId').value;
+            const token = document.getElementById('token').value;
+            
+            if (!analysisId || !token) {
+                log('❌ 请输入分析ID和Token');
+                return;
+            }
+
+            if (ws) {
+                ws.close();
+            }
+
+            const wsUrl = `ws://localhost:8000/api/v1/ws/analysis/${analysisId}?token=${encodeURIComponent(token)}`;
+            log(`🔌 连接到: ${wsUrl}`);
+            
+            updateStatus('connecting', '连接中...');
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function(event) {
+                log('✅ WebSocket 连接已建立');
+                updateStatus('connected', '已连接');
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    log(`📨 收到消息: ${JSON.stringify(data, null, 2)}`);
+                } catch (error) {
+                    log(`📨 收到消息: ${event.data}`);
+                }
+            };
+
+            ws.onclose = function(event) {
+                log(`❌ WebSocket 连接关闭: ${event.code} - ${event.reason}`);
+                updateStatus('disconnected', '连接断开');
+                ws = null;
+            };
+
+            ws.onerror = function(error) {
+                log(`❌ WebSocket 错误: ${error}`);
+                updateStatus('disconnected', '连接错误');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                log('🔌 手动断开连接');
+                updateStatus('disconnected', '已断开');
+            }
+        }
+
+        function clearLog() {
+            logElement.textContent = '';
+        }
+    </script>
+</body>
+</html>

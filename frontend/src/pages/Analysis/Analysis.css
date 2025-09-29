@@ -1,0 +1,247 @@
+.analysis-page {
+  padding: 24px;
+  min-height: calc(100vh - 64px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  overflow-x: hidden;
+}
+
+.analysis-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.analysis-header h2 {
+  color: #1890ff;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.analysis-tabs {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.analysis-tabs .ant-tabs-tab {
+  font-weight: 500;
+  font-size: 16px;
+  padding: 12px 20px;
+}
+
+.analysis-tabs .ant-tabs-tab-active {
+  color: #1890ff;
+}
+
+.analysis-tabs .ant-tabs-content-holder {
+  padding-top: 24px;
+  overflow: visible;
+}
+
+.analysis-tabs .ant-tabs-tabpane {
+  overflow: visible;
+}
+
+.progress-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #52c41a;
+  border-radius: 50%;
+  margin-left: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.no-progress-message,
+.no-history-message {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.no-progress-message h4 {
+  margin-bottom: 16px;
+}
+
+.no-progress-message p,
+.no-history-message p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.analysis-history {
+  padding: 16px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .analysis-page {
+    padding: 16px;
+  }
+  
+  .analysis-header h2 {
+    font-size: 24px;
+  }
+  
+  .analysis-tabs {
+    padding: 12px;
+  }
+  
+  .analysis-tabs .ant-tabs-tab {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .analysis-page {
+    padding: 12px;
+  }
+  
+  .analysis-header h2 {
+    font-size: 20px;
+  }
+  
+  .analysis-tabs {
+    padding: 8px;
+    margin: 0 -4px;
+  }
+  
+  .analysis-tabs .ant-tabs-tab {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  
+  .no-progress-message,
+  .no-history-message {
+    padding: 40px 16px;
+  }
+}
+/*
+ 防止组件重叠的额外样式 */
+.analysis-tabs .ant-row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+}
+
+.analysis-tabs .ant-col {
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-bottom: 24px;
+}
+
+/* 确保表单和结果区域有足够的间距 */
+.analysis-form-container,
+.analysis-results-container {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 20px;
+  height: fit-content;
+  min-height: 400px;
+}
+
+/* 移动端优化 */
+@media (max-width: 992px) {
+  .analysis-tabs .ant-col {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .analysis-form-container,
+  .analysis-results-container {
+    padding: 16px;
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .analysis-page {
+    padding: 16px 8px;
+  }
+  
+  .analysis-tabs {
+    padding: 12px 8px;
+    border-radius: 8px;
+  }
+  
+  .analysis-tabs .ant-col {
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-bottom: 12px;
+  }
+  
+  .analysis-form-container,
+  .analysis-results-container {
+    padding: 12px;
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 576px) {
+  .analysis-page {
+    padding: 12px 4px;
+  }
+  
+  .analysis-tabs {
+    padding: 8px 4px;
+    margin: 0;
+  }
+  
+  .analysis-tabs .ant-tabs-tab {
+    font-size: 12px;
+    padding: 8px 6px;
+  }
+  
+  .analysis-form-container,
+  .analysis-results-container {
+    padding: 8px;
+    min-height: 200px;
+  }
+}
+
+/* 修复可能的 z-index 问题 */
+.analysis-tabs .ant-tabs-content {
+  position: relative;
+  z-index: 1;
+}
+
+.analysis-tabs .ant-tabs-tab-btn {
+  position: relative;
+  z-index: 2;
+}
+
+/* 确保内容不会溢出 */
+.analysis-page * {
+  box-sizing: border-box;
+}
+
+/* 修复 Ant Design 组件的默认边距 */
+.analysis-tabs .ant-tabs-content-holder .ant-tabs-content .ant-tabs-tabpane {
+  padding: 0;
+  margin: 0;
+}

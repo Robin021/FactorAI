@@ -1,0 +1,407 @@
+/* Printable Report Styles */
+.printable-report {
+  background: white;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* Header Styles */
+.print-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #1890ff;
+}
+
+.header-content {
+  flex: 1;
+}
+
+.report-title {
+  margin: 0 0 0.5rem 0 !important;
+  color: #1890ff;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stock-code {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #262626;
+}
+
+.report-date {
+  font-size: 0.95rem;
+  color: #8c8c8c;
+}
+
+.header-logo {
+  text-align: right;
+  color: #8c8c8c;
+}
+
+/* Section Styles */
+.print-section {
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  box-shadow: none;
+  border: 1px solid #f0f0f0;
+}
+
+.print-section .ant-card-head {
+  background: #fafafa;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.print-section .ant-card-head-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #262626;
+}
+
+.print-section .ant-card-body {
+  padding: 1.5rem;
+}
+
+/* Executive Summary Styles */
+.summary-stats {
+  margin-bottom: 1.5rem;
+}
+
+.summary-stat {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #1890ff;
+  min-width: 32px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-content .ant-typography {
+  margin: 0;
+}
+
+.recommendation-tag {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+}
+
+.summary-text {
+  margin-top: 1rem;
+}
+
+.summary-text h4 {
+  margin-bottom: 0.75rem;
+  color: #262626;
+}
+
+.summary-text .ant-typography {
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* Analysis Details Styles */
+.analysis-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.analysis-section {
+  page-break-inside: avoid;
+}
+
+.analysis-summary,
+.key-metrics,
+.key-points,
+.recommendations {
+  margin-bottom: 1.5rem;
+}
+
+.analysis-summary h5,
+.key-metrics h5,
+.key-points h5,
+.recommendations h5 {
+  margin-bottom: 0.75rem;
+  color: #262626;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.metric-item {
+  background: #fafafa;
+  padding: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #f0f0f0;
+  margin-bottom: 0.5rem;
+}
+
+.metric-item .ant-statistic-title {
+  font-size: 0.875rem;
+  color: #8c8c8c;
+  margin-bottom: 0.25rem;
+}
+
+.metric-item .ant-statistic-content {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #262626;
+}
+
+.recommendation-list {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.recommendation-list li {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Timeline Customization */
+.key-points .ant-timeline {
+  margin-top: 0.5rem;
+}
+
+.key-points .ant-timeline-item-content {
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Descriptions Customization */
+.print-section .ant-descriptions-item-label {
+  font-weight: 600;
+  color: #595959;
+  background: #fafafa;
+}
+
+.print-section .ant-descriptions-item-content {
+  color: #262626;
+}
+
+/* Disclaimer Styles */
+.disclaimer {
+  background: #fff7e6;
+  border: 1px solid #ffd591;
+}
+
+.disclaimer .ant-card-head {
+  background: #fff2e8;
+  border-bottom: 1px solid #ffd591;
+}
+
+.disclaimer-text {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #ad6800;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Footer Styles */
+.print-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #8c8c8c;
+}
+
+/* Print-specific Styles */
+@media print {
+  .printable-report {
+    padding: 1rem;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  .print-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .report-title {
+    font-size: 18pt !important;
+  }
+
+  .stock-code {
+    font-size: 14pt;
+  }
+
+  .report-date {
+    font-size: 10pt;
+  }
+
+  .print-section {
+    margin-bottom: 1.5rem;
+    border: 1px solid #ddd;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  .print-section .ant-card-head {
+    background: #f5f5f5 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .print-section .ant-card-body {
+    padding: 1rem;
+  }
+
+  .summary-stat {
+    padding: 0.75rem;
+    background: #f9f9f9 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .stat-icon {
+    font-size: 16pt;
+  }
+
+  .recommendation-tag {
+    background: #f0f0f0 !important;
+    color: #333 !important;
+    border: 1px solid #ddd !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .metric-item {
+    background: #f9f9f9 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .disclaimer {
+    background: #fffbf0 !important;
+    border: 1px solid #e6cc80 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .disclaimer .ant-card-head {
+    background: #fff8e1 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .print-footer {
+    margin-top: 1.5rem;
+    padding-top: 0.75rem;
+  }
+
+  /* Force page breaks */
+  .analysis-section {
+    page-break-inside: avoid;
+  }
+
+  .summary-stats {
+    page-break-inside: avoid;
+  }
+
+  /* Hide elements that shouldn't print */
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Responsive Styles for Screen */
+@media screen and (max-width: 768px) {
+  .printable-report {
+    padding: 1rem;
+  }
+
+  .print-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .header-logo {
+    text-align: center;
+  }
+
+  .summary-stats .ant-col {
+    margin-bottom: 1rem;
+  }
+
+  .summary-stat {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .printable-report {
+    padding: 0.75rem;
+  }
+
+  .report-title {
+    font-size: 1.5rem !important;
+  }
+
+  .stock-code {
+    font-size: 1.1rem;
+  }
+
+  .print-section .ant-card-body {
+    padding: 1rem;
+  }
+
+  .summary-stat {
+    padding: 0.75rem;
+  }
+
+  .stat-icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* Color Adjustments for Print */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
