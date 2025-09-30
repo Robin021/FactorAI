@@ -25,6 +25,30 @@
 ### 状态
 ✅ 已完成
 
+## 2025-09-30 新增一键启动 docker-compose (基于GHCR镜像)
+
+### 任务描述
+提供一个无需本地构建、直接使用 GHCR 镜像的一键启动 Compose 文件，便于快速体验和部署。
+
+### 新增文件
+- `docker-compose.ghcr.yml`
+  - 服务 `web`：从 `ghcr.io/<owner>/tradingagents-cn:cn-0.1.16` 启动，暴露 8501/8000
+  - 服务 `mongodb`：持久化卷 `mongodb_data`
+  - 服务 `redis`：启用 AOF，持久化卷 `redis_data`
+
+### 使用说明
+```bash
+export GITHUB_OWNER=hsliuping  # 如你fork了仓库，请改为你的 GitHub 用户名
+docker compose -f docker-compose.ghcr.yml up -d
+
+# 查看
+open http://localhost:8501
+open http://localhost:8000/api/v1/docs
+```
+
+### 状态
+✅ 已完成
+
 ## 2025-09-30 A股301209分析进度问题深度诊断
 
 ### 任务描述

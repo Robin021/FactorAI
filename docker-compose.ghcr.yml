@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  web:
+    image: ghcr.io/${GITHUB_OWNER:-hsliuping}/tradingagents-cn:cn-0.1.16
+    container_name: tradingagents-cn
+    ports:
+      - "8501:8501"
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      TZ: "Asia/Shanghai"
+      MONGODB_ENABLED: "true"
+      REDIS_ENABLED: "true"
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: 27017
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # 兼容现有后端默认端口
+      BACKEND_PORT: 8000
+    depends_on:
+      - mongodb
+      - redis
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6
+    container_name: tradingagents-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: tradingagents123
+      MONGO_INITDB_DATABASE: tradingagents
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: tradingagents-redis
+    command: redis-server --appendonly yes --requirepass tradingagents123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+
