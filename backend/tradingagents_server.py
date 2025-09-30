@@ -15,7 +15,7 @@ import sys
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
-import jwt
+from jose import jwt
 from datetime import datetime, timedelta
 import hashlib
 import time
@@ -218,7 +218,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
                 detail="Invalid authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-    except jwt.PyJWTError:
+    except jwt.JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
