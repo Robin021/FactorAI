@@ -7,7 +7,7 @@ from typing import Dict, Any, List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
-from ..models.config import (
+from models.config import (
     Config,
     ConfigInDB,
     ConfigType,
@@ -18,7 +18,7 @@ from ..models.config import (
     LLMProvider,
     DataSourceType
 )
-from ..core.database import get_database, Depends
+from core.database import get_database, Depends
 
 # Import TradingAgents config components for compatibility
 from tradingagents.default_config import DEFAULT_CONFIG

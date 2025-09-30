@@ -7,8 +7,8 @@ from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from ...app.config import settings
-from ...app.dependencies import get_database, get_redis
+from app.config import settings
+from app.dependencies import get_database, get_redis
 
 router = APIRouter()
 
@@ -55,7 +55,7 @@ async def detailed_health_check():
     
     # Check database connection
     try:
-        from ...core.database import db_manager
+        from core.database import db_manager
         start_time = asyncio.get_event_loop().time()
         is_healthy = await db_manager.health_check()
         end_time = asyncio.get_event_loop().time()
@@ -79,7 +79,7 @@ async def detailed_health_check():
     
     # Check Redis connection
     try:
-        from ...core.database import cache_manager
+        from core.database import cache_manager
         start_time = asyncio.get_event_loop().time()
         is_healthy = await cache_manager.health_check()
         end_time = asyncio.get_event_loop().time()

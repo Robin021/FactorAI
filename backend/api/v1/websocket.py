@@ -7,11 +7,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPExce
 from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 
-from ...models.user import UserInDB
-from ...core.websocket_manager import get_websocket_manager, WebSocketManager
-from ...core.security import get_user_by_id
-from ...core.auth import verify_token
-from ...app.config import settings
+from models.user import UserInDB
+from core.websocket_manager import get_websocket_manager, WebSocketManager
+from core.security import get_user_by_id
+from core.auth import verify_token
+from app.config import settings
 from tradingagents.utils.logging_manager import get_logger
 
 logger = get_logger('websocket_api')

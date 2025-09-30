@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
-from ...models.user import UserInDB
-from ...models.analysis import (
+from models.user import UserInDB
+from models.analysis import (
     Analysis,
     AnalysisInDB,
     AnalysisRequest,
@@ -20,14 +20,14 @@ from ...models.analysis import (
     AnalysisHistoryQuery,
     MarketType
 )
-from ...core.security import (
+from core.security import (
     get_current_active_user,
     require_permissions,
     Permissions
 )
-from ...core.database import get_database, get_redis
-from ...core.exceptions import AuthenticationException, ValidationException
-from ...services.analysis_service import AnalysisService, get_analysis_service
+from core.database import get_database, get_redis
+from core.exceptions import AuthenticationException, ValidationException
+from services.analysis_service import AnalysisService, get_analysis_service
 
 # Import logging
 from tradingagents.utils.logging_manager import get_logger
@@ -47,8 +47,8 @@ async def start_analysis(
     Start a new analysis task using async task queue
     """
     # Import here to avoid circular imports
-    from ...services.async_analysis_service import get_async_analysis_service
-    from ...core.task_queue import TaskPriority
+    from services.async_analysis_service import get_async_analysis_service
+    from core.task_queue import TaskPriority
     
     # Validate stock code format based on market type
     if not _validate_stock_code(analysis_request.stock_code, analysis_request.market_type):
@@ -580,7 +580,7 @@ async def get_queue_stats(
     """
     Get task queue statistics (admin only)
     """
-    from ...services.async_analysis_service import get_async_analysis_service
+    from services.async_analysis_service import get_async_analysis_service
     
     async_analysis_service = await get_async_analysis_service()
     stats = await async_analysis_service.get_queue_stats()

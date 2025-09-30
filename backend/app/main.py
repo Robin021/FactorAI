@@ -6,18 +6,18 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .middleware import setup_middleware
-from ..core.exceptions import (
+from core.exceptions import (
     TradingAgentsException,
     trading_agents_exception_handler,
     http_exception_handler,
     general_exception_handler,
 )
-from ..core.database import init_db, close_db
-from ..api.v1.health import router as health_router
-from ..api.v1.auth import router as auth_router
-from ..api.v1.analysis import router as analysis_router
-from ..api.v1.config import router as config_router
-from ..api.v1.websocket import router as websocket_router
+from core.database import init_db, close_db
+from api.v1.health import router as health_router
+from api.v1.auth import router as auth_router
+from api.v1.analysis import router as analysis_router
+from api.v1.config import router as config_router
+from api.v1.websocket import router as websocket_router
 
 
 def create_application() -> FastAPI:
@@ -75,11 +75,11 @@ def create_application() -> FastAPI:
             await init_db()
             
             # Initialize task queue
-            from ..core.task_queue import initialize_task_queue
+            from core.task_queue import initialize_task_queue
             await initialize_task_queue()
             
             # Initialize WebSocket manager
-            from ..core.websocket_manager import get_websocket_manager
+            from core.websocket_manager import get_websocket_manager
             await get_websocket_manager()
             
             print("Application startup completed")
@@ -92,11 +92,11 @@ def create_application() -> FastAPI:
         """Close database connections and shutdown task queue"""
         try:
             # Shutdown task queue
-            from ..core.task_queue import shutdown_task_queue
+            from core.task_queue import shutdown_task_queue
             await shutdown_task_queue()
             
             # Shutdown WebSocket manager
-            from ..core.websocket_manager import shutdown_websocket_manager
+            from core.websocket_manager import shutdown_websocket_manager
             await shutdown_websocket_manager()
             
             await close_db()

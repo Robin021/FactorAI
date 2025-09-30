@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
-from ...models.user import UserInDB
-from ...models.config import (
+from models.user import UserInDB
+from models.config import (
     Config,
     ConfigInDB,
     ConfigType,
@@ -21,14 +21,14 @@ from ...models.config import (
     LLMProvider,
     DataSourceType
 )
-from ...core.security import (
+from core.security import (
     get_current_active_user,
     require_permissions,
     get_current_admin_user,
     Permissions
 )
-from ...core.database import get_database
-from ...services.config_service import ConfigService, get_config_service
+from core.database import get_database
+from services.config_service import ConfigService, get_config_service
 
 router = APIRouter()
 

@@ -9,15 +9,15 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from jose import jwt, JWTError
 
-from ...models.user import User, UserInDB, UserLogin, Token, UserCreate, UserUpdate, PasswordResetRequest, PasswordReset
-from ...core.auth import (
+from models.user import User, UserInDB, UserLogin, Token, UserCreate, UserUpdate, PasswordResetRequest, PasswordReset
+from core.auth import (
     verify_password,
     get_password_hash,
     create_token_for_user,
     create_access_token,
     SessionManager
 )
-from ...core.security import (
+from core.security import (
     get_current_user,
     get_current_active_user,
     get_current_admin_user,
@@ -25,9 +25,9 @@ from ...core.security import (
     security,
     create_rate_limiter
 )
-from ...core.database import get_database
-from ...core.exceptions import AuthenticationException, AuthorizationException
-from ...app.config import settings
+from core.database import get_database
+from core.exceptions import AuthenticationException, AuthorizationException
+from app.config import settings
 
 router = APIRouter()
 
