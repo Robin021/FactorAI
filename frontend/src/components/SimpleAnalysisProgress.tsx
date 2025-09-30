@@ -4,13 +4,13 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Progress, Card, Typography, Space, Tag, Button, Alert, Statistic, Row, Col } from 'antd';
-import { 
-  PlayCircleOutlined, 
+import {
+  PlayCircleOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   StopOutlined,
-  ReloadOutlined
+  ReloadOutlined,
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -39,12 +39,12 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
   analysisId,
   onComplete,
   onCancel,
-  showCancelButton = true
+  showCancelButton = true,
 }) => {
   const [progressData, setProgressData] = useState<ProgressData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const POLL_INTERVAL = 3000; // 3秒轮询一次
 
@@ -64,54 +64,86 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
   // 获取状态颜色
   const getStatusColor = useCallback((status: string) => {
     switch (status) {
-      case 'pending': return 'default';
-      case 'running': return 'processing';
-      case 'completed': return 'success';
-      case 'failed': return 'error';
-      case 'cancelled': return 'warning';
-      default: return 'default';
+      case 'pending':
+        return 'default';
+      case 'running':
+        return 'processing';
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'error';
+      case 'cancelled':
+        return 'warning';
+      default:
+        return 'default';
     }
   }, []);
 
   // 获取状态图标
   const getStatusIcon = useCallback((status: string) => {
     switch (status) {
-      case 'pending': return <ClockCircleOutlined />;
-      case 'running': return <PlayCircleOutlined spin />;
-      case 'completed': return <CheckCircleOutlined />;
-      case 'failed': return <ExclamationCircleOutlined />;
-      case 'cancelled': return <StopOutlined />;
-      default: return <ClockCircleOutlined />;
+      case 'pending':
+        return <ClockCircleOutlined />;
+      case 'running':
+        return <PlayCircleOutlined spin />;
+      case 'completed':
+        return <CheckCircleOutlined />;
+      case 'failed':
+        return <ExclamationCircleOutlined />;
+      case 'cancelled':
+        return <StopOutlined />;
+      default:
+        return <ClockCircleOutlined />;
     }
   }, []);
 
   // 获取进度数据
   const fetchProgress = useCallback(async () => {
     if (isLoading) return;
-    
+
     setIsLoading(true);
     try {
       const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/v1/analysis/${analysisId}/progress`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data: ProgressData = await response.json();
+
+        // 🔍 调试：打印接收到的原始数据
+        console.log('🔍 [进度数据] 从后端接收:', {
+          analysis_id: data.analysis_id,
+          status: data.status,
+          progress_percentage: data.progress_percentage,
+          current_step: data.current_step,
+          total_steps: data.total_steps,
+          message: data.message,
+          current_step_name: data.current_step_name,
+        });
+
         setProgressData(data);
         setError(null);
-        
+
         // 检查是否完成
         if (data.status === 'completed' || data.status === 'failed') {
+          console.log('✅ [分析完成] 状态:', data.status);
           onComplete?.(data.status === 'completed');
           // 停止轮询
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
+        } else {
+          console.log(
+            '⏳ [分析进行中] 进度:',
+            `${Math.round(data.progress_percentage * 100)}%`,
+            '步骤:',
+            `${data.current_step + 1}/${data.total_steps}`
+          );
         }
       } else if (response.status === 404) {
         setError('分析不存在');
@@ -139,7 +171,7 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -164,7 +196,7 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
   useEffect(() => {
     // 立即获取一次
     fetchProgress();
-    
+
     // 设置定时轮询
     intervalRef.current = setInterval(fetchProgress, POLL_INTERVAL);
 
@@ -194,31 +226,38 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
     elapsed_time,
     estimated_remaining,
     current_step_name,
-    status
+    status,
   } = progressData || {};
 
   return (
-    <Card 
+    <Card
       title={
         <Space>
           <span>📊 分析进度</span>
           {status && (
             <Tag color={getStatusColor(status)} icon={getStatusIcon(status)}>
-              {status === 'running' ? '进行中' : 
-               status === 'completed' ? '已完成' :
-               status === 'failed' ? '失败' :
-               status === 'cancelled' ? '已取消' : '等待中'}
+              {status === 'running'
+                ? '进行中'
+                : status === 'completed'
+                  ? '已完成'
+                  : status === 'failed'
+                    ? '失败'
+                    : status === 'cancelled'
+                      ? '已取消'
+                      : '等待中'}
             </Tag>
           )}
           {isLoading && (
-            <Tag color="blue" icon={<ReloadOutlined spin />}>更新中</Tag>
+            <Tag color="blue" icon={<ReloadOutlined spin />}>
+              更新中
+            </Tag>
           )}
         </Space>
       }
       extra={
         <Space>
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
             loading={isLoading}
@@ -227,13 +266,7 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
             刷新
           </Button>
           {showCancelButton && status === 'running' && (
-            <Button 
-              type="text" 
-              danger 
-              icon={<StopOutlined />}
-              onClick={handleCancel}
-              size="small"
-            >
+            <Button type="text" danger icon={<StopOutlined />} onClick={handleCancel} size="small">
               取消
             </Button>
           )}
@@ -259,9 +292,13 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
             <Progress
               percent={Math.round(progress_percentage * 100)}
               status={
-                status === 'completed' ? 'success' :
-                status === 'failed' ? 'exception' :
-                status === 'running' ? 'active' : 'normal'
+                status === 'completed'
+                  ? 'success'
+                  : status === 'failed'
+                    ? 'exception'
+                    : status === 'running'
+                      ? 'active'
+                      : 'normal'
               }
               strokeColor={{
                 '0%': '#108ee9',
@@ -271,6 +308,10 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
               strokeWidth={8}
               showInfo={true}
             />
+            {/* 调试信息 */}
+            <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
+              原始进度值: {progress_percentage} | 显示: {Math.round(progress_percentage * 100)}%
+            </div>
           </div>
 
           {/* 当前状态 */}
@@ -318,13 +359,15 @@ const SimpleAnalysisProgress: React.FC<SimpleAnalysisProgressProps> = ({
           </div>
 
           {/* 最后更新时间 */}
-          <div style={{ 
-            fontSize: '12px', 
-            color: '#999', 
-            textAlign: 'right',
-            borderTop: '1px solid #f0f0f0',
-            paddingTop: '8px'
-          }}>
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#999',
+              textAlign: 'right',
+              borderTop: '1px solid #f0f0f0',
+              paddingTop: '8px',
+            }}
+          >
             最后更新: {new Date().toLocaleTimeString()}
           </div>
         </>

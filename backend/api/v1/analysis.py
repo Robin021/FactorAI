@@ -29,6 +29,10 @@ from ...core.database import get_database, get_redis
 from ...core.exceptions import AuthenticationException, ValidationException
 from ...services.analysis_service import AnalysisService, get_analysis_service
 
+# Import logging
+from tradingagents.utils.logging_manager import get_logger
+logger = get_logger('api.analysis')
+
 router = APIRouter()
 
 
@@ -87,6 +91,114 @@ async def start_analysis(
         "status": "queued",
         "message": "Analysis queued successfully",
         "priority": priority
+    }
+
+
+@router.get("/{analysis_id}/progress")
+async def get_analysis_progress(
+    analysis_id: str,
+    current_user: UserInDB = Depends(require_permissions([Permissions.ANALYSIS_READ])),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    redis_client = Depends(get_redis)
+):
+    """
+    Get analysis progress (polling endpoint)
+    Returns detailed progress information for frontend polling
+    """
+    try:
+        analysis_object_id = ObjectId(analysis_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid analysis ID format"
+        )
+    
+    # Get analysis from database
+    analysis_doc = await db.analyses.find_one({"_id": analysis_object_id})
+    if not analysis_doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found"
+        )
+    
+    analysis = AnalysisInDB(**analysis_doc)
+    
+    # Check if user owns this analysis or is admin
+    if str(analysis.user_id) != str(current_user.id) and "admin" not in current_user.role.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
+    
+    # Get real-time progress from Redis
+    progress_data = None
+    redis_keys_to_try = [
+        f"analysis_progress:{analysis_id}",  # React版本格式
+        f"progress:{analysis_id}",           # Streamlit版本格式
+        f"task_progress:analysis_{analysis_id}"  # TaskQueue格式
+    ]
+    
+    for key in redis_keys_to_try:
+        progress_data = await redis_client.get(key)
+        if progress_data:
+            break
+    
+    # 解析进度数据
+    if progress_data:
+        try:
+            import json
+            progress_info = json.loads(progress_data)
+            
+            # 返回兼容前端 SimpleAnalysisProgress 组件的格式
+            # 优先使用 progress_percentage (0-1格式)，如果没有则从 progress (0-100) 转换
+            progress_percentage = progress_info.get("progress_percentage")
+            if progress_percentage is None:
+                # fallback: 从progress字段转换
+                progress_percentage = progress_info.get("progress", 0) / 100.0
+            
+            return {
+                "analysis_id": analysis_id,
+                "status": progress_info.get("status", analysis.status.value),
+                "current_step": progress_info.get("current_step", 0),
+                "total_steps": progress_info.get("total_steps", 6),
+                "progress_percentage": progress_percentage,  # 0-1 的小数格式
+                "message": progress_info.get("message", "正在分析..."),
+                "elapsed_time": progress_info.get("elapsed_time", 0),
+                "estimated_remaining": progress_info.get("estimated_time_remaining", progress_info.get("estimated_remaining", 0)),
+                "current_step_name": progress_info.get("current_step_name") or progress_info.get("current_step") or "分析中",
+                "timestamp": datetime.utcnow().timestamp()
+            }
+        except Exception as e:
+            logger.warning(f"Failed to parse progress data from Redis: {e}")
+    
+    # Fallback to database data
+    # 从数据库构造进度数据
+    progress_percentage = analysis.progress / 100.0 if analysis.progress else 0.0
+    
+    # 根据进度估算当前步骤
+    total_steps = 6
+    current_step = int(progress_percentage * total_steps)
+    
+    # 根据状态返回消息
+    status_messages = {
+        "pending": "等待开始...",
+        "running": "正在分析...",
+        "completed": "分析完成",
+        "failed": analysis.error_message or "分析失败",
+        "cancelled": "已取消"
+    }
+    
+    return {
+        "analysis_id": analysis_id,
+        "status": analysis.status.value,
+        "current_step": current_step,
+        "total_steps": total_steps,
+        "progress_percentage": progress_percentage,
+        "message": status_messages.get(analysis.status.value, "未知状态"),
+        "elapsed_time": 0,
+        "estimated_remaining": 0,
+        "current_step_name": f"步骤 {current_step + 1}/{total_steps}",
+        "timestamp": datetime.utcnow().timestamp()
     }
 
 
@@ -157,8 +269,14 @@ async def get_analysis_status(
                 }
                 status_value = status_mapping.get(status_value, analysis.status.value)
             
-            # 兼容不同的进度字段名
-            progress_value = progress_info.get("progress") or progress_info.get("progress_percentage", analysis.progress)
+            # 兼容不同的进度字段名 - 注意不能用or，因为0会被判断为False
+            if "progress" in progress_info:
+                progress_value = progress_info["progress"]
+            elif "progress_percentage" in progress_info:
+                # progress_percentage是0-1格式，需要转换为0-100
+                progress_value = progress_info["progress_percentage"] * 100
+            else:
+                progress_value = analysis.progress
             
             # 兼容不同的步骤字段名
             current_step = progress_info.get("current_step") or progress_info.get("current_step_name")

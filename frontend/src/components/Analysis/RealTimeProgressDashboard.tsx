@@ -4,7 +4,6 @@ import {
   ClockCircleOutlined,
   ThunderboltOutlined,
   CheckCircleOutlined,
-  PauseCircleOutlined,
   PlayCircleOutlined,
   StopOutlined,
   ReloadOutlined,
@@ -61,6 +60,10 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     averageStepTime: 0,
     throughput: 0,
   });
+
+  // 🔧 估算逻辑已关闭，仅记录最新真实进度时间
+  const [lastRealProgress, setLastRealProgress] = React.useState<number>(0);
+  const [lastProgressUpdateTime, setLastProgressUpdateTime] = React.useState<number>(Date.now());
 
   // 动态生成步骤，与后端保持一致
   const generateSteps = React.useCallback(() => {
@@ -165,12 +168,12 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     };
 
     // 从分析对象中获取分析师列表，如果没有则使用默认值
-    const analysts = analysis.analysts || ['market', 'fundamentals'];
-    
-    analysts.forEach(analyst => {
+    const analysts = (analysis.config?.analysts as string[]) || ['market', 'fundamentals'];
+
+    analysts.forEach((analyst: string) => {
       const name = analystNames[analyst] || analyst;
       const tasks = analystTasks[analyst] || [`执行${name}分析`];
-      
+
       baseSteps.push({
         id: `analyst_${analyst}`,
         name: `${name}分析`,
@@ -192,16 +195,25 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     });
 
     return baseSteps;
-  }, [analysis.analysts]);
+  }, [analysis.config]);
 
   const [steps, setSteps] = React.useState<StepInfo[]>(() => generateSteps());
 
   const [lastUpdateTime, setLastUpdateTime] = React.useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isPolling, setIsPolling] = React.useState(false);
-  
+  const [currentStatus, setCurrentStatus] = React.useState(analysis.status); // 本地状态管理
+
   const pollingIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
-  const POLL_INTERVAL = 1000; // 1秒轮询一次，确保不错过步骤
+  // 🔧 优化：动态轮询间隔
+  const getPollingInterval = () => {
+    const progress = metrics.overallProgress;
+    if (currentStatus === 'completed' || currentStatus === 'failed') return 0;
+    if (progress < 10) return 1000; // 初始阶段：1秒
+    if (progress < 50) return 2000; // 分析阶段：2秒
+    return 3000; // 后期阶段：3秒
+  };
+  const POLL_INTERVAL = 1000; // 基础轮询间隔
 
   // 手动刷新功能
   const refreshProgress = React.useCallback(async () => {
@@ -209,14 +221,15 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     try {
       // 使用正确的API路径
       const token = localStorage.getItem('auth_token');
-      
+
       if (!token) {
         console.warn('No auth token found, cannot fetch progress');
         setLastUpdateTime(new Date());
         return;
       }
-      
-      const response = await fetch(`/api/v1/analysis/${analysis.id}/status`, {
+
+      // ✅ 修复：调用 /progress API 获取真实进度，而不是 /status (返回假数据)
+      const response = await fetch(`/api/v1/analysis/${analysis.id}/progress`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -242,10 +255,15 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
 
   // 开始轮询
   const startPolling = React.useCallback(() => {
-    if (pollingIntervalRef.current || analysis.status === 'completed' || analysis.status === 'failed' || analysis.status === 'cancelled') {
+    if (
+      pollingIntervalRef.current ||
+      analysis.status === 'completed' ||
+      analysis.status === 'failed' ||
+      analysis.status === 'cancelled'
+    ) {
       return;
     }
-    
+
     setIsPolling(true);
     pollingIntervalRef.current = setInterval(refreshProgress, POLL_INTERVAL);
   }, [refreshProgress, analysis.status]);
@@ -259,9 +277,9 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     setIsPolling(false);
   }, []);
 
-  // 自动轮询管理
+  // 自动轮询管理 - 使用本地状态
   React.useEffect(() => {
-    if (analysis.status === 'running' || analysis.status === 'pending') {
+    if (currentStatus === 'running' || currentStatus === 'pending') {
       startPolling();
     } else {
       stopPolling();
@@ -270,7 +288,7 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     return () => {
       stopPolling();
     };
-  }, [analysis.status, startPolling, stopPolling]);
+  }, [currentStatus, startPolling, stopPolling]);
 
   // Timer for elapsed time calculation
   React.useEffect(() => {
@@ -289,20 +307,81 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     return () => clearInterval(timer);
   }, [analysis.createdAt]);
 
+  // 估算功能取消，保留空实现以兼容调用
+  const estimateProgress = (currentProgress: number) => currentProgress;
+
+  // 🔧 新增：获取当前阶段描述
+  const getCurrentPhaseDescription = (
+    elapsedTime: number,
+    progress: number,
+    timeSinceLastUpdate: number
+  ): string => {
+    // 🔧 修复：如果长时间无更新，显示等待状态
+    if (timeSinceLastUpdate > 30) {
+      return '⏳ 等待数据响应中...';
+    }
+    if (timeSinceLastUpdate > 15) {
+      return '🔄 处理中，请稍候...';
+    }
+
+    // 正常阶段描述
+    if (progress >= 90) return '⚠️ 风险评估与决策中...';
+    if (progress >= 70) return '📰 情绪分析中...';
+    if (progress >= 50) return '📈 技术分析中...';
+    if (progress >= 30) return '💰 基本面分析中...';
+    if (progress >= 10) return '📊 市场数据分析中...';
+    return '🔍 数据准备中...';
+  };
+
   function handleProgressUpdate(data: any) {
     // 处理后端返回的AnalysisProgress格式
-    console.log('Progress update received:', data);
+    console.log('🔄 [ProgressUpdate] Received:', {
+      progress: data.progress,
+      status: data.status,
+      message: data.message,
+      current_step: data.current_step,
+    });
 
-    // 更新总体进度 - 当前API返回的是0-100的数值
-    if (data.progress !== undefined) {
+    // 更新总体进度 - API可能返回0-1或0-100的值，需要自动适配（严格使用后端值，不估算）
+    if (data.progress !== undefined || data.progress_percentage !== undefined) {
+      const raw = data.progress !== undefined ? data.progress : data.progress_percentage;
+      const progressValue = raw > 1 ? raw : raw * 100;
+      const now = Date.now();
+      if (progressValue !== lastRealProgress) {
+        setLastRealProgress(progressValue);
+        setLastProgressUpdateTime(now);
+      }
       setMetrics(prev => ({
         ...prev,
-        overallProgress: data.progress,
+        overallProgress: progressValue,
       }));
     }
 
-    // 更新当前步骤信息
-    if (data.current_step) {
+    // 使用后端结构化steps渲染
+    if (Array.isArray(data.steps) && data.steps.length > 0) {
+      const mapped: StepInfo[] = data.steps.map((s: any) => ({
+        id: `step_${s.index}`,
+        name: s.name || `步骤 ${s.index}`,
+        status: (s.status || 'pending') as any,
+        progress: s.status === 'completed' ? 100 : s.status === 'running' ? 50 : 0,
+        message:
+          s.status === 'running'
+            ? data.message || '进行中'
+            : s.status === 'completed'
+              ? '已完成'
+              : '等待开始...',
+      }));
+      setSteps(mapped);
+      const completed = mapped.filter(s => s.status === 'completed').length;
+      const running = mapped.find(s => s.status === 'running');
+      setMetrics(prev => ({
+        ...prev,
+        totalSteps: mapped.length,
+        completedSteps: completed,
+        currentStep: running ? running.name : prev.currentStep,
+      }));
+    } else if (data.current_step) {
+      // 兼容旧字段，更新当前步骤名称
       setMetrics(prev => ({
         ...prev,
         currentStep: data.current_step,
@@ -312,14 +391,17 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
     // 更新消息 - 显示详细的步骤信息
     if (data.message) {
       console.log('Current message:', data.message);
-      
+
       // 根据后端的current_step（1-10）映射到前端步骤索引（0-9）
       let currentStepIndex = 0;
+      // 自动适配0-1或0-100的进度值
+      const progressPercent =
+        data.progress !== undefined ? (data.progress > 1 ? data.progress : data.progress * 100) : 0;
+
       if (data.current_step && typeof data.current_step === 'number') {
         currentStepIndex = Math.max(0, Math.min(data.current_step - 1, steps.length - 1));
       } else {
         // 如果没有current_step，根据进度百分比估算
-        const progressPercent = data.progress || 0;
         if (progressPercent >= 95) currentStepIndex = 9;
         else if (progressPercent >= 90) currentStepIndex = 8;
         else if (progressPercent >= 80) currentStepIndex = 7;
@@ -331,9 +413,16 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
         else if (progressPercent >= 10) currentStepIndex = 1;
         else currentStepIndex = 0;
       }
-      
+
+      console.log(
+        '📍 [StepUpdate] Current step index:',
+        currentStepIndex,
+        'Progress:',
+        progressPercent
+      );
+
       // 更新步骤状态
-      setSteps(prev => 
+      setSteps(prev =>
         prev.map((step, index) => {
           if (index < currentStepIndex) {
             return {
@@ -345,7 +434,7 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
           } else if (index === currentStepIndex) {
             return {
               ...step,
-              status: data.status === 'completed' ? 'completed' : 'running' as const,
+              status: data.status === 'completed' ? 'completed' : ('running' as const),
               progress: data.status === 'completed' ? 100 : Math.min(progressPercent, 100),
               message: data.message,
             };
@@ -381,10 +470,13 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
             completedSteps: prev.totalSteps,
             overallProgress: 100,
           }));
-          
+
+          // 更新本地状态
+          setCurrentStatus('completed');
+
           // 停止轮询
           stopPolling();
-          
+
           // 通知分析完成
           onComplete?.();
           break;
@@ -538,7 +630,7 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <h3>🔐 需要登录</h3>
             <p>请先登录以查看分析进度</p>
-            <Button type="primary" onClick={() => window.location.href = '/login'}>
+            <Button type="primary" onClick={() => (window.location.href = '/login')}>
               前往登录
             </Button>
           </div>
@@ -557,17 +649,18 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
           <Col>
             <Space>
               <h3>分析进度 - {analysis.stockCode}</h3>
-              <Tag color={getStatusColor(analysis.status)}>
-                {analysis.status === 'running'
+              <Tag color={getStatusColor(currentStatus)}>
+                {currentStatus === 'running'
                   ? '运行中'
-                  : analysis.status === 'pending'
+                  : currentStatus === 'pending'
                     ? '等待中'
-                    : analysis.status === 'completed'
+                    : currentStatus === 'completed'
                       ? '已完成'
-                      : analysis.status === 'failed'
+                      : currentStatus === 'failed'
                         ? '失败'
-                        : analysis.status}
+                        : currentStatus}
               </Tag>
+              {/* 已关闭估算提示，严格使用后端真实进度 */}
               {lastUpdateTime && (
                 <Tag color="blue">最后更新: {lastUpdateTime.toLocaleTimeString()}</Tag>
               )}
@@ -583,7 +676,7 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
                   自动轮询中
                 </Tag>
               )}
-              {analysis.status === 'running' && (
+              {currentStatus === 'running' && (
                 <Button danger icon={<StopOutlined />} onClick={handleCancel}>
                   取消分析
                 </Button>
@@ -599,7 +692,7 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
           <Card>
             <Statistic
               title="总体进度"
-              value={metrics.overallProgress}
+              value={metrics.overallProgress.toFixed(1)}
               suffix="%"
               prefix={<ThunderboltOutlined />}
             />
@@ -608,7 +701,12 @@ const RealTimeProgressDashboard: React.FC<RealTimeProgressDashboardProps> = ({
               size="small"
               showInfo={false}
               strokeColor="#1890ff"
+              status={currentStatus === 'running' ? 'active' : 'normal'}
             />
+            {/* 🔧 新增：显示当前阶段 */}
+            {currentStatus === 'running' && (
+              <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>{metrics.currentStep}</div>
+            )}
           </Card>
         </Col>
 

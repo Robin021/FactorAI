@@ -245,14 +245,14 @@ html[data-theme] .ant-select {
 }
 
 html[data-theme] .ant-select-selector {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
   color: var(--text-primary) !important;
 }
 
 html[data-theme] .ant-select:hover .ant-select-selector {
   border-color: var(--accent-color) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 html[data-theme] .ant-select-focused .ant-select-selector {
@@ -266,7 +266,7 @@ html[data-theme] .ant-select-selection-item {
 
 html[data-theme] .ant-select-selection-placeholder,
 html[data-theme] .ant-input::placeholder {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 /* 修复下拉选项 */
@@ -368,11 +368,10 @@ html[data-theme] .analysis-form-card {
   color: var(--text-primary) !important;
 }
 
-/* 统
-一输入框和选择框的样式 */
+/* 统一输入框和选择框的样式 */
 html[data-theme] .ant-input {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
   color: var(--text-primary) !important;
   border-radius: 8px !important;
   height: 40px !important;
@@ -380,12 +379,13 @@ html[data-theme] .ant-input {
 
 html[data-theme] .ant-input:hover {
   border-color: var(--accent-color) !important;
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 html[data-theme] .ant-input:focus {
   border-color: var(--accent-color) !important;
   box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
 }
 
 /* 确保选择框高度一致和文字居中 */
@@ -436,7 +436,7 @@ html[data-theme] .ant-picker-input > input {
 }
 
 html[data-theme] .ant-picker-input > input::placeholder {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 html[data-theme] .ant-picker-suffix {

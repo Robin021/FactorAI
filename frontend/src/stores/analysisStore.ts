@@ -107,8 +107,41 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
     
     try {
       const result = await analysisService.getAnalysisHistory(page, limit);
+      
+      console.log('📊 [Store] 收到历史数据:', result);
+      console.log('📊 [Store] analyses数组:', result.analyses);
+      
+      // 🔧 新增：自动检测运行中的任务
+      const runningAnalysis = result.analyses.find(
+        (item) => item.status === 'running' || item.status === 'pending'
+      );
+
+      // 🔧 新增：如果没有运行中的任务，自动选中最新的完成任务作为当前分析，避免需要来回切换标签
+      let selectedAnalysis = runningAnalysis;
+      if (!selectedAnalysis && result.analyses.length > 0) {
+        // 选择最近的一个（按createdAt倒序），若无createdAt则取第一个
+        const sorted = [...result.analyses].sort((a, b) => {
+          const ta = a.createdAt ? Date.parse(a.createdAt) : 0;
+          const tb = b.createdAt ? Date.parse(b.createdAt) : 0;
+          return tb - ta;
+        });
+        selectedAnalysis = sorted[0];
+      }
+      
+      if (runningAnalysis) {
+        console.log('✅ [Store] 发现运行中的任务:', runningAnalysis);
+        console.log('✅ [Store] 任务ID:', runningAnalysis.id);
+        console.log('✅ [Store] 股票代码:', runningAnalysis.stockCode);
+        console.log('✅ [Store] 状态:', runningAnalysis.status);
+        console.log('✅ [Store] 进度:', runningAnalysis.progress);
+      } else {
+        console.log('ℹ️ [Store] 没有运行中的任务');
+      }
+      
       set({
         analysisHistory: result.analyses,
+        // ✅ 自动设置currentAnalysis：优先运行中的任务，否则最新一条
+        currentAnalysis: selectedAnalysis || get().currentAnalysis,
         pagination: {
           page: result.page,
           limit: result.limit,
@@ -117,8 +150,10 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         historyLoading: false,
         historyError: null,
       });
+      
+      console.log('✅ [Store] 状态已更新，currentAnalysis:', get().currentAnalysis);
     } catch (error: any) {
-      console.error('Failed to load analysis history:', error);
+      console.error('❌ [Store] 加载历史失败:', error);
       set({
         historyLoading: false,
         historyError: error.message || 'Failed to load analysis history',

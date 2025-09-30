@@ -37,11 +37,16 @@ export interface Analysis {
   id: string;
   userId: string;
   stockCode: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   progress: number;
   resultData?: Record<string, any>;
   createdAt: string;
   completedAt?: string;
+  marketType?: string;
+  analysisType?: string;
+  config?: Record<string, any>;
+  errorMessage?: string;
+  startedAt?: string;
 }
 
 export type AnalysisStatus = Analysis['status'];

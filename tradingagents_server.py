@@ -19,10 +19,20 @@ import jwt
 from datetime import datetime, timedelta
 import hashlib
 import time
+import uuid
 
-# 设置日志
+# 设置日志（需要在import MongoDB之前，因为异常处理需要用到logger）
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# MongoDB支持
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient
+    from bson import ObjectId
+    MONGODB_AVAILABLE = True
+except ImportError:
+    MONGODB_AVAILABLE = False
+    logger.warning("⚠️ MongoDB driver not available, analysis history will not be saved")
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent
@@ -58,6 +68,54 @@ security = HTTPBearer()
 
 # 进度存储 - 使用内存存储（生产环境建议使用Redis）
 analysis_progress_store = {}
+
+# Redis客户端（用于与前端API共享进度数据）
+redis_client = None
+try:
+    import redis
+    REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+    REDIS_DB = int(os.getenv("REDIS_DB", "0"))
+    REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)  # 支持密码认证
+    
+    # 构建Redis连接参数
+    redis_config = {
+        "host": REDIS_HOST,
+        "port": REDIS_PORT,
+        "db": REDIS_DB,
+        "decode_responses": True
+    }
+    
+    # 如果有密码，添加密码参数
+    if REDIS_PASSWORD:
+        redis_config["password"] = REDIS_PASSWORD
+    
+    redis_client = redis.Redis(**redis_config)
+    
+    # 测试连接
+    redis_client.ping()
+    password_info = "with password" if REDIS_PASSWORD else "without password"
+    logger.info(f"✅ Redis连接成功: {REDIS_HOST}:{REDIS_PORT} ({password_info})")
+except Exception as e:
+    logger.warning(f"⚠️ Redis连接失败，进度仅保存在内存中: {e}")
+    redis_client = None
+
+# MongoDB客户端（用于持久化分析记录）
+mongodb_client = None
+mongodb_db = None
+if MONGODB_AVAILABLE:
+    try:
+        MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        DATABASE_NAME = os.getenv("DATABASE_NAME", "tradingagents")
+        
+        mongodb_client = AsyncIOMotorClient(MONGODB_URL)
+        mongodb_db = mongodb_client[DATABASE_NAME]
+        
+        logger.info(f"✅ MongoDB连接成功: {DATABASE_NAME}")
+    except Exception as e:
+        logger.warning(f"⚠️ MongoDB连接失败，分析历史将不会保存: {e}")
+        mongodb_client = None
+        mongodb_db = None
 
 # 模拟用户数据库
 fake_users_db = {
@@ -316,11 +374,40 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
     if not request.symbol:
         raise HTTPException(status_code=400, detail="股票代码不能为空")
     
-    # 模拟分析ID生成
-    import uuid
+    # 生成分析ID
     analysis_id = str(uuid.uuid4())
     
-    # 初始化进度数据
+    # 保存到MongoDB数据库（如果可用）
+    db_object_id = None
+    if mongodb_db is not None:
+        try:
+            # 创建分析记录
+            analysis_doc = {
+                "user_id": current_user.get("sub", current_user["username"]),  # 用户唯一标识
+                "stock_code": request.symbol.upper(),
+                "market_type": request.market_type,
+                "status": "pending",  # 初始状态
+                "progress": 0.0,
+                "config": {
+                    "analysis_type": request.analysis_type,
+                    "username": current_user["username"]
+                },
+                "created_at": datetime.utcnow(),
+                "result_data": None,
+                "error_message": None
+            }
+            
+            result = await mongodb_db.analyses.insert_one(analysis_doc)
+            db_object_id = str(result.inserted_id)
+            
+            # 使用数据库ID作为分析ID，保持一致性
+            analysis_id = db_object_id
+            
+            logger.info(f"✅ 分析记录已保存到数据库: {analysis_id}")
+        except Exception as e:
+            logger.warning(f"⚠️ 保存分析到数据库失败: {e}，将继续使用内存存储")
+    
+    # 初始化进度数据（内存和Redis）
     analysis_progress_store[analysis_id] = {
         "analysis_id": analysis_id,
         "symbol": request.symbol.upper(),
@@ -335,9 +422,10 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
         "remaining_time": 35.0,
         "last_message": "分析即将开始...",
         "last_update": time.time(),
+        "start_time": time.time(),  # 记录开始时间
         "timestamp": datetime.now().isoformat(),
-        "user": current_user["username"],  # 添加用户关联
-        "user_sub": current_user.get("sub", ""),  # 添加用户唯一标识
+        "user": current_user["username"],
+        "user_sub": current_user.get("sub", ""),
         "market_type": request.market_type,
         "analysis_type": request.analysis_type
     }
@@ -1039,6 +1127,12 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                         else:  # 后期阶段，保持当前进度
                             progress_percentage = current_progress
                         current_step_num = analysis_progress_store[analysis_id].get("current_step", 1)
+
+                # 心跳消息：仅更新时间与提示，不改变百分比（保证前端看到“在进行”但不编造进度）
+                if isinstance(message, str) and "HEARTBEAT" in message:
+                    progress_percentage = analysis_progress_store[analysis_id].get("progress_percentage", 0)
+                    # 保持当前步骤不变
+                    current_step_num = analysis_progress_store[analysis_id].get("current_step", current_step_num)
                     
                     total_step_num = 10
                 
@@ -1058,18 +1152,51 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     estimated_remaining = 0
                 
                 # 更新进度数据
-                analysis_progress_store[analysis_id].update({
+                # 构建步骤结构化信息（等权）。如果具体权重未来可用，可在此替换为权重表。
+                steps_list = []
+                for idx in range(1, total_step_num + 1):
+                    if progress_percentage >= 1.0 or idx < current_step_num:
+                        step_status = "completed"
+                    elif idx == current_step_num and progress_percentage < 1.0:
+                        step_status = "running"
+                    else:
+                        step_status = "pending"
+                    steps_list.append({
+                        "index": idx,
+                        "name": f"步骤 {idx}",
+                        "status": step_status
+                    })
+
+                progress_data = {
                     "status": "running" if progress_percentage < 1.0 else "completed",
                     "current_step": current_step_num,
                     "total_steps": total_step_num,
                     "progress_percentage": progress_percentage,  # 保持0-1之间的小数
+                    "progress": progress_percentage * 100,  # 同时提供0-100格式供兼容
                     "current_step_name": message.split("...")[0] if "..." in message else message[:50],
                     "message": message,
-                    "elapsed_time": elapsed_time,
-                    "estimated_remaining": estimated_remaining,
+                    "elapsed_time": int(elapsed_time),
+                    "estimated_time_remaining": int(estimated_remaining),
+                    "estimated_remaining": estimated_remaining,  # 保留旧字段兼容性
+                    "steps": steps_list,
                     "last_update": current_time,
-                    "timestamp": datetime.now().isoformat()
-                })
+                    "timestamp": datetime.now().isoformat(),
+                    "updated_at": datetime.now().isoformat()
+                }
+                
+                # 更新内存存储
+                analysis_progress_store[analysis_id].update(progress_data)
+                
+                # 同时写入Redis，供前端API读取
+                if redis_client:
+                    try:
+                        import json
+                        # 使用与backend API相同的Redis键格式
+                        redis_key = f"analysis_progress:{analysis_id}"
+                        redis_client.setex(redis_key, 3600, json.dumps(progress_data))  # 1小时过期
+                    except Exception as redis_error:
+                        # Redis写入失败不应该影响分析继续进行
+                        logger.warning(f"Failed to write progress to Redis: {redis_error}")
                 
                 # 记录进度变化，包括调试信息
                 progress_percent_display = int(progress_percentage * 100)
@@ -1123,27 +1250,122 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
             )
             
             # 保存分析结果
-            analysis_progress_store[analysis_id].update({
-                "status": "completed" if result.get("success", False) else "failed",
-                "progress_percentage": 100,
-                "last_message": "分析完成！" if result.get("success", False) else f"分析失败: {result.get('error', '未知错误')}",
+            final_status = "completed" if result.get("success", False) else "failed"
+            final_message = "分析完成！" if result.get("success", False) else f"分析失败: {result.get('error', '未知错误')}"
+            
+            final_progress_data = {
+                "status": final_status,
+                "progress_percentage": 1.0,
+                "progress": 100,
+                "current_step": 10,
+                "total_steps": 10,
+                "message": final_message,
+                "current_step_name": final_message,
+                "last_message": final_message,
                 "results": result,
                 "last_update": time.time(),
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+                "elapsed_time": int(time.time() - analysis_progress_store[analysis_id].get("start_time", time.time())),
+                "estimated_time_remaining": 0,
+                "estimated_remaining": 0
+            }
+            
+            analysis_progress_store[analysis_id].update(final_progress_data)
+            
+            # 同时写入Redis
+            if redis_client:
+                try:
+                    import json
+                    redis_key = f"analysis_progress:{analysis_id}"
+                    redis_client.setex(redis_key, 3600, json.dumps(final_progress_data))
+                    logger.info(f"✅ 分析完成状态已写入Redis: {analysis_id}")
+                except Exception as redis_error:
+                    logger.warning(f"Failed to write completion status to Redis: {redis_error}")
+            
+            # 更新MongoDB数据库状态
+            if mongodb_db is not None:
+                try:
+                    import asyncio
+                    from bson import ObjectId
+                    
+                    update_data = {
+                        "status": final_status,
+                        "progress": 100.0,
+                        "completed_at": datetime.utcnow()
+                    }
+                    
+                    # 如果分析成功，保存结果
+                    if result.get('success', False):
+                        update_data["result_data"] = result
+                    else:
+                        update_data["error_message"] = result.get('error', '未知错误')
+                    
+                    # 使用asyncio运行异步更新
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(
+                        mongodb_db.analyses.update_one(
+                            {"_id": ObjectId(analysis_id)},
+                            {"$set": update_data}
+                        )
+                    )
+                    loop.close()
+                    
+                    logger.info(f"✅ 分析完成状态已更新到数据库: {analysis_id}")
+                except Exception as db_error:
+                    logger.warning(f"⚠️ 更新数据库状态失败: {db_error}")
             
             logger.info(f"分析 {analysis_id} 完成，成功: {result.get('success', False)}")
             
         except Exception as e:
             logger.error(f"分析 {analysis_id} 执行失败: {e}")
-            analysis_progress_store[analysis_id].update({
+            error_progress_data = {
                 "status": "failed",
                 "progress_percentage": 0,
+                "progress": 0,
+                "message": f"分析失败: {str(e)}",
                 "last_message": f"分析失败: {str(e)}",
                 "error": str(e),
                 "last_update": time.time(),
-                "timestamp": datetime.now().isoformat()
-            })
+                "timestamp": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat()
+            }
+            analysis_progress_store[analysis_id].update(error_progress_data)
+            
+            # 同时写入Redis
+            if redis_client:
+                try:
+                    import json
+                    redis_key = f"analysis_progress:{analysis_id}"
+                    redis_client.setex(redis_key, 3600, json.dumps(error_progress_data))
+                except Exception as redis_error:
+                    logger.warning(f"Failed to write error status to Redis: {redis_error}")
+            
+            # 更新MongoDB数据库状态
+            if mongodb_db is not None:
+                try:
+                    import asyncio
+                    from bson import ObjectId
+                    
+                    # 使用asyncio运行异步更新
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(
+                        mongodb_db.analyses.update_one(
+                            {"_id": ObjectId(analysis_id)},
+                            {"$set": {
+                                "status": "failed",
+                                "error_message": str(e),
+                                "completed_at": datetime.utcnow()
+                            }}
+                        )
+                    )
+                    loop.close()
+                    
+                    logger.info(f"✅ 分析失败状态已更新到数据库: {analysis_id}")
+                except Exception as db_error:
+                    logger.warning(f"⚠️ 更新数据库状态失败: {db_error}")
     
     # 启动后台线程
     thread = threading.Thread(target=analysis_worker, daemon=True)

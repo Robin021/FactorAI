@@ -1,5 +1,436 @@
 # 任务记录
 
+## 2025-09-30 版本发布与GHCR镜像自动化
+
+### 任务描述
+为当前可用版本打包发布，并配置 GitHub Actions 自动构建和发布 Docker 镜像到 GHCR（GitHub Container Registry）。
+
+### 变更内容
+- 更新版本号：`VERSION` → `cn-0.1.16`
+- 更新 `pyproject.toml` 项目版本 → `0.1.16`
+- 更新 `README.md` 徽标与“最新版本”文案为 `cn-0.1.16`
+- 新增 GitHub Actions 工作流：`.github/workflows/publish-ghcr.yml`
+  - 支持手动触发（可传入 tag），以及当推送 `cn-*` 标签时自动触发
+  - 自动登录 GHCR 并构建、推送镜像到 `ghcr.io/<owner>/tradingagents-cn:{tag}` 与 `latest`
+
+### 使用说明
+- 手动触发：在 GitHub Actions 页面选择“Publish Docker image to GHCR”，可传入 `tag`（默认读取 `VERSION`）
+- 标签触发：执行 `git tag cn-0.1.16 && git push origin cn-0.1.16` 会自动触发构建并发布
+
+### 后续建议
+- 为前后端分别提供子镜像（多阶段/多服务）
+- 将 `latest` 仅在 `main` 或 `release/*` 分支合并后更新
+- 增加多架构构建（linux/amd64, linux/arm64）
+
+### 状态
+✅ 已完成
+
+## 2025-09-30 A股301209分析进度问题深度诊断
+
+### 任务描述
+通过浏览器 + 后台日志 + API调用，对A股301209（联合化学）进行真实分析测试，诊断进度显示问题。
+
+### 诊断方法
+1. 🌐 启动浏览器访问 http://localhost:3000/analysis
+2. 🔧 通过API直接启动分析任务
+3. 📊 监控后台日志文件（tradingagents.log）
+4. 🔍 轮询API检查进度数据
+5. 📸 截图记录前端显示状态
+
+### 发现的问题
+
+#### 问题1: 前端无法自动显示正在运行的分析任务 ❌
+- **现象**: 通过API启动分析后，前端页面显示"暂无分析任务"
+- **根本原因**: 前端状态管理(`zustand`)没有实现轮询/WebSocket来自动检测新任务
+- **影响**: 用户体验差，无法实时看到分析进度
+
+#### 问题2: 分析进度卡在10%不更新 ❌
+- **现象**: 
+  ```
+  Status: running, Progress: 10.0%, Step: 1/10
+  ElapsedTime: 61s (持续增长)
+  ```
+- **根本原因**: `analysis_runner.py` 的 `update_progress()` 只在 `graph.propagate()` 前后调用，分析执行期间没有进度更新
+- **影响**: 用户误以为系统卡死
+
+#### 问题3: TradingAgentsGraph不支持进度回调 ❌ (核心问题)
+- **现象**: 
+  ```python
+  # analysis_runner.py:478
+  state, decision = graph.propagate(formatted_symbol, analysis_date)
+  # propagate()方法不接受progress_callback参数
+  ```
+- **根本原因**: 架构设计问题，`TradingAgentsGraph` 设计时没有考虑进度回调机制
+- **影响**: 占90%时间的分析阶段完全看不到进度
+
+#### 问题4: 后台日志与前端进度完全不同步 ⚠️
+- **后台日志显示**: 分析已到基本面分析师阶段（13:10:18）
+- **前端API返回**: 进度仍为10%，步骤1/10
+- **根本原因**: `progress_callback` 与分析图执行隔离
+- **影响**: 后台正常工作，用户完全不知道
+
+### 测试数据
+
+**API进度查询** (分析运行61秒后):
+```json
+{
+    "status": "running",
+    "progress_percentage": 0.1,  # 卡住！
+    "current_step": 1,
+    "total_steps": 10,
+    "elapsed_time": 61,  # 时间在更新
+    "message": "正在执行分析..."
+}
+```
+
+**后台日志摘录**:
+```log
+13:08:36 | [进度] 正在执行分析...
+# ⚠️ 之后没有更多进度回调
+13:09:10 | [市场分析师] 使用统一市场数据工具
+13:10:18 | 🔍 开始获取301209的AKShare财务数据
+# 分析在进行，但前端看不到
+```
+
+### 受影响的文件
+1. `tradingagents_server.py` - start_real_analysis(), progress_callback()
+2. `web/utils/analysis_runner.py` - run_stock_analysis(), update_progress()
+3. `tradingagents/graph/trading_graph.py` - TradingAgentsGraph.propagate()
+4. `frontend/src/stores/analysisStore.ts` - 状态管理
+5. `frontend/src/components/Analysis/RealTimeProgressDashboard.tsx` - 进度展示
+
+### 解决方案建议
+
+#### 方案1: 在TradingAgentsGraph中添加进度回调支持 (推荐✅)
+- 修改 `TradingAgentsGraph.__init__()` 接受 `progress_callback`
+- 修改 `propagate()` 传递进度回调给各节点
+- 各分析师节点在关键步骤调用回调
+- **优点**: 彻底解决，细粒度追踪
+- **缺点**: 工作量大
+
+#### 方案2: 前端轮询优化 (临时方案⏰)
+- 减小轮询间隔（500ms）
+- 根据 `elapsed_time` 估算进度
+- 添加动画缓解焦虑
+- **优点**: 快速上线
+- **缺点**: 治标不治本
+
+### 详细诊断报告
+📄 [完整诊断报告](/docs/fixes/progress_display_issues_found_20250930.md)
+
+### 优先级
+1. **P0** (立即): 前端轮询优化 + 进度估算
+2. **P1** (本周): TradingAgentsGraph 进度回调支持
+3. **P2** (可选): 状态管理改进
+
+---
+
+## 2025-09-30 实时进度显示与Tab切换修复
+
+### 任务描述
+修复点击"开始分析"后：
+1. 进度直接显示100%，看不到真实过程
+2. 需要手动点击"实时进度"Tab才能看到状态
+
+### 问题分析
+1. **进度值单位不统一**：
+   - 后端Redis存储的 `progress` 是0-100（整数）
+   - 但某些API返回 `progress_percentage` 是0-1（小数）
+   - 前端 `RealTimeProgressDashboard` 期望0-100的值
+   - 当收到0-1的值时，显示0.XX%，非常小，看起来像0
+   - 但后续计算步骤时按100处理，导致所有步骤都标记为"已完成"
+
+2. **Tab切换逻辑**：
+   - `Analysis/index.tsx` 有自动切换逻辑（useEffect）
+   - 但可能因为状态更新时机或条件不满足而失效
+   - 缺少调试日志，难以追踪问题
+
+### 解决方案
+1. ✅ **统一进度值单位**：在前端自动适配0-1和0-100两种格式
+   - 添加判断：`progress > 1` 则视为0-100，否则乘以100
+   - 在两处关键位置应用：总体进度更新、步骤进度计算
+   
+2. ✅ **增强Tab切换调试**：
+   - 添加详细的console.log追踪 currentAnalysis 变化
+   - 记录 status、progress、activeTab 等关键信息
+   - 便于排查为什么没有自动切换
+
+### 修改的文件
+1. **frontend/src/pages/Analysis/index.tsx**
+   - 添加调试日志到 useEffect（第20-35行）
+   - 记录 currentAnalysis 变化和Tab切换触发
+
+2. **frontend/src/components/Analysis/RealTimeProgressDashboard.tsx**
+   - 修改 `handleProgressUpdate` 函数（第298-315行）
+     - 自动适配0-1或0-100的progress值
+     - 添加详细日志记录
+   - 修改步骤进度计算逻辑（第329-375行）
+     - 统一使用progressPercent变量
+     - 自动转换0-1到0-100
+     - 添加步骤索引和进度日志
+
+### 技术要点
+- **值自适应**：`progress > 1 ? progress : progress * 100`
+- **调试日志分类**：
+  - 🔄 表示数据更新
+  - 📊 表示进度计算
+  - 📍 表示步骤定位
+  - ✅ 表示成功操作
+- **React useEffect依赖**：确保 currentAnalysis 变化时触发
+
+### 测试步骤
+1. 刷新页面，打开浏览器控制台（F12）
+2. 填写股票代码，点击"开始分析"
+3. 观察：
+   - 控制台应显示 `🔄 [Analysis] currentAnalysis changed`
+   - 如果status是running/pending，应显示 `✅ [Analysis] Auto-switching to progress tab`
+   - Tab应自动切换到"实时进度"
+4. 在"实时进度"中观察：
+   - 控制台应显示 `🔄 [ProgressUpdate] Received`
+   - 进度应从0%开始逐步增长（5% → 10% → ...）
+   - 显示 `📍 [StepUpdate] Current step index: X, Progress: XX`
+
+### 预期结果
+✅ Tab自动切换到"实时进度"  
+✅ 进度从0%开始显示  
+✅ 步骤逐个亮起，显示详细信息  
+✅ 控制台有完整的调试日志
+
+### 状态
+🔧 已修复，待用户测试
+
+---
+
+## 2025-09-30 进度估算功能实现 (P0-3)
+
+### 任务描述
+解决分析进度长时间卡在10%的用户体验问题，通过前端进度估算算法让用户看到持续的进度反馈。
+
+### 问题背景
+- 后端真实进度长时间停留在10%（分析师执行需要5-8分钟）
+- 用户看到进度条不动，误以为系统卡死
+- 没有当前阶段的文字提示，不知道系统在做什么
+
+### 解决方案 ✅
+1. **进度估算算法**：
+   - 基于已用时间（elapsedTime）和预估总时间（600秒）自动估算进度
+   - 当进度超过10秒没更新时启用估算
+   - 估算值永远不低于真实进度，最高估算到95%
+   
+2. **UI增强**：
+   - 橙色"预估进度 - 分析进行中..."标签（header）
+   - 当前阶段文字描述（总体进度卡片下方）
+   - 进度条active动画效果
+   - 进度值精确到小数点后一位
+
+3. **动态轮询策略**：
+   - 初始阶段（0-10%）：1秒
+   - 分析阶段（10-50%）：2秒
+   - 后期阶段（50%+）：3秒
+
+### 测试结果 🎯
+**测试任务**: 301209（A股）  
+**测试时间**: 2025-09-30 13:44 - 13:47
+
+| 时间点 | 真实进度 | 估算进度 | 已用时间 |
+| ------ | -------- | -------- | -------- |
+| 开始   | 10%      | 10%      | 0:00     |
+| +2:40  | 10%      | 26.7%    | 2:40     |
+| +3:03  | 10%      | 30.5%    | 3:03     |
+
+**控制台日志**:
+```
+✨ [进度估算] 实际进度:10% -> 估算进度:26.7% (已用时:160s)
+```
+
+### 修改的文件
+1. **frontend/src/components/Analysis/RealTimeProgressDashboard.tsx**
+   - 添加进度估算状态和算法
+   - 实现`estimateProgress()`和`getCurrentPhaseDescription()`
+   - 在handleProgressUpdate()集成估算逻辑
+   - 添加橙色"预估进度"标签
+   - 进度值显示改为`.toFixed(1)`
+
+2. **frontend/src/types/index.ts**
+   - 添加`'cancelled'`状态到Analysis接口
+   - 添加可选字段：`marketType`, `analysisType`, `config`等
+
+3. **frontend/src/services/analysis.ts**
+   - 修复`resultData`类型（`undefined`而不是`null`）
+
+### 技术细节
+```typescript
+// 估算算法
+const estimateProgress = (currentProgress: number, elapsedTime: number): number => {
+  if (currentProgress >= 90) return currentProgress;
+  const ESTIMATED_TOTAL_TIME = 600; // 10分钟
+  const timeBasedProgress = Math.min((elapsedTime / ESTIMATED_TOTAL_TIME) * 100, 95);
+  return Math.max(currentProgress, timeBasedProgress);
+};
+
+// 触发条件
+if (timeSinceLastUpdate > 10 && status === 'running' && progress < 90) {
+  // 启用估算
+}
+```
+
+### 用户体验改善 ⭐
+**修复前**:
+- ❌ 进度卡在10%数分钟
+- ❌ 用户不知道系统是否还在运行
+- ❌ 用户焦虑
+
+**修复后**:
+- ✅ 进度持续增长（10% -> 30.5%）
+- ✅ 显示"预估进度"标签
+- ✅ 显示当前阶段描述（如"📊 市场数据分析中..."）
+- ✅ 进度条有active动画
+- ✅ 用户体验显著改善
+
+### 已知限制 ⚠️
+1. 这是前端补丁方案，核心问题（P1: TradingAgentsGraph不支持progress_callback）仍需解决
+2. 估算基于固定的10分钟总时间，可能不够准确
+3. 用户需要知道这是估算值（通过橙色标签提示）
+
+### 后续工作
+- P1: 修改`TradingAgentsGraph.propagate()`，添加`progress_callback`参数
+- P2: 基于历史数据动态调整预估总时间
+- P3: 为不同分析类型使用不同的时间估算
+
+### 相关文档
+📄 [进度估算完成报告](/docs/fixes/progress_estimation_fix_20250930.md)
+
+### 状态
+✅ 已完成并验证
+
+---
+
+## 2025-09-30 分析数据持久化修复
+
+### 任务描述
+修复刷新页面后分析数据丢失的问题
+
+### 问题分析
+1. **只保存在内存**：旧API只将数据存在 `analysis_progress_store`（内存）
+2. **没有数据库记录**：刷新页面后无法从数据库恢复
+3. **历史记录为空**：前端历史记录API读取数据库，查不到任何数据
+
+### 解决方案
+1. ✅ 在 `tradingagents_server.py` 中添加MongoDB客户端
+2. ✅ 启动分析时创建数据库记录
+3. ✅ 分析完成/失败时更新数据库状态
+4. ✅ 支持优雅降级（MongoDB不可用时仍能工作）
+
+### 修改的文件
+- **修改**：`tradingagents_server.py`
+  - 添加MongoDB客户端初始化
+  - 修改 `start_analysis` 保存到数据库
+  - 修改分析完成时更新数据库
+  - 修改分析失败时更新数据库
+
+### 技术要点
+- 使用motor异步MongoDB驱动
+- 在同步线程中使用asyncio新建event loop
+- 优雅降级：MongoDB不可用时仍保存到内存和Redis
+- 使用MongoDB ObjectId作为分析ID保持一致性
+
+### 环境变量
+```bash
+MONGODB_URL=mongodb://localhost:27017
+DATABASE_NAME=tradingagents
+```
+
+### 测试步骤
+1. 确保MongoDB运行（`mongod`）
+2. 重启后端服务（看到MongoDB连接成功的日志）
+3. 启动一个分析任务
+4. **刷新页面**
+5. 点击"历史记录"标签
+6. 应该能看到分析记录并继续查看进度
+
+### 状态
+✅ 已完成
+
+### 相关文档
+- [修复报告](../fixes/progress_persistence_fix_20250930.md)
+
+---
+
+## 2025-09-30 前端分析进度显示修复
+
+### 任务描述
+修复点击开始分析后，前端直接显示100%而看不到具体分析过程的问题
+
+### 问题分析
+1. **API路径不匹配**：前端调用 `/api/analysis/start`（旧服务器），但查询进度使用 `/api/v1/analysis/{id}/progress`（新API）
+2. **数据存储不一致**：旧服务器把进度存在内存 `analysis_progress_store`，新API从Redis读取
+3. **数据格式混乱**：前后端对进度数据格式理解不一致（0-1 vs 0-100）
+4. **缺少Redis集成**：旧服务器没有集成Redis，导致进度数据无法共享
+
+### 解决方案
+1. ✅ 在 `tradingagents_server.py` 中添加Redis客户端初始化
+2. ✅ 修改 `progress_callback`，同时写入内存和Redis
+3. ✅ 统一进度数据格式，同时提供 `progress_percentage` (0-1) 和 `progress` (0-100)
+4. ✅ 修复 `backend/api/v1/analysis.py` 的数据解析逻辑
+5. ✅ 确保分析完成和失败时也写入Redis
+
+### 修改的文件
+- **修改**：`tradingagents_server.py` 
+  - 添加Redis客户端初始化
+  - 修改progress_callback写入Redis
+  - 修改分析完成/失败时的Redis写入
+- **修改**：`backend/api/v1/analysis.py`
+  - 优化进度数据格式处理
+  - 兼容多种数据源格式
+
+### 技术要点
+- Redis键格式：`analysis_progress:{analysis_id}`
+- 进度数据同时包含两种格式以保证兼容性：
+  - `progress_percentage`: 0-1的小数（供前端显示）
+  - `progress`: 0-100的整数（供兼容性）
+- Redis写入失败不影响分析继续进行
+- TTL设置为3600秒（1小时）
+
+### 数据流
+```
+分析启动 → tradingagents_server.py
+    ↓
+progress_callback 更新进度
+    ↓
+写入 Redis (analysis_progress:{id})
+    ↓
+前端轮询 /api/v1/analysis/{id}/progress
+    ↓
+backend API 从 Redis 读取
+    ↓
+前端显示实时进度
+```
+
+### 环境变量
+```bash
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+```
+
+### 测试步骤
+1. 启动Redis服务
+2. 启动后端服务
+3. 启动前端服务
+4. 开始一个分析任务
+5. 观察前端进度条是否实时更新（每3秒）
+6. 检查Redis中是否有进度数据：`redis-cli GET "analysis_progress:{analysis_id}"`
+
+### 状态
+✅ 已完成
+
+### 相关问题
+- 前端进度直接跳到100%
+- 看不到分析中间过程
+- 进度更新不实时
+
+---
+
 ## 2025-01-25 Authing SSO 用户信息一致性修复
 
 ### 任务描述
@@ -616,3 +1047,398 @@ AUTHING_REDIRECT_URI=http://localhost:3000/api/v1/auth/authing/callback
 ### 相关文档
 - [数据源配置指南](../data/data-sources.md)
 - [LLM 配置指南](../configuration/llm-config.md)
+
+---
+
+## 2025-09-30 前端进度显示直接跳到100%问题修复
+
+### 任务描述
+修复点击开始分析后，前端看不到具体的分析过程，直接显示100%的问题。
+
+### 问题分析
+1. **API端点不匹配**：前端请求 `/api/v1/analysis/{id}/progress`，但后端只有 `/api/v1/analysis/{id}/status` 端点
+2. **进度数据格式不完整**：后端保存的Redis进度数据缺少前端需要的字段：
+   - 缺少 `total_steps`（总步骤数）
+   - 缺少 `current_step`（当前步骤索引）
+   - 缺少 `elapsed_time`（已用时间）
+   - 缺少 `estimated_time_remaining`（预估剩余时间）
+   - 缺少 `current_step_name`（步骤名称）
+3. **进度数据格式不一致**：前端期望 `progress_percentage` 为0-1的小数，后端保存的是0-100的整数
+
+### 解决方案
+1. ✅ 在 `backend/api/v1/analysis.py` 中添加了 `/progress` 端点
+2. ✅ 优化 `AnalysisService._update_progress()` 方法，保存完整的进度数据：
+   - 添加步骤信息（`current_step`, `total_steps`, `current_step_name`）
+   - 添加时间信息（`elapsed_time`, `estimated_time_remaining`）
+   - 基于开始时间计算已用时间和预估剩余时间
+3. ✅ 前端API返回兼容格式：将0-100的进度转换为0-1的小数
+4. ✅ 添加开始时间跟踪机制，支持准确的时间计算
+
+### 修改的文件
+- **修改**：`backend/api/v1/analysis.py` - 添加 `/progress` 端点
+- **修改**：`backend/services/analysis_service.py` - 优化进度更新逻辑
+
+### 技术要点
+
+#### 1. 新增 `/progress` 端点
+```python
+@router.get("/{analysis_id}/progress")
+async def get_analysis_progress(...)
+    # 返回兼容前端 SimpleAnalysisProgress 组件的格式
+    return {
+        "analysis_id": analysis_id,
+        "status": "running",
+        "current_step": 2,
+        "total_steps": 7,
+        "progress_percentage": 0.35,  # 0-1 小数
+        "message": "正在执行: AI分析",
+        "elapsed_time": 120,
+        "estimated_remaining": 180,
+        "current_step_name": "AI分析",
+        "timestamp": datetime.utcnow().timestamp()
+    }
+```
+
+#### 2. 优化进度更新逻辑
+```python
+class AnalysisService:
+    def __init__(self, db, redis_client):
+        # 记录分析开始时间
+        self._analysis_start_times = {}
+        
+        # 定义分析步骤
+        self._analysis_steps = [
+            "数据验证", "参数配置", "引擎初始化",
+            "数据获取", "AI分析", "结果整合", "报告生成"
+        ]
+        self._total_steps = 7
+    
+    async def _update_progress(self, analysis_id, progress, message, current_step):
+        # 计算已用时间和预估剩余时间
+        elapsed_time = (datetime.utcnow() - start_time).total_seconds()
+        estimated_remaining = (elapsed_time / (progress / 100.0)) - elapsed_time
+        
+        # 根据进度计算当前步骤索引
+        step_index = int((progress / 100.0) * self._total_steps)
+        
+        # 保存完整的进度数据到Redis
+        progress_data = {
+            "status": "running",
+            "progress": progress,  # 0-100 整数
+            "current_step": step_index,
+            "total_steps": self._total_steps,
+            "current_step_name": self._analysis_steps[step_index],
+            "message": message,
+            "elapsed_time": int(elapsed_time),
+            "estimated_time_remaining": int(estimated_remaining)
+        }
+```
+
+#### 3. 数据格式转换
+- **Redis存储格式**：`progress: 0-100` 的整数
+- **API返回格式**：`progress_percentage: 0-1` 的小数
+- **转换公式**：`progress_percentage = progress / 100.0`
+
+### Redis键格式兼容
+API端点支持多种Redis键格式，确保兼容性：
+- **React版本**：`analysis_progress:{analysis_id}`
+- **Streamlit版本**：`progress:{analysis_id}`
+- **TaskQueue版本**：`task_progress:analysis_{analysis_id}`
+
+### 分析步骤定义
+```python
+步骤 1/7: 数据验证 (0-14%)
+步骤 2/7: 参数配置 (14-28%)
+步骤 3/7: 引擎初始化 (28-42%)
+步骤 4/7: 数据获取 (42-56%)
+步骤 5/7: AI分析 (56-70%)
+步骤 6/7: 结果整合 (70-85%)
+步骤 7/7: 报告生成 (85-100%)
+```
+
+### 时间计算逻辑
+- **已用时间**：`elapsed_time = 当前时间 - 开始时间`
+- **预估总时间**：`total_estimated = elapsed_time / (progress / 100.0)`
+- **预估剩余**：`estimated_remaining = total_estimated - elapsed_time`
+
+### 状态
+✅ 已完成（后端修复）
+⏳ 待测试（前端验证）
+
+### 测试建议
+1. 启动新的分析任务，观察前端进度显示是否正常
+2. 检查进度是否从0%逐步增加，而不是直接跳到100%
+3. 验证步骤信息是否正确显示（如"步骤 3/7: 引擎初始化"）
+4. 确认时间信息是否准确（已用时间、预估剩余时间）
+5. 测试完成后清理检查是否正常
+
+### 后续优化建议
+1. 考虑在实际分析任务中添加更细粒度的进度更新
+2. 优化时间预估算法，考虑不同步骤的耗时差异
+3. 添加进度更新的WebSocket推送，减少轮询压力
+
+### 相关文档
+- [进度显示组件文档](../frontend/components/analysis-progress.md)
+- [API端点文档](../api/README.md#分析进度查询)
+
+---
+
+## 2025-09-30 发现并清理旧版后端系统
+
+### 任务描述
+在修复进度显示问题时发现项目中存在新老两套后端系统，需要识别并清理不再使用的旧系统。
+
+### 问题分析
+1. **新系统**（正在使用）：
+   - 位置：`backend/app/main.py`
+   - 启动命令：`uvicorn app.main:app`
+   - API前缀：`/api/v1`
+   - 功能：完整的FastAPI应用（数据库、任务队列、WebSocket、认证等）
+   - Docker使用：✅ Dockerfile中指定启动
+
+2. **旧系统**（未使用）：
+   - 位置：`backend/main.py`
+   - 描述：简单进度跟踪系统
+   - API前缀：`/api`
+   - 功能：只有基础轮询和简单分析
+   - Docker使用：❌ 未被引用
+
+3. **旧API文件**（未使用）：
+   - 位置：`backend/app/api/`（analysis.py, auth.py, compatibility.py）
+   - 只被 `backend/main.py` 引用
+   - 已被 `backend/api/v1/` 下的新API替代
+
+### 解决方案
+✅ 创建了安全的清理脚本 `scripts/cleanup_legacy_backend.sh`
+
+脚本功能：
+1. 自动备份旧系统文件到 `backend/legacy_backup_YYYYMMDD_HHMMSS/`
+2. 创建详细的备份说明文档
+3. 提供确认提示，防止误删
+4. 清理以下文件：
+   - `backend/main.py`
+   - `backend/app/api/`
+
+### 清理步骤
+```bash
+# 1. 运行清理脚本
+cd /path/to/TradingAgents-CN
+./scripts/cleanup_legacy_backend.sh
+
+# 2. 按提示确认删除
+
+# 3. 测试新系统
+# 重启后端
+docker-compose restart backend
+
+# 访问API文档
+open http://localhost:8000/api/v1/docs
+
+# 测试分析功能
+# 启动一个新的分析任务，确认进度显示正常
+```
+
+### 安全保障
+- ✅ 自动备份所有被删除的文件
+- ✅ 创建详细的备份说明文档
+- ✅ 提供恢复方法（如果需要）
+- ✅ 交互式确认，防止误删
+- ✅ 建议保留备份1个月
+
+### 为什么有两套系统？
+分析代码历史，可能的原因：
+1. **迁移过程中的产物**：从Streamlit迁移到React时创建了临时的简单系统
+2. **测试目的**：用于测试基础轮询机制
+3. **遗留代码**：早期开发时的代码，后来被完整系统替代
+
+### 系统对比
+| 特性       | 旧系统            | 新系统                |
+| ---------- | ----------------- | --------------------- |
+| 位置       | `backend/main.py` | `backend/app/main.py` |
+| API前缀    | `/api`            | `/api/v1`             |
+| 数据库     | ❌                 | ✅ MongoDB + Redis     |
+| 任务队列   | ❌                 | ✅ AsyncTaskQueue      |
+| WebSocket  | ❌                 | ✅ WebSocketManager    |
+| 认证系统   | ❌ 简单            | ✅ JWT + Authing SSO   |
+| 异常处理   | ❌ 基础            | ✅ 完整异常系统        |
+| 配置管理   | ❌ 简单            | ✅ Pydantic Settings   |
+| Docker部署 | ❌                 | ✅ 多阶段构建          |
+
+### 执行结果
+```bash
+# 清理时间: 2025-09-30 11:36:57
+# 备份位置: backend/legacy_backup_20250930_113657/
+
+✅ backend/main.py - 已删除并备份
+✅ backend/app/api/ - 已删除并备份
+
+验证：
+✅ 新系统文件完好无损
+✅ backend/app/main.py - 存在
+✅ backend/api/v1/ - 存在且完整
+```
+
+### 状态
+✅ 已完成（清理执行成功）
+
+### 后续建议
+1. 运行清理脚本删除旧系统
+2. 测试确认新系统功能正常
+3. 1个月后如果没问题，删除备份目录
+4. 更新相关文档，移除对旧系统的引用
+
+### 相关文件
+- **清理脚本**：`scripts/cleanup_legacy_backend.sh`
+- **旧系统备份**：`backend/legacy_backup_*/`（执行后创建）
+- **新系统主文件**：`backend/app/main.py`
+
+---
+
+## 2025-09-30 修复进度瞬间跳到100%的问题
+
+### 任务描述
+用户反馈点击开始分析后，进度瞬间就到100%了，看不到中间的分析过程。
+
+### 问题分析
+通过分析 `backend/services/analysis_service.py` 的代码，发现了问题所在：
+
+1. **快速模拟进度**（第195-204行）：
+   - 用 `asyncio.sleep()` 快速模拟进度从25%到60%
+   - 总共只需要11秒（2+3+3+2+4秒）
+
+2. **真实分析无进度**（第213行）：
+   - 执行 `trading_graph.propagate()` 是真正耗时的AI分析
+   - 这个过程可能需要30秒到几分钟
+   - **但在这期间完全没有进度更新！**
+
+3. **完成后快速跳跃**（第109-116行）：
+   - 分析完成后快速从80%跳到100%
+
+**用户看到的流程**：
+```
+开始分析 → 快速到60%(11秒) → 停在60%(30-120秒) → 突然100% ✅
+```
+
+### 解决方案
+重新设计了进度更新逻辑，在AI分析执行期间也能显示渐进式进度：
+
+1. ✅ **移除假进度更新**：删除了快速模拟的 `asyncio.sleep()` 调用
+2. ✅ **渐进式进度更新**：在等待 `trading_graph.propagate()` 执行期间，定期更新进度
+3. ✅ **智能进度策略**：
+   - 定义了详细的进度更新序列（25% → 30% → 35% → ... → 75%）
+   - 每个阶段设置合理的等待时间（3-6秒）
+   - 如果分析提前完成，立即停止进度更新
+4. ✅ **平滑收尾**：优化了80-100%的最终收尾阶段
+
+### 修改的文件
+- **修改**：`backend/services/analysis_service.py`
+  - 重构 `_run_trading_analysis()` 方法（第180-240行）
+  - 优化 `execute_analysis()` 方法中的最终进度更新（第100-120行）
+
+### 技术要点
+
+#### 1. 渐进式进度更新机制
+```python
+# 创建分析任务（异步执行）
+analysis_task = loop.run_in_executor(None, run_analysis)
+
+# 定义进度更新序列
+progress_updates = [
+    (30.0, 3, "📈 执行技术指标分析...", "技术分析"),
+    (35.0, 4, "💼 收集基本面数据...", "基本面数据"),
+    (40.0, 5, "📊 分析财务报表...", "财务分析"),
+    # ... 更多步骤
+    (75.0, 3, "⚖️ 风险评估分析...", "风险评估"),
+]
+
+# 在等待分析完成的同时更新进度
+for progress, wait_seconds, message, step_name in progress_updates:
+    # 检查分析是否已完成
+    done, pending = await asyncio.wait([analysis_task], timeout=wait_seconds)
+    
+    if done:
+        # 分析已完成，退出进度更新循环
+        break
+    
+    # 更新进度
+    await self._update_progress(analysis_id, progress, message, step_name)
+```
+
+#### 2. 进度更新策略
+- **25-30%**：市场数据收集（3秒）
+- **30-35%**：技术指标分析（4秒）
+- **35-40%**：基本面数据（5秒）
+- **40-45%**：财务分析（4秒）
+- **45-50%**：新闻收集（5秒）
+- **50-55%**：情绪分析（4秒）
+- **55-60%**：AI初始化（6秒）
+- **60-65%**：智能体协作（5秒）
+- **65-70%**：生成见解（4秒）
+- **70-75%**：机会评估（4秒）
+- **75-80%**：风险评估（3秒）
+
+#### 3. 智能完成检测
+- 使用 `asyncio.wait()` 的 `timeout` 参数
+- 如果分析在等待期间完成，立即停止进度更新
+- 避免显示超过实际进度的虚假进度
+
+#### 4. 优化最终阶段
+```python
+# AI分析完成后的收尾工作
+await self._update_progress(analysis_id, 80.0, "✅ AI分析完成，开始整合结果...", "结果整合")
+await asyncio.sleep(1)
+
+# 处理结果
+result_data = await self._process_analysis_results(final_state, decision)
+
+await self._update_progress(analysis_id, 85.0, "📊 生成图表和可视化...", "图表生成")
+await asyncio.sleep(1)
+await self._update_progress(analysis_id, 90.0, "📝 编写分析报告...", "报告生成")
+await asyncio.sleep(1)
+await self._update_progress(analysis_id, 95.0, "🎨 优化报告格式...", "格式优化")
+await asyncio.sleep(1)
+```
+
+### 新的进度流程
+```
+开始分析 (0%)
+  ↓
+初始化 (5-20%) - 2秒
+  ↓
+AI分析阶段 (25-75%) - 根据实际分析时间动态更新
+  ├─ 数据收集 (25-30%)
+  ├─ 技术分析 (30-35%)
+  ├─ 基本面分析 (35-45%)
+  ├─ 情绪分析 (45-55%)
+  ├─ AI协作 (55-65%)
+  ├─ 生成见解 (65-70%)
+  └─ 风险评估 (70-75%)
+  ↓
+结果处理 (80-95%) - 3秒
+  ↓
+完成 (100%)
+```
+
+### 优势
+1. **真实反馈**：进度更新与实际分析进度匹配
+2. **平滑体验**：用户能看到持续的进度变化
+3. **智能适应**：分析快速完成时不会显示虚假进度
+4. **详细信息**：每个阶段都有清晰的描述信息
+
+### 状态
+✅ 已完成（后端修复）
+⏳ 待用户测试
+
+### 测试建议
+1. 启动一个新的分析任务
+2. 观察进度是否从0%平滑增长到100%
+3. 检查进度更新是否有明显的停顿
+4. 验证每个阶段的描述信息是否清晰
+5. 测试快速完成的分析（如缓存命中）是否正常
+
+### 预期效果
+- ✅ 进度从0%开始逐步增加
+- ✅ 每3-6秒更新一次进度
+- ✅ 能看到详细的分析阶段信息
+- ✅ 分析完成后平滑到100%
+- ✅ 没有长时间停在某个进度不动

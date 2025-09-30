@@ -461,6 +461,7 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
 
         # 在开始长时间运行的分析前检查取消状态
         try:
+            update_progress("🧠 启动智能体图 (即将进入长耗时阶段)...", 4, 10)
             update_progress("正在执行分析...")  # 这会触发取消检查
         except Exception as e:
             if "cancelled" in str(e).lower():
@@ -475,14 +476,39 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
                 }
             raise
 
+        # 心跳线程：在graph.propagate运行期间每隔3秒上报一次心跳，不改变百分比，仅刷新时间与消息
+        import threading
+        heartbeat_running = True
+
+        def heartbeat_loop():
+            # 尽量短小，避免阻塞
+            import time as _t
+            while heartbeat_running:
+                try:
+                    update_progress("HEARTBEAT: 智能体分析进行中...")
+                except Exception:
+                    pass
+                _t.sleep(3)
+
+        hb_thread = threading.Thread(target=heartbeat_loop, daemon=True)
+        hb_thread.start()
+
+        # 进入真正的长耗时分析
         state, decision = graph.propagate(formatted_symbol, analysis_date)
+
+        # 停止心跳
+        heartbeat_running = False
+        try:
+            hb_thread.join(timeout=0.1)
+        except Exception:
+            pass
 
         # 调试信息
         logger.debug(f"🔍 [DEBUG] 分析完成，decision类型: {type(decision)}")
         logger.debug(f"🔍 [DEBUG] decision内容: {decision}")
 
         # 格式化结果
-        update_progress("📋 分析完成，正在整理结果...")
+        update_progress("📋 分析完成，正在整理结果...", 9, 10)
 
         # 提取风险评估数据
         risk_assessment = extract_risk_assessment(state)
@@ -587,7 +613,7 @@ def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, ll
             logger.error(f"❌ [报告保存] 保存分析报告时发生错误: {str(save_error)}")
             update_progress("⚠️ 报告保存出错，但分析已完成")
 
-        update_progress("✅ 分析成功完成！")
+        update_progress("✅ 分析成功完成！", 10, 10)
         return results
 
     except Exception as e:

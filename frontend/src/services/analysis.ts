@@ -21,7 +21,7 @@ export class AnalysisService {
       }
       
       // 适配后端返回格式，转换为前端期望的 Analysis 格式
-      const analysis = {
+      const analysis: Analysis = {
         id: response.analysis_id,
         userId: 'current_user', // 从认证状态获取
         stockCode: response.symbol,
@@ -30,8 +30,8 @@ export class AnalysisService {
         createdAt: new Date().toISOString(),
         marketType: request.market_type,
         analysisType: request.analysis_type,
-        resultData: null
-      } as Analysis;
+        resultData: undefined
+      };
       
       console.log('✅ [startAnalysis] 转换后的Analysis对象:', analysis);
       return analysis;
@@ -70,16 +70,29 @@ export class AnalysisService {
   // Get analysis result
   async getAnalysisResult(id: string): Promise<Analysis> {
     try {
-      const response = await apiClient.get(`/analysis/${id}/result`);
+      const response = await apiClient.get(`/analysis/${id}/results`);
       
       // 适配后端返回格式
+      const results = response.results || response.result_data;
       return {
-        id: response.id,
-        userId: response.user_id,
-        stockCode: response.stock_code,
+        id: response.analysis_id || response.id,
+        userId: response.user_id || 'current_user',
+        stockCode: response.symbol || response.stock_code,
         status: response.status,
-        progress: response.progress,
-        resultData: response.result_data,
+        progress: response.progress || 100,
+        resultData: results ? {
+          // 从state字段中提取分析结果
+          trader_investment_plan: results.state?.trader_investment_plan || '',
+          market_report: results.state?.market_report || '',
+          sentiment_report: results.state?.sentiment_report || '',
+          fundamentals_report: results.state?.fundamentals_report || '',
+          risk_assessment: results.state?.risk_assessment || '',
+          investment_plan: results.state?.investment_plan || '',
+          final_trade_decision: results.state?.final_trade_decision || '',
+          decision: results.decision || {},
+          // 保留原始数据
+          ...results
+        } : undefined,
         createdAt: response.created_at,
         completedAt: response.completed_at,
       } as Analysis;
@@ -148,22 +161,40 @@ export class AnalysisService {
     try {
       const response = await apiClient.get(`/analysis/history?page=${page}&page_size=${limit}`);
       
-      // 转换后端数据格式为前端格式
-      const analyses: Analysis[] = (response.analyses || []).map((item: any) => ({
-        id: item.id,
-        userId: item.user_id,
-        stockCode: item.stock_code,
-        status: item.status,
-        progress: item.progress || 0,
-        createdAt: item.created_at,
-        startedAt: item.started_at,
-        completedAt: item.completed_at,
-        marketType: item.market_type,
-        analysisType: 'comprehensive', // 默认值，如果后端没有这个字段
-        config: item.config || {},
-        resultData: item.result_data,
-        errorMessage: item.error_message
-      }));
+      console.log('📊 [getAnalysisHistory] 后端响应:', response);
+      console.log('📊 [getAnalysisHistory] analyses数量:', response.analyses?.length);
+      
+      // 🔧 修复：转换后端数据格式为前端格式（字段名映射）
+      const analyses: Analysis[] = (response.analyses || []).map((item: any) => {
+        console.log('🔍 [getAnalysisHistory] 原始item:', item);
+        
+        // ✅ 修复字段映射
+        const mapped = {
+          id: item.analysis_id || item.id,  // 后端返回 analysis_id
+          userId: item.user_id || 'current_user',
+          stockCode: item.symbol || item.stock_code,  // 后端返回 symbol
+          status: item.status,
+          progress: item.progress_percentage !== undefined 
+            ? item.progress_percentage * 100  // 后端返回 0-1，转换为 0-100
+            : (item.progress || 0),
+          createdAt: item.created_at,
+          startedAt: item.started_at,
+          completedAt: item.completed_at,
+          marketType: item.market_type,
+          analysisType: item.analysis_type || 'comprehensive',
+          config: item.config || {},
+          resultData: item.result_data,
+          errorMessage: item.error_message
+        };
+        
+        console.log('✅ [getAnalysisHistory] 映射后的Analysis:', mapped);
+        return mapped;
+      });
+      
+      console.log('✅ [getAnalysisHistory] 最终返回:', { 
+        总数: analyses.length, 
+        第一个: analyses[0] 
+      });
       
       return {
         analyses,
@@ -172,7 +203,7 @@ export class AnalysisService {
         limit: response.page_size || limit,
       };
     } catch (error: any) {
-      console.error('Failed to get analysis history:', error);
+      console.error('❌ [getAnalysisHistory] 失败:', error);
       throw new Error(error.message || 'Failed to get analysis history');
     }
   }

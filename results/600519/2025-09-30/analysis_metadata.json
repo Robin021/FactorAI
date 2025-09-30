@@ -1,0 +1,25 @@
+{
+  "stock_symbol": "600519",
+  "analysis_date": "2025-09-30",
+  "timestamp": "2025-09-30T13:41:21.649592",
+  "research_depth": 2,
+  "analysts": [
+    "market",
+    "fundamentals",
+    "technical",
+    "sentiment",
+    "risk"
+  ],
+  "status": "completed",
+  "reports_count": 8,
+  "report_types": [
+    "market_report",
+    "sentiment_report",
+    "fundamentals_report",
+    "investment_plan",
+    "trader_investment_plan",
+    "final_trade_decision",
+    "investment_debate_state",
+    "risk_debate_state"
+  ]
+}

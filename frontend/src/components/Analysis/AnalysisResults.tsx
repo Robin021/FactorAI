@@ -376,7 +376,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
         </div>
 
         <Space>
-          <Button icon={<EyeOutlined />} onClick={() => navigate(`/analysis/${analysis.id}`)}>
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => navigate(`/analysis/report/${analysis.id}`)}
+          >
             详细报告
           </Button>
           <Button icon={<DownloadOutlined />} onClick={handleExport}>
