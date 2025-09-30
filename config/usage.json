@@ -5578,5 +5578,35 @@
     "cost": 0.004602,
     "session_id": "deepseek_9439",
     "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-30T23:07:58.102615",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 1322,
+    "output_tokens": 813,
+    "cost": 0.004127,
+    "session_id": "deepseek_4038",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-30T23:08:49.198691",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 3053,
+    "output_tokens": 1044,
+    "cost": 0.007197,
+    "session_id": "deepseek_5613",
+    "analysis_type": "stock_analysis"
+  },
+  {
+    "timestamp": "2025-09-30T23:09:42.535022",
+    "provider": "deepseek",
+    "model_name": "deepseek-chat",
+    "input_tokens": 5151,
+    "output_tokens": 1134,
+    "cost": 0.010387,
+    "session_id": "deepseek_9475",
+    "analysis_type": "stock_analysis"
   }
 ]
