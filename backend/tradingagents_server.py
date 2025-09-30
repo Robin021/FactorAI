@@ -67,7 +67,13 @@ app = FastAPI(
 # 配置CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "http://47.239.62.97",  # 生产环境前端
+        "http://47.239.62.97:80",  # 明确指定端口
+        "https://47.239.62.97",  # 如果使用 HTTPS
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
