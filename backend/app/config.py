@@ -3,7 +3,8 @@ Application configuration management
 """
 import os
 from typing import List, Optional
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -36,7 +37,7 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v):
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
