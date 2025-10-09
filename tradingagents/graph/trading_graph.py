@@ -255,6 +255,9 @@ class TradingAgentsGraph:
         # Create tool nodes
         self.tool_nodes = self._create_tool_nodes()
 
+        # 进度回调 - 先初始化
+        self.progress_callback = None
+        
         # Initialize components
         self.conditional_logic = ConditionalLogic()
         self.graph_setup = GraphSetup(
@@ -270,6 +273,7 @@ class TradingAgentsGraph:
             self.conditional_logic,
             self.config,
             getattr(self, 'react_llm', None),
+            self.progress_callback,
         )
 
         self.propagator = Propagator()
@@ -359,16 +363,28 @@ class TradingAgentsGraph:
             ),
         }
 
-    def propagate(self, company_name, trade_date):
+    def propagate(self, company_name, trade_date, progress_callback=None):
         """Run the trading agents graph for a company on a specific date."""
 
         # 添加详细的接收日志
         logger.debug(f"🔍 [GRAPH DEBUG] ===== TradingAgentsGraph.propagate 接收参数 =====")
         logger.debug(f"🔍 [GRAPH DEBUG] 接收到的company_name: '{company_name}' (类型: {type(company_name)})")
-        logger.debug(f"🔍 [GRAPH DEBUG] 接收到的trade_date: '{trade_date}' (类型: {type(trade_date)})")
+        logger.debug(f"🔍 [GRAPH DEBUG] 接收到的trade_date: '{trade_date}' (类型: {trade_date})")
+        logger.debug(f"🔍 [GRAPH DEBUG] 接收到的progress_callback: {progress_callback is not None}")
 
         self.ticker = company_name
+        self.progress_callback = progress_callback
+        
+        # 🔧 关键修复：动态更新GraphSetup中的progress_callback
+        if progress_callback and hasattr(self, 'graph_setup'):
+            self.graph_setup.progress_callback = progress_callback
+            logger.debug(f"🔧 [GRAPH DEBUG] 动态更新GraphSetup的progress_callback")
+        
         logger.debug(f"🔍 [GRAPH DEBUG] 设置self.ticker: '{self.ticker}'")
+
+        # 步骤0: 股票识别
+        if self.progress_callback:
+            self.progress_callback("🔍 开始识别股票类型并获取基本信息", 0)
 
         # Initialize state
         logger.debug(f"🔍 [GRAPH DEBUG] 创建初始状态，传递参数: company_name='{company_name}', trade_date='{trade_date}'")
@@ -378,6 +394,15 @@ class TradingAgentsGraph:
         logger.debug(f"🔍 [GRAPH DEBUG] 初始状态中的company_of_interest: '{init_agent_state.get('company_of_interest', 'NOT_FOUND')}'")
         logger.debug(f"🔍 [GRAPH DEBUG] 初始状态中的trade_date: '{init_agent_state.get('trade_date', 'NOT_FOUND')}'")
         args = self.propagator.get_graph_args()
+        
+        # 完成股票识别
+        if self.progress_callback:
+            from tradingagents.utils.stock_utils import StockUtils
+            market_info = StockUtils.get_market_info(company_name)
+            self.progress_callback(f"✅ 股票识别完成: {market_info['market_name']} - {company_name}", 0)
+        
+        # 🔧 关键修复：将progress_callback添加到状态中，供分析师使用
+        init_agent_state["progress_callback"] = self.progress_callback
 
         if self.debug:
             # Debug mode with tracing
@@ -393,6 +418,10 @@ class TradingAgentsGraph:
         else:
             # Standard mode without tracing
             final_state = self.graph.invoke(init_agent_state, **args)
+        
+        # 分析完成回调
+        if self.progress_callback:
+            self.progress_callback("✅ 所有分析师完成，开始最终决策整合", 6)
 
         # Store current state for reflection
         self.curr_state = final_state

@@ -149,6 +149,40 @@ open http://localhost:8000/api/v1/docs
 
 ---
 
+## 2025-10-09 后端依赖缺失导致服务启动失败修复
+
+### 任务描述
+修复在本地启动后端服务时出现 `ModuleNotFoundError: No module named 'jose'` 的问题，确保 JWT 相关功能正常。
+
+### 背景与原因
+- 报错位置：`backend/tradingagents_server.py` 在导入 `from jose import jwt` 时失败。
+- 依赖声明：
+  - `backend/requirements.txt` 已包含 `python-jose[cryptography]==3.3.0`
+  - `backend/pyproject.toml` `dependencies` 中也包含 `python-jose[cryptography]>=3.3.0`
+- 结论：本地运行环境未按后端依赖文件完成安装，导致缺包。
+
+### 解决方案
+1. 在后端目录按声明安装依赖（推荐基于 `pyproject.toml`）：
+   - `cd backend && pip install -e .`
+2. 或直接安装缺失库：
+   - `pip install "python-jose[cryptography]"==3.3.0`
+
+### 验证步骤
+```bash
+conda activate tradingagents
+python -c "import jose, sys; print('python-jose OK', jose.__version__)"
+python backend/tradingagents_server.py  # 应不再报 jose 缺失
+```
+
+### 影响面
+- 涉及 JWT 认证与解析的模块：`backend/api/v1/auth.py`, `backend/core/auth.py`, `backend/api/v1/websocket.py`, `backend/tests/test_auth_api.py`。
+- 安装完成后，上述模块可正常导入与运行单测。
+
+### 状态
+✅ 已记录修复方案；待环境中执行安装并验证
+
+---
+
 ## 2025-09-30 实时进度显示与Tab切换修复
 
 ### 任务描述
@@ -1466,3 +1500,60 @@ AI分析阶段 (25-75%) - 根据实际分析时间动态更新
 - ✅ 能看到详细的分析阶段信息
 - ✅ 分析完成后平滑到100%
 - ✅ 没有长时间停在某个进度不动
+
+## 2025-01-XX LLM分析结果实时显示功能
+
+### 任务描述
+实现分析过程中实时显示各个AI分析师的LLM分析结果，让用户能够看到每个分析步骤的详细内容和AI的思考过程。
+
+### 变更内容
+
+#### 后端修改
+- **分析服务增强** (`backend/services/analysis_service.py`)
+  - 修改 `progress_callback` 函数签名，支持LLM结果传递：`llm_result` 和 `analyst_type` 参数
+  - 更新 `_update_progress` 方法，存储LLM结果到Redis
+  - 同步回调函数支持LLM结果传递
+
+- **分析师结果传递**
+  - **市场分析师** (`tradingagents/agents/analysts/market_analyst.py`)：在LLM调用完成后传递分析结果
+  - **基本面分析师** (`tradingagents/agents/analysts/fundamentals_analyst.py`)：传递财务分析结果
+  - **新闻分析师** (`tradingagents/agents/analysts/news_analyst.py`)：传递新闻分析结果
+  - **社交媒体分析师** (`tradingagents/agents/analysts/social_media_analyst.py`)：传递情绪分析结果
+  - 所有分析师都会截取前500字符作为预览，避免消息过长
+
+#### 前端修改
+- **实时进度面板** (`frontend/src/components/Analysis/RealTimeProgressDashboard.tsx`)
+  - 新增LLM结果状态管理：`llmResults` 状态
+  - 在 `handleProgressUpdate` 中处理LLM结果数据
+  - 新增"🤖 AI分析师结果"显示区域，支持滚动查看
+  - 每个分析师结果以卡片形式展示，包含分析师类型、时间戳和详细内容
+
+- **简单进度组件** (`frontend/src/components/SimpleAnalysisProgress.tsx`)
+  - 更新 `ProgressData` 接口，添加 `llm_result` 和 `analyst_type` 字段
+  - 新增LLM结果状态管理和显示区域
+  - 与实时进度面板保持一致的UI设计
+
+### 功能特点
+1. **实时性**：每个分析师完成分析后立即显示结果
+2. **可读性**：清晰的分析师标识、时间戳和优雅的视觉设计
+3. **完整性**：保留原始LLM分析内容，支持多行文本显示
+4. **性能优化**：结果截断处理、滚动限制，避免UI性能问题
+
+### 支持的分析师类型
+- 市场分析师：技术指标分析、价格走势研究
+- 基本面分析师：财务数据分析、估值评估  
+- 新闻分析师：新闻事件分析、市场情绪评估
+- 社交媒体分析师：社交媒体分析、投资者情绪
+
+### 技术实现
+- 后端通过Redis存储LLM结果，TTL为1小时
+- 前端通过轮询机制获取最新的LLM结果
+- 结果区域最大高度200px，支持滚动查看完整内容
+- 使用Ant Design组件库确保UI一致性
+
+### 文档更新
+- 新增功能文档：`docs/LLM_RESULTS_DISPLAY_FEATURE.md`
+- 包含详细的技术实现、配置说明和未来扩展计划
+
+### 状态
+✅ 已完成

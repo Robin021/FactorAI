@@ -51,7 +51,7 @@ export class AnalysisService {
       
       // 适配后端返回格式
       return {
-        id: response.analysis_id,
+        id: response.id || response.analysis_id || response._id,
         userId: response.user || 'current_user',
         stockCode: 'UNKNOWN', // 后端没有返回，使用默认值
         status: response.status === 'completed' ? 'completed' : 'running',
@@ -75,9 +75,9 @@ export class AnalysisService {
       // 适配后端返回格式
       const results = response.results || response.result_data;
       return {
-        id: response.analysis_id || response.id,
+        id: response.id || response.analysis_id || response._id,
         userId: response.user_id || 'current_user',
-        stockCode: response.symbol || response.stock_code,
+        stockCode: response.stock_code || response.symbol,
         status: response.status,
         progress: response.progress || 100,
         resultData: results ? {
@@ -170,9 +170,9 @@ export class AnalysisService {
         
         // ✅ 修复字段映射
         const mapped = {
-          id: item.analysis_id || item.id,  // 后端返回 analysis_id
+          id: item.id || item.analysis_id || item._id,  // 后端返回 id 字段
           userId: item.user_id || 'current_user',
-          stockCode: item.symbol || item.stock_code,  // 后端返回 symbol
+          stockCode: item.stock_code || item.symbol,  // 后端返回 stock_code
           status: item.status,
           progress: item.progress_percentage !== undefined 
             ? item.progress_percentage * 100  // 后端返回 0-1，转换为 0-100
@@ -211,9 +211,14 @@ export class AnalysisService {
   // Delete analysis
   async deleteAnalysis(id: string): Promise<void> {
     try {
-      // 目前后端没有删除接口，模拟成功
-      console.log(`Delete analysis ${id} - not implemented`);
+      console.log(`🗑️ [deleteAnalysis] 删除分析记录: ${id}`);
+      await apiClient.delete(`/analysis/${id}`);
+      console.log(`✅ [deleteAnalysis] 删除成功: ${id}`);
     } catch (error: any) {
+      console.error(`❌ [deleteAnalysis] 删除失败: ${id}`, error);
+      if (error.response?.data?.detail) {
+        throw new Error(error.response.data.detail);
+      }
       throw new Error(error.message || 'Failed to delete analysis');
     }
   }

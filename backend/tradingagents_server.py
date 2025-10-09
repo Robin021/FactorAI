@@ -30,9 +30,50 @@ try:
     from motor.motor_asyncio import AsyncIOMotorClient
     from bson import ObjectId
     MONGODB_AVAILABLE = True
+    logger.info("✅ Motor (异步MongoDB驱动) 可用")
 except ImportError:
-    MONGODB_AVAILABLE = False
-    logger.warning("⚠️ MongoDB driver not available, analysis history will not be saved")
+    try:
+        # 如果motor不可用，尝试使用pymongo
+        from pymongo import MongoClient
+        from bson import ObjectId
+        MONGODB_AVAILABLE = True
+        logger.info("✅ PyMongo (同步MongoDB驱动) 可用，将使用同步操作")
+        # 定义一个简单的异步包装器
+        class AsyncIOMotorClient:
+            def __init__(self, url):
+                self._sync_client = MongoClient(url)
+                self._is_sync = True  # 标记这是同步客户端
+            
+            def __getitem__(self, name):
+                return self._sync_client[name]
+            
+            @property
+            def admin(self):
+                return self._sync_client.admin
+            
+            def close(self):
+                self._sync_client.close()
+        
+        # 定义统一的MongoDB操作函数
+        def safe_mongodb_operation(operation_func, *args, **kwargs):
+            """安全执行MongoDB操作，自动处理同步/异步"""
+            try:
+                if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
+                    # 同步操作
+                    return operation_func(*args, **kwargs)
+                else:
+                    # 异步操作
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    result = loop.run_until_complete(operation_func(*args, **kwargs))
+                    loop.close()
+                    return result
+            except Exception as e:
+                logger.error(f"MongoDB操作失败: {e}")
+                raise e
+    except ImportError:
+        MONGODB_AVAILABLE = False
+        logger.warning("⚠️ MongoDB driver not available, analysis history will not be saved")
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent
@@ -127,12 +168,55 @@ mongodb_db = None
 if MONGODB_AVAILABLE:
     try:
         MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-        DATABASE_NAME = os.getenv("DATABASE_NAME", "tradingagents")
+        DATABASE_NAME = os.getenv("MONGODB_DB_NAME", os.getenv("DATABASE_NAME", "tradingagents"))
         
         mongodb_client = AsyncIOMotorClient(MONGODB_URL)
         mongodb_db = mongodb_client[DATABASE_NAME]
         
-        logger.info(f"✅ MongoDB连接成功: {DATABASE_NAME}")
+        # 测试连接 - 使用同步方式避免motor依赖问题
+        try:
+            # 如果motor可用，使用异步测试
+            import asyncio
+            async def test_connection():
+                try:
+                    if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
+                        # 同步客户端，直接调用
+                        mongodb_client.admin.command('ping')
+                        return True
+                    else:
+                        # 异步客户端
+                        await mongodb_client.admin.command('ping')
+                        return True
+                except Exception as e:
+                    logger.error(f"MongoDB ping失败: {e}")
+                    return False
+            
+            # 在新的事件循环中测试连接
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            connection_ok = loop.run_until_complete(test_connection())
+            loop.close()
+            
+            if connection_ok:
+                logger.info(f"✅ MongoDB连接成功: {DATABASE_NAME} at {MONGODB_URL}")
+            else:
+                logger.warning(f"⚠️ MongoDB连接测试失败，分析历史将不会保存")
+                mongodb_client = None
+                mongodb_db = None
+        except Exception as test_error:
+            # 如果异步测试失败，尝试同步测试
+            logger.warning(f"异步测试失败，尝试同步测试: {test_error}")
+            try:
+                from pymongo import MongoClient
+                sync_client = MongoClient(MONGODB_URL)
+                sync_client.admin.command('ping')
+                sync_client.close()
+                logger.info(f"✅ MongoDB连接成功 (同步测试): {DATABASE_NAME} at {MONGODB_URL}")
+            except Exception as sync_error:
+                logger.warning(f"⚠️ MongoDB连接失败，分析历史将不会保存: {sync_error}")
+                mongodb_client = None
+                mongodb_db = None
+            
     except Exception as e:
         logger.warning(f"⚠️ MongoDB连接失败，分析历史将不会保存: {e}")
         mongodb_client = None
@@ -418,7 +502,11 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
                 "error_message": None
             }
             
-            result = await mongodb_db.analyses.insert_one(analysis_doc)
+            # 使用统一的MongoDB操作函数
+            if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
+                result = mongodb_db.analyses.insert_one(analysis_doc)
+            else:
+                result = await mongodb_db.analyses.insert_one(analysis_doc)
             db_object_id = str(result.inserted_id)
             
             # 使用数据库ID作为分析ID，保持一致性
@@ -451,7 +539,7 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
         "analysis_type": request.analysis_type
     }
     
-    # 启动真实分析
+    # 启动真实分析（start_real_analysis 内部会创建后台线程）
     start_real_analysis(analysis_id, request.symbol.upper(), request.market_type, request.analysis_type, current_user["username"])
     
     return AnalysisResponse(
@@ -1043,140 +1131,336 @@ async def download_analysis_file(analysis_id: str, filename: str, current_user: 
         media_type=media_type
     )
 
-# 启动真实分析
+# 启动真实分析 - 重构版本，消除重复执行
 def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysis_type: str, username: str):
-    """启动真实的股票分析"""
+    """启动真实的股票分析 - 修复重复执行问题"""
     import threading
     import time
     from datetime import datetime
     
     def analysis_worker():
         try:
-            # 导入真实的分析函数
+            # 简化的路径设置
             import sys
-            # 添加项目根目录到路径，以便导入 web.utils.analysis_runner
-            project_root = Path(__file__).parent
+            import os
+            current_file = Path(__file__).resolve()
+            project_root = current_file.parent.parent
+            
+            if not (project_root / 'tradingagents').exists():
+                project_root = Path(os.getcwd()).parent if 'backend' in os.getcwd() else Path(os.getcwd())
+                if not (project_root / 'tradingagents').exists():
+                    # Try to find tradingagents directory in common locations
+                    possible_paths = [
+                        Path('/app'),  # Docker container
+                        Path.cwd().parent,  # Parent directory
+                        Path.cwd(),  # Current directory
+                        Path.home() / 'TradingAgents-CN',  # User home
+                    ]
+                    for path in possible_paths:
+                        if (path / 'tradingagents').exists():
+                            project_root = path
+                            break
+                    else:
+                        # If still not found, use current directory as fallback
+                        project_root = Path(os.getcwd())
+            
             if str(project_root) not in sys.path:
                 sys.path.insert(0, str(project_root))
             
-            # 在 Docker 中，web 目录应该在 /app/web
-            web_path = Path("/app/web")
-            if web_path.exists() and str(web_path.parent) not in sys.path:
-                sys.path.insert(0, str(web_path.parent))
+            # 进度回调函数 - 兼容TradingAgents的两参数调用
+            def progress_callback(message, step=0, total_steps=7):
+                try:
+                    current_time = time.time()
+                    elapsed_time = current_time - analysis_progress_store[analysis_id].get("start_time", current_time)
+                    
+                    # TradingAgents调用时: progress_callback(message, step)
+                    # 我们的调用时: progress_callback(message, step, total_steps)
+                    progress_percentage = (step + 1) / total_steps if total_steps > 0 else 0
+                    
+                    progress_data = {
+                        "status": "running" if progress_percentage < 1.0 else "completed",
+                        "current_step": step,
+                        "total_steps": total_steps,
+                        "progress_percentage": progress_percentage,
+                        "progress": progress_percentage * 100,
+                        "current_step_name": message,
+                        "message": message,
+                        "elapsed_time": int(elapsed_time),
+                        "last_update": current_time,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    
+                    # 更新内存存储
+                    analysis_progress_store[analysis_id].update(progress_data)
+                    
+                    # 写入Redis
+                    if redis_client:
+                        try:
+                            import json
+                            redis_key = f"analysis_progress:{analysis_id}"
+                            redis_client.setex(redis_key, 3600, json.dumps(progress_data))
+                        except Exception as redis_error:
+                            logger.warning(f"Failed to write progress to Redis: {redis_error}")
+                    
+                    logger.info(f"分析 {analysis_id} 进度: {int(progress_percentage * 100)}% - {message}")
+                except Exception as e:
+                    logger.error(f"进度回调失败: {e}")
             
-            from web.utils.analysis_runner import run_stock_analysis
+            # 直接执行TradingAgents分析 - 只执行一次
+            try:
+                from tradingagents.graph.trading_graph import TradingAgentsGraph
+                from tradingagents.default_config import DEFAULT_CONFIG
+                
+                logger.info("✅ 使用真实TradingAgents分析引擎")
+                
+                # 创建配置
+                config = DEFAULT_CONFIG.copy()
+                config['llm_provider'] = "deepseek"
+                config['deep_think_llm'] = "deepseek-chat"
+                config['quick_think_llm'] = "deepseek-chat"
+                
+                # 统一的分析师配置 - 避免重复
+                selected_analysts = ["market", "fundamentals", "social"]
+                
+                # ��录开始时间
+                analysis_progress_store[analysis_id]["start_time"] = time.time()
+                
+                # 创建TradingAgents图实例
+                trading_graph = TradingAgentsGraph(selected_analysts=selected_analysts, config=config)
+                
+                progress_callback("🔍 初始化TradingAgents分析引擎", 0, 7)
+                
+                # 在开始分析前检查是否已被取消
+                if analysis_progress_store[analysis_id].get("status") == "cancelled":
+                    logger.info(f"Analysis {analysis_id} was cancelled before execution")
+                    return
+                
+                # 执行分析 - 只执行一次
+                final_state, decision = trading_graph.propagate(
+                    company_name=symbol,
+                    trade_date=datetime.now().strftime("%Y-%m-%d"),
+                    progress_callback=progress_callback
+                )
+                
+                progress_callback("✅ 分析完成，正在整理结果", 6, 7)
+                
+                # 构建结果
+                result = {
+                    'success': True,
+                    'stock_symbol': symbol,
+                    'analysis_date': datetime.now().strftime("%Y-%m-%d"),
+                    'analysts': selected_analysts,
+                    'research_depth': 2,
+                    'llm_provider': "deepseek",
+                    'llm_model': "deepseek-chat",
+                    'state': final_state,
+                    'decision': decision
+                }
+                
+            except ImportError as e:
+                logger.error(f"❌ 无法导入TradingAgents: {e}")
+                result = {
+                    "success": False,
+                    "error": f"TradingAgents分析引擎导入失败: {str(e)}",
+                    "stock_symbol": symbol
+                }
+            except Exception as e:
+                logger.error(f"❌ 分析执行失败: {e}")
+                result = {
+                    "success": False,
+                    "error": f"分析执行失败: {str(e)}",
+                    "stock_symbol": symbol
+                }
             
-            # 进度回调函数
+            # 尝试导入并使用真正的TradingAgents分析引擎
+            try:
+                # 导入TradingAgents核心组件
+                from tradingagents.graph.trading_graph import TradingAgentsGraph
+                from tradingagents.default_config import DEFAULT_CONFIG
+                
+                # 尝试导入result_formatter
+                try:
+                    from services.result_formatter import format_analysis_results
+                except ImportError:
+                    # 如果导入失败，创建简单的格式化函数
+                    def format_analysis_results(results):
+                        return results
+                
+                def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
+                    """真正的TradingAgents股票分析函数"""
+                    
+                    # 创建TradingAgents图实例
+                    config = DEFAULT_CONFIG.copy()
+                    config['llm_provider'] = llm_provider
+                    config['deep_think_llm'] = llm_model
+                    config['quick_think_llm'] = llm_model
+                    
+                    # 将analysts转换为正确的格式
+                    if isinstance(analysts, list):
+                        selected_analysts = analysts
+                    else:
+                        # 默认分析师列表
+                        selected_analysts = ["market", "fundamentals", "news", "social"]
+                    
+                    trading_graph = TradingAgentsGraph(selected_analysts=selected_analysts, config=config)
+                    
+                    if progress_callback:
+                        progress_callback("🔍 初始化TradingAgents分析引擎", 0, 7)
+                    
+                    try:
+                        # 执行真正的股票分析
+                        final_state, decision = trading_graph.propagate(
+                            company_name=stock_symbol,
+                            trade_date=analysis_date,
+                            progress_callback=progress_callback
+                        )
+                        
+                        if progress_callback:
+                            progress_callback("✅ 分析完成，正在整理结果", 6, 7)
+                        
+                        # 格式化分析结果
+                        analysis_result = {
+                            'success': True,
+                            'stock_symbol': stock_symbol,
+                            'analysis_date': analysis_date,
+                            'analysts': analysts,
+                            'research_depth': research_depth,
+                            'llm_provider': llm_provider,
+                            'llm_model': llm_model,
+                            'state': final_state,
+                            'decision': decision
+                        }
+                        
+                        return format_analysis_results(analysis_result)
+                        
+                    except Exception as e:
+                        logger.error(f"TradingAgents分析执行失败: {e}")
+                        # 如果真实分析失败，返回错误结果
+                        return {
+                            'success': False,
+                            'error': f'分析执行失败: {str(e)}',
+                            'stock_symbol': stock_symbol
+                        }
+                
+                USE_BACKEND_SERVICE = True
+                logger.info("✅ 使用真实TradingAgents分析引擎")
+                
+            except ImportError as e:
+                logger.error(f"❌ 无法导入TradingAgents: {e}")
+                result = {
+                    "success": False,
+                    "error": f"TradingAgents分析引擎导入失败: {str(e)}",
+                    "stock_symbol": symbol
+                }
+                
+                USE_BACKEND_SERVICE = False
+            
+            # 进度回调函数 - 支持7步真实进度系统
             def progress_callback(message, step=None, total_steps=None):
                 # 检查是否已被取消
                 if analysis_progress_store[analysis_id].get("status") == "cancelled":
                     logger.info(f"Analysis {analysis_id} was cancelled, stopping execution")
                     raise Exception("Analysis was cancelled by user")
+                
+                # 🔧 添加调试日志
+                logger.info(f"🔧 [PROGRESS DEBUG] 收到进度回调: message='{message}', step={step}, total_steps={total_steps}")
                     
                 current_time = time.time()
                 start_time = analysis_progress_store[analysis_id].get("start_time", current_time)
                 elapsed_time = current_time - start_time
                 
+                # 7步系统的步骤名称和权重
+                step_names = [
+                    "股票识别",    # 10%
+                    "市场分析",    # 15% 
+                    "基本面分析",  # 15%
+                    "新闻分析",    # 10%
+                    "情绪分析",    # 10%
+                    "投资辩论",    # 25%
+                    "风险评估"     # 15%
+                ]
+                step_weights = [0.10, 0.15, 0.15, 0.10, 0.10, 0.25, 0.15]
+                
                 # 计算进度百分比
-                if step is not None and total_steps is not None and total_steps > 0:
-                    # 使用传入的步骤信息计算精确进度
-                    progress_percentage = min((step / total_steps), 1.0)  # 返回0-1之间的小数
-                    current_step_num = step
-                    total_step_num = total_steps
+                if step is not None and step < len(step_names):
+                    # 使用7步系统计算精确进度
+                    completed_weight = sum(step_weights[:step])  # 已完成步骤的权重
+                    current_weight = step_weights[step]          # 当前步骤的权重
+                    progress_percentage = completed_weight + current_weight  # 当前步骤算作已完成
+                    current_step_num = step + 1  # 显示用的步骤号（从1开始）
+                    total_step_num = len(step_names)
+                    current_step_name = step_names[step]
                 else:
-                    # 根据消息内容估算进度（返回0-1之间的小数）
+                    # 智能检测步骤（基于消息内容）
                     current_progress = analysis_progress_store[analysis_id].get("progress_percentage", 0)
                     
-                    # 更全面的消息匹配逻辑 - 详细进度步骤
-                    if "验证" in message or "预获取" in message or "股票代码" in message:
-                        progress_percentage = 0.05
-                        current_step_num = 1
-                    elif "数据准备完成" in message or "✅ 数据准备完成" in message:
-                        progress_percentage = 0.08
-                        current_step_num = 1
-                    elif "开始股票分析" in message:
-                        progress_percentage = 0.1
-                        current_step_num = 2
-                    elif "预估分析成本" in message or "成本" in message:
-                        progress_percentage = 0.12
-                        current_step_num = 2
-                    elif "环境变量" in message or "检查环境变量" in message:
-                        progress_percentage = 0.15
-                        current_step_num = 2
-                    elif "环境变量验证通过" in message:
-                        progress_percentage = 0.18
-                        current_step_num = 2
-                    elif "配置分析参数" in message or "配置" in message:
-                        progress_percentage = 0.2
-                        current_step_num = 3
-                    elif "创建必要的目录" in message or "📁" in message:
-                        progress_percentage = 0.22
-                        current_step_num = 3
-                    elif "准备分析" in message and ("A股" in message or "港股" in message or "美股" in message):
-                        progress_percentage = 0.25
-                        current_step_num = 3
-                    elif "初始化分析引擎" in message or "初始化" in message or "引擎" in message:
-                        progress_percentage = 0.3
-                        current_step_num = 4
-                    elif "开始分析" in message and "股票" in message:
-                        progress_percentage = 0.35
-                        current_step_num = 4
-                    # 新增：更详细的分析步骤识别
-                    elif "市场分析师" in message or "市场数据" in message or "技术指标" in message:
-                        progress_percentage = 0.4
-                        current_step_num = 5
-                    elif "基本面分析师" in message or "财务数据" in message or "财务比率" in message:
-                        progress_percentage = 0.5
-                        current_step_num = 6
-                    elif "技术分析师" in message or "技术形态" in message or "MACD" in message or "RSI" in message:
-                        progress_percentage = 0.6
-                        current_step_num = 7
-                    elif "情绪分析师" in message or "新闻分析" in message or "情绪" in message:
-                        progress_percentage = 0.65
-                        current_step_num = 7
-                    elif "智能体" in message or "协作分析" in message or "多智能体" in message:
-                        progress_percentage = 0.7
-                        current_step_num = 8
-                    elif "分析完成，正在整理结果" in message or "整理结果" in message:
-                        progress_percentage = 0.75
-                        current_step_num = 8
-                    elif "生成图表" in message or "可视化" in message:
-                        progress_percentage = 0.8
-                        current_step_num = 9
-                    elif "编写报告" in message or "生成报告" in message:
-                        progress_percentage = 0.85
-                        current_step_num = 9
-                    elif "记录使用成本" in message:
-                        progress_percentage = 0.88
-                        current_step_num = 9
-                    elif "正在保存分析报告" in message or "保存分析报告" in message:
-                        progress_percentage = 0.9
-                        current_step_num = 9
-                    elif "报告已保存" in message or "本地报告已保存" in message:
-                        progress_percentage = 0.95
-                        current_step_num = 10
-                    elif "分析成功完成" in message or "✅ 分析成功完成" in message:
+                    # 7步系统的智能消息匹配逻辑
+                    detected_step = None
+                    
+                    # 步骤0: 股票识别 (10%) - 更精确的匹配，避免与其他步骤冲突
+                    if any(keyword in message for keyword in ["股票识别", "识别股票类型", "获取基本信息"]) and not any(analyst in message for analyst in ["分析师", "Analyst"]):
+                        detected_step = 0
+                    elif "开始分析" in message and not any(analyst in message for analyst in ["市场分析师", "基本面分析师", "新闻分析师", "社交媒体分析师"]):
+                        detected_step = 0
+                    
+                    # 步骤1: 市场分析 (15%)
+                    elif any(keyword in message for keyword in ["市场分析师开始", "市场分析师完成", "✅ 市场分析师完成", "📈 市场分析师完成", "Market Analyst", "技术指标分析", "价格走势研究"]):
+                        detected_step = 1
+                    
+                    # 步骤2: 基本面分析 (15%)
+                    elif any(keyword in message for keyword in ["基本面分析师开始", "基本面分析师完成", "✅ 基本面分析师完成", "Fundamentals Analyst", "财务数据分析", "估值评估"]):
+                        detected_step = 2
+                    
+                    # 步骤3: 新闻分析 (10%)
+                    elif any(keyword in message for keyword in ["新闻分析师开始", "新闻分析师完成", "✅ 新闻分析师完成", "News Analyst", "新闻事件影响", "行业动态分析"]):
+                        detected_step = 3
+                    
+                    # 步骤4: 情绪分析 (10%)
+                    elif any(keyword in message for keyword in ["社交媒体分析师开始", "社交媒体分析师完成", "✅ 社交媒体分析师完成", "Social Media Analyst", "情绪分析", "市场热度分析"]):
+                        detected_step = 4
+                    
+                    # 步骤5: 投资辩论 (25%)
+                    elif any(keyword in message for keyword in ["Bull Researcher", "Bear Researcher", "Research Manager", "投资辩论", "多空"]):
+                        detected_step = 5
+                    
+                    # 步骤6: 风险评估 (15%)
+                    elif any(keyword in message for keyword in ["Risk Judge", "Risky Analyst", "Safe Analyst", "风险评估", "风险管理"]):
+                        detected_step = 6
+                    
+                    # 分析完成
+                    elif any(keyword in message for keyword in ["分析成功完成", "✅ 分析", "所有分析师完成"]):
+                        detected_step = 6
                         progress_percentage = 1.0
-                        current_step_num = 10
-                    elif "完成" in message:
-                        progress_percentage = 1.0
-                        current_step_num = 10
+                    
+                    # 根据检测到的步骤计算进度
+                    if detected_step is not None:
+                        completed_weight = sum(step_weights[:detected_step])
+                        current_weight = step_weights[detected_step]
+                        progress_percentage = completed_weight + current_weight
+                        current_step_num = detected_step + 1
+                        current_step_name = step_names[detected_step]
+                        total_step_num = len(step_names)
                     else:
-                        # 根据当前进度平滑递增，避免跳跃
-                        current_progress = analysis_progress_store[analysis_id].get("progress_percentage", 0)
-                        if current_progress < 0.7:  # 分析阶段，缓慢递增
-                            progress_percentage = min(current_progress + 0.02, 0.7)
-                        else:  # 后期阶段，保持当前进度
-                            progress_percentage = current_progress
+                        # 如果没有匹配到特定步骤，保持当前进度或缓慢递增
+                        progress_percentage = max(current_progress, 0.05)  # 至少5%
                         current_step_num = analysis_progress_store[analysis_id].get("current_step", 1)
+                        current_step_name = analysis_progress_store[analysis_id].get("current_step_name", "分析中")
+                        total_step_num = 7
+                
+                # 确保所有变量都有默认值
+                if 'current_step_name' not in locals():
+                    current_step_name = analysis_progress_store[analysis_id].get("current_step_name", "分析中")
+                if 'total_step_num' not in locals():
+                    total_step_num = 7
+
 
                 # 心跳消息：仅更新时间与提示，不改变百分比（保证前端看到“在进行”但不编造进度）
                 if isinstance(message, str) and "HEARTBEAT" in message:
                     progress_percentage = analysis_progress_store[analysis_id].get("progress_percentage", 0)
                     # 保持当前步骤不变
-                    current_step_num = analysis_progress_store[analysis_id].get("current_step", current_step_num)
-                    
-                    total_step_num = 10
+                    current_step_num = analysis_progress_store[analysis_id].get("current_step", 1)
+                    current_step_name = analysis_progress_store[analysis_id].get("current_step_name", "分析中")
+                    total_step_num = 7
                 
                 # 确保进度不会倒退
                 current_progress = analysis_progress_store[analysis_id].get("progress_percentage", 0)
@@ -1193,30 +1477,38 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                 else:
                     estimated_remaining = 0
                 
-                # 更新进度数据
-                # 构建步骤结构化信息（等权）。如果具体权重未来可用，可在此替换为权重表。
+                # 更新进度数据 - 使用真实的7步名称
                 steps_list = []
-                for idx in range(1, total_step_num + 1):
-                    if progress_percentage >= 1.0 or idx < current_step_num:
+                for idx in range(total_step_num):
+                    step_num = idx + 1
+                    if progress_percentage >= 1.0 or step_num < current_step_num:
                         step_status = "completed"
-                    elif idx == current_step_num and progress_percentage < 1.0:
+                    elif step_num == current_step_num and progress_percentage < 1.0:
                         step_status = "running"
                     else:
                         step_status = "pending"
+                    
                     steps_list.append({
-                        "index": idx,
-                        "name": f"步骤 {idx}",
-                        "status": step_status
+                        "index": step_num,
+                        "name": step_names[idx],
+                        "status": step_status,
+                        "weight": step_weights[idx]
                     })
 
+                # 处理消息显示 - 避免显示HEARTBEAT
+                display_message = message
+                if "HEARTBEAT" in message:
+                    # 心跳消息使用更友好的显示
+                    display_message = f"正在执行 {current_step_name}..."
+                
                 progress_data = {
                     "status": "running" if progress_percentage < 1.0 else "completed",
-                    "current_step": current_step_num,
+                    "current_step": current_step_num - 1,  # 转换为0-based索引供前端使用
                     "total_steps": total_step_num,
                     "progress_percentage": progress_percentage,  # 保持0-1之间的小数
                     "progress": progress_percentage * 100,  # 同时提供0-100格式供兼容
-                    "current_step_name": message.split("...")[0] if "..." in message else message[:50],
-                    "message": message,
+                    "current_step_name": current_step_name,
+                    "message": display_message,
                     "elapsed_time": int(elapsed_time),
                     "estimated_time_remaining": int(estimated_remaining),
                     "estimated_remaining": estimated_remaining,  # 保留旧字段兼容性
@@ -1254,9 +1546,9 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     # 其他情况只记录debug级别
                     logger.debug(f"分析 {analysis_id} 进度保持: {progress_percent_display}% - {message}")
             
-            # 设置分析参数
+            # 设置分析参数 - 使用与TradingAgentsGraph相同的分析师配置
             analysis_date = datetime.now().strftime("%Y-%m-%d")
-            analysts = ["market", "fundamentals", "technical", "sentiment", "risk"]  # 默认分析师
+            analysts = ["market", "fundamentals", "social"]  # 与TradingAgentsGraph保持一致，避免重复
             research_depth = 2  # 基础分析
             llm_provider = "deepseek"  # 使用DeepSeek
             llm_model = "deepseek-chat"
@@ -1343,16 +1635,12 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     else:
                         update_data["error_message"] = result.get('error', '未知错误')
                     
-                    # 使用asyncio运行异步更新
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    loop.run_until_complete(
-                        mongodb_db.analyses.update_one(
-                            {"_id": ObjectId(analysis_id)},
-                            {"$set": update_data}
-                        )
+                    # 使用统一的MongoDB操作函数
+                    safe_mongodb_operation(
+                        mongodb_db.analyses.update_one,
+                        {"_id": ObjectId(analysis_id)},
+                        {"$set": update_data}
                     )
-                    loop.close()
                     
                     logger.info(f"✅ 分析完成状态已更新到数据库: {analysis_id}")
                 except Exception as db_error:
@@ -1390,20 +1678,16 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     import asyncio
                     from bson import ObjectId
                     
-                    # 使用asyncio运行异步更新
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    loop.run_until_complete(
-                        mongodb_db.analyses.update_one(
-                            {"_id": ObjectId(analysis_id)},
-                            {"$set": {
-                                "status": "failed",
-                                "error_message": str(e),
-                                "completed_at": datetime.utcnow()
-                            }}
-                        )
+                    # 使用统一的MongoDB操作函数
+                    safe_mongodb_operation(
+                        mongodb_db.analyses.update_one,
+                        {"_id": ObjectId(analysis_id)},
+                        {"$set": {
+                            "status": "failed",
+                            "error_message": str(e),
+                            "completed_at": datetime.utcnow()
+                        }}
                     )
-                    loop.close()
                     
                     logger.info(f"✅ 分析失败状态已更新到数据库: {analysis_id}")
                 except Exception as db_error:

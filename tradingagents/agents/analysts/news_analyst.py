@@ -16,7 +16,7 @@ from tradingagents.agents.utils.google_tool_handler import GoogleToolCallHandler
 logger = get_logger("analysts.news")
 
 
-def create_news_analyst(llm, toolkit):
+def create_news_analyst(llm, toolkit, progress_callback=None):
     @log_analyst_module("news")
     def news_analyst_node(state):
         start_time = datetime.now()
@@ -26,6 +26,13 @@ def create_news_analyst(llm, toolkit):
         logger.info(f"[新闻分析师] 开始分析 {ticker} 的新闻，交易日期: {current_date}")
         session_id = state.get("session_id", "未知会话")
         logger.info(f"[新闻分析师] 会话ID: {session_id}，开始时间: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # 🔧 从状态中获取进度回调（优先）或使用传入的回调
+        callback = state.get("progress_callback") or progress_callback
+        
+        # 通知进度回调
+        if callback:
+            callback(f"📰 新闻分析师开始分析 {ticker}", 3)
         
         # 获取市场信息
         market_info = StockUtils.get_market_info(ticker)
@@ -338,6 +345,13 @@ def create_news_analyst(llm, toolkit):
         clean_message = AIMessage(content=report)
         
         logger.info(f"[新闻分析师] ✅ 返回清洁消息，报告长度: {len(report)} 字符")
+
+        # 通知进度回调完成
+        callback = state.get("progress_callback") or progress_callback
+        if callback:
+            # 截取前500字符作为预览，避免消息过长
+            preview = report[:500] + "..." if len(report) > 500 else report
+            callback(f"✅ 新闻分析师完成分析: {ticker}", 3, 7, preview, "新闻分析师")
 
         return {
             "messages": [clean_message],

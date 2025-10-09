@@ -1,56 +1,64 @@
-# Multi-stage build for production backend
-FROM python:3.11-slim as builder
+# TradingAgents Backend Service
+FROM python:3.10-slim-bookworm
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+# 安装uv包管理器
+RUN pip install -i https://mirrors.aliyun.com/pypi/simple uv
 
 WORKDIR /app
 
-# Copy requirements and install dependencies
-COPY requirements.txt pyproject.toml ./
-RUN pip install --no-cache-dir --user -r requirements.txt
+# 创建必要目录
+RUN mkdir -p /app/data /app/logs /app/cache /app/results
 
-# Production stage
-FROM python:3.11-slim
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app
 
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# 配置阿里云镜像源
+RUN echo 'deb http://mirrors.aliyun.com/debian/ bookworm main' > /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/debian/ bookworm main' >> /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/debian/ bookworm-updates main' >> /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/debian/ bookworm-updates main' >> /etc/apt/sources.list && \
+    echo 'deb http://mirrors.aliyun.com/debian-security bookworm-security main' >> /etc/apt/sources.list && \
+    echo 'deb-src http://mirrors.aliyun.com/debian-security bookworm-security main' >> /etc/apt/sources.list
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     curl \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+# 复制依赖文件（从项目根目录）
+COPY requirements.txt pyproject.toml ./
 
-# Copy installed packages from builder stage
-COPY --from=builder /root/.local /home/appuser/.local
+# 多源轮询安装Python依赖
+RUN set -e; \
+    for src in \
+        https://mirrors.aliyun.com/pypi/simple \
+        https://pypi.tuna.tsinghua.edu.cn/simple \
+        https://pypi.doubanio.com/simple \
+        https://pypi.org/simple; do \
+      echo "Try installing from $src"; \
+      uv pip install --system --no-cache -e . -i $src && break; \
+      echo "Failed at $src, try next"; \
+    done
 
-# Copy application code
-COPY . .
+# 复制tradingagents模块（共享模块）
+COPY tradingagents/ ./tradingagents/
 
-# Create necessary directories and set permissions
-RUN mkdir -p /app/logs /app/data && \
-    chown -R appuser:appuser /app
+# 复制backend代码
+COPY backend/ ./backend/
 
-# Switch to non-root user
-USER appuser
+# 复制配置文件
+COPY .env* ./
 
-# Add local packages to PATH
-ENV PATH=/home/appuser/.local/bin:$PATH
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Expose port
+# 暴露端口
 EXPOSE 8000
 
-# Health check
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Start application
-CMD ["python", "tradingagents_server.py"]
+# 启动应用
+CMD ["python", "backend/tradingagents_server.py"]

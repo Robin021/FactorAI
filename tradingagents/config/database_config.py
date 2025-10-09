@@ -22,18 +22,27 @@ class DatabaseConfig:
         Raises:
             ValueError: 当必要的配置未设置时
         """
-        connection_string = os.getenv('MONGODB_CONNECTION_STRING')
-        if not connection_string:
-            raise ValueError(
-                "MongoDB连接字符串未配置。请设置环境变量 MONGODB_CONNECTION_STRING\n"
-                "例如: MONGODB_CONNECTION_STRING=mongodb://localhost:27017/"
-            )
+        # 优先使用统一的 MONGODB_URL
+        mongodb_url = os.getenv('MONGODB_URL')
+        if mongodb_url:
+            return {
+                'connection_string': mongodb_url,
+                'database': os.getenv('MONGODB_DB_NAME', 'tradingagents')
+            }
         
-        return {
-            'connection_string': connection_string,
-            'database': os.getenv('MONGODB_DATABASE', 'tradingagents'),
-            'auth_source': os.getenv('MONGODB_AUTH_SOURCE', 'admin')
-        }
+        # 兼容旧版本的 MONGODB_CONNECTION_STRING
+        connection_string = os.getenv('MONGODB_CONNECTION_STRING')
+        if connection_string:
+            return {
+                'connection_string': connection_string,
+                'database': os.getenv('MONGODB_DATABASE', 'tradingagents'),
+                'auth_source': os.getenv('MONGODB_AUTH_SOURCE', 'admin')
+            }
+        
+        raise ValueError(
+            "MongoDB连接字符串未配置。请设置环境变量 MONGODB_URL\n"
+            "例如: MONGODB_URL=mongodb://username:password@localhost:27017/tradingagents?authSource=admin"
+        )
     
     @staticmethod
     def get_redis_config() -> Dict[str, Any]:

@@ -1,0 +1,12 @@
+{
+  "symbol": "NVDA",
+  "data_type": "stock_data",
+  "market_type": "us",
+  "start_date": "2024-04-10",
+  "end_date": "2024-05-10",
+  "data_source": "finnhub",
+  "file_path": "/Users/robin/VSCode/BigA/TradingAgents-CN/tradingagents/dataflows/data_cache/us_stocks/NVDA_stock_data_903f96574619.txt",
+  "file_format": "txt",
+  "content_length": 306,
+  "cached_at": "2025-10-09T18:24:15.597819"
+}

@@ -319,12 +319,33 @@ class AsyncAnalysisService:
                     task_id, progress, message, current_step
                 )
                 
+                # 计算已用时间
+                elapsed_time = 0
+                estimated_remaining = 0
+                
+                try:
+                    # 从数据库获取分析开始时间
+                    analysis_doc = await self.db.analyses.find_one({"_id": ObjectId(analysis_id)})
+                    if analysis_doc and analysis_doc.get("started_at"):
+                        started_at = analysis_doc["started_at"]
+                        elapsed_time = (datetime.utcnow() - started_at).total_seconds()
+                        
+                        # 根据当前进度估算剩余时间
+                        if progress > 0:
+                            total_estimated_time = elapsed_time * (100.0 / progress)
+                            estimated_remaining = max(0, total_estimated_time - elapsed_time)
+                except Exception as e:
+                    logger.warning(f"Failed to calculate elapsed time in progress callback: {e}")
+                
                 # 同时更新analysis_progress键，供前端API使用
                 progress_data = {
                     "status": "running",
                     "progress": progress,
+                    "progress_percentage": progress / 100.0,  # 添加0-1格式的进度
                     "message": message,
                     "current_step": current_step,
+                    "elapsed_time": elapsed_time,
+                    "estimated_remaining": estimated_remaining,
                     "updated_at": datetime.utcnow().isoformat()
                 }
                 await self.redis.setex(

@@ -245,6 +245,13 @@ def create_market_analyst_react(llm, toolkit):
 
                 report = result['output']
                 logger.info(f"📈 [市场分析师] ReAct Agent完成，报告长度: {len(report)}")
+                
+                # 🔧 通过progress_callback传递LLM分析结果
+                callback = state.get("progress_callback") or progress_callback
+                if callback:
+                    # 截取前500字符作为预览，避免消息过长
+                    preview = report[:500] + "..." if len(report) > 500 else report
+                    callback(f"📈 市场分析师完成分析: {ticker}", 1, 7, preview, "市场分析师")
 
             except Exception as e:
                 logger.error(f"❌ [DEBUG] ReAct Agent失败: {str(e)}")
@@ -263,7 +270,7 @@ def create_market_analyst_react(llm, toolkit):
     return market_analyst_react_node
 
 
-def create_market_analyst(llm, toolkit):
+def create_market_analyst(llm, toolkit, progress_callback=None):
 
     def market_analyst_node(state):
         logger.debug(f"📈 [DEBUG] ===== 市场分析师节点开始 =====")
@@ -274,6 +281,13 @@ def create_market_analyst(llm, toolkit):
         logger.debug(f"📈 [DEBUG] 输入参数: ticker={ticker}, date={current_date}")
         logger.debug(f"📈 [DEBUG] 当前状态中的消息数量: {len(state.get('messages', []))}")
         logger.debug(f"📈 [DEBUG] 现有市场报告: {state.get('market_report', 'None')}")
+        
+        # 🔧 从状态中获取进度回调（优先）或使用传入的回调
+        callback = state.get("progress_callback") or progress_callback
+        
+        # 通知进度回调
+        if callback:
+            callback(f"📈 市场分析师开始分析 {ticker}", 1)
 
         # 根据股票代码格式选择数据源
         from tradingagents.utils.stock_utils import StockUtils
@@ -417,6 +431,13 @@ def create_market_analyst(llm, toolkit):
                 # 没有工具调用，直接使用LLM的回复
                 report = result.content
                 logger.info(f"📊 [市场分析师] 直接回复，长度: {len(report)}")
+                
+                # 🔧 通过progress_callback传递LLM分析结果
+                callback = state.get("progress_callback") or progress_callback
+                if callback:
+                    # 截取前500字符作为预览，避免消息过长
+                    preview = report[:500] + "..." if len(report) > 500 else report
+                    callback(f"📈 市场分析师完成分析: {ticker}", 1, 7, preview, "市场分析师")
             else:
                 # 有工具调用，执行工具并生成完整分析报告
                 logger.info(f"📊 [市场分析师] 工具调用: {[call.get('name', 'unknown') for call in result.tool_calls]}")
@@ -493,6 +514,13 @@ def create_market_analyst(llm, toolkit):
 
                     logger.info(f"📊 [市场分析师] 生成完整分析报告，长度: {len(report)}")
 
+                    # 🔧 通过progress_callback传递LLM分析结果
+                    callback = state.get("progress_callback") or progress_callback
+                    if callback:
+                        # 截取前500字符作为预览，避免消息过长
+                        preview = report[:500] + "..." if len(report) > 500 else report
+                        callback(f"📈 市场分析师完成分析: {ticker}", 1, 7, preview, "市场分析师")
+
                     # 返回包含工具调用和最终分析的完整消息序列
                     return {
                         "messages": [result] + tool_messages + [final_result],
@@ -511,6 +539,11 @@ def create_market_analyst(llm, toolkit):
                         "market_report": report,
                     }
 
+            # 通知进度回调完成
+            callback = state.get("progress_callback") or progress_callback
+            if callback:
+                callback(f"✅ 市场分析师完成分析: {ticker}", 1, 7)
+            
             return {
                 "messages": [result],
                 "market_report": report,

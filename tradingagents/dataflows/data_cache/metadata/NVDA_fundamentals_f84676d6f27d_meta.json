@@ -1,0 +1,10 @@
+{
+  "symbol": "NVDA",
+  "data_type": "fundamentals",
+  "data_source": "finnhub",
+  "market_type": "us",
+  "file_path": "/Users/robin/VSCode/BigA/TradingAgents-CN/tradingagents/dataflows/data_cache/us_fundamentals/NVDA_fundamentals_f84676d6f27d.txt",
+  "file_format": "txt",
+  "content_length": 739,
+  "cached_at": "2025-10-09T18:30:19.728673"
+}

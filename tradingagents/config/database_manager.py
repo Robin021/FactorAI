@@ -47,17 +47,28 @@ class DatabaseManager:
         self.mongodb_enabled = parse_bool_env("MONGODB_ENABLED", False)
         self.redis_enabled = parse_bool_env("REDIS_ENABLED", False)
 
-        # 从环境变量读取MongoDB配置
-        self.mongodb_config = {
-            "enabled": self.mongodb_enabled,
-            "host": os.getenv("MONGODB_HOST", "localhost"),
-            "port": int(os.getenv("MONGODB_PORT", "27017")),
-            "username": os.getenv("MONGODB_USERNAME"),
-            "password": os.getenv("MONGODB_PASSWORD"),
-            "database": os.getenv("MONGODB_DATABASE", "tradingagents"),
-            "auth_source": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
-            "timeout": 2000
-        }
+        # 从环境变量读取MongoDB配置 - 优先使用统一的连接字符串
+        mongodb_url = os.getenv("MONGODB_URL")
+        if mongodb_url:
+            # 使用统一的连接字符串
+            self.mongodb_config = {
+                "enabled": self.mongodb_enabled,
+                "url": mongodb_url,
+                "database": os.getenv("MONGODB_DB_NAME", "tradingagents"),
+                "timeout": 2000
+            }
+        else:
+            # 兼容旧版本的分离配置
+            self.mongodb_config = {
+                "enabled": self.mongodb_enabled,
+                "host": os.getenv("MONGODB_HOST", "localhost"),
+                "port": int(os.getenv("MONGODB_PORT", "27017")),
+                "username": os.getenv("MONGODB_USERNAME"),
+                "password": os.getenv("MONGODB_PASSWORD"),
+                "database": os.getenv("MONGODB_DATABASE", "tradingagents"),
+                "auth_source": os.getenv("MONGODB_AUTH_SOURCE", "admin"),
+                "timeout": 2000
+            }
 
         # 从环境变量读取Redis配置
         self.redis_config = {
@@ -72,7 +83,10 @@ class DatabaseManager:
         self.logger.info(f"MongoDB启用: {self.mongodb_enabled}")
         self.logger.info(f"Redis启用: {self.redis_enabled}")
         if self.mongodb_enabled:
-            self.logger.info(f"MongoDB配置: {self.mongodb_config['host']}:{self.mongodb_config['port']}")
+            if "url" in self.mongodb_config:
+                self.logger.info(f"MongoDB配置: {self.mongodb_config['url']}")
+            else:
+                self.logger.info(f"MongoDB配置: {self.mongodb_config['host']}:{self.mongodb_config['port']}")
         if self.redis_enabled:
             self.logger.info(f"Redis配置: {self.redis_config['host']}:{self.redis_config['port']}")
     
@@ -88,23 +102,31 @@ class DatabaseManager:
             import pymongo
             from pymongo import MongoClient
 
-            # 构建连接参数
-            connect_kwargs = {
-                "host": self.mongodb_config["host"],
-                "port": self.mongodb_config["port"],
-                "serverSelectionTimeoutMS": self.mongodb_config["timeout"],
-                "connectTimeoutMS": self.mongodb_config["timeout"]
-            }
+            # 优先使用连接字符串
+            if "url" in self.mongodb_config:
+                client = MongoClient(
+                    self.mongodb_config["url"],
+                    serverSelectionTimeoutMS=self.mongodb_config["timeout"],
+                    connectTimeoutMS=self.mongodb_config["timeout"]
+                )
+            else:
+                # 兼容旧版本的分离配置
+                connect_kwargs = {
+                    "host": self.mongodb_config["host"],
+                    "port": self.mongodb_config["port"],
+                    "serverSelectionTimeoutMS": self.mongodb_config["timeout"],
+                    "connectTimeoutMS": self.mongodb_config["timeout"]
+                }
 
-            # 如果有用户名和密码，添加认证
-            if self.mongodb_config["username"] and self.mongodb_config["password"]:
-                connect_kwargs.update({
-                    "username": self.mongodb_config["username"],
-                    "password": self.mongodb_config["password"],
-                    "authSource": self.mongodb_config["auth_source"]
-                })
+                # 如果有用户名和密码，添加认证
+                if self.mongodb_config.get("username") and self.mongodb_config.get("password"):
+                    connect_kwargs.update({
+                        "username": self.mongodb_config["username"],
+                        "password": self.mongodb_config["password"],
+                        "authSource": self.mongodb_config["auth_source"]
+                    })
 
-            client = MongoClient(**connect_kwargs)
+                client = MongoClient(**connect_kwargs)
 
             # 测试连接
             client.server_info()
@@ -195,22 +217,30 @@ class DatabaseManager:
             try:
                 import pymongo
 
-                # 构建连接参数
-                connect_kwargs = {
-                    "host": self.mongodb_config["host"],
-                    "port": self.mongodb_config["port"],
-                    "serverSelectionTimeoutMS": self.mongodb_config["timeout"]
-                }
+                # 优先使用连接字符串
+                if "url" in self.mongodb_config:
+                    self.mongodb_client = pymongo.MongoClient(
+                        self.mongodb_config["url"],
+                        serverSelectionTimeoutMS=self.mongodb_config["timeout"]
+                    )
+                else:
+                    # 兼容旧版本的分离配置
+                    connect_kwargs = {
+                        "host": self.mongodb_config["host"],
+                        "port": self.mongodb_config["port"],
+                        "serverSelectionTimeoutMS": self.mongodb_config["timeout"]
+                    }
 
-                # 如果有用户名和密码，添加认证
-                if self.mongodb_config["username"] and self.mongodb_config["password"]:
-                    connect_kwargs.update({
-                        "username": self.mongodb_config["username"],
-                        "password": self.mongodb_config["password"],
-                        "authSource": self.mongodb_config["auth_source"]
-                    })
+                    # 如果有用户名和密码，添加认证
+                    if self.mongodb_config.get("username") and self.mongodb_config.get("password"):
+                        connect_kwargs.update({
+                            "username": self.mongodb_config["username"],
+                            "password": self.mongodb_config["password"],
+                            "authSource": self.mongodb_config["auth_source"]
+                        })
 
-                self.mongodb_client = pymongo.MongoClient(**connect_kwargs)
+                    self.mongodb_client = pymongo.MongoClient(**connect_kwargs)
+                
                 self.logger.info("MongoDB客户端初始化成功")
             except Exception as e:
                 self.logger.error(f"MongoDB客户端初始化失败: {e}")
@@ -279,13 +309,16 @@ class DatabaseManager:
 
     def get_status_report(self) -> Dict[str, Any]:
         """获取状态报告"""
+        mongodb_info = {"available": self.mongodb_available}
+        if "url" in self.mongodb_config:
+            mongodb_info["url"] = self.mongodb_config["url"]
+        else:
+            mongodb_info["host"] = self.mongodb_config.get("host", "unknown")
+            mongodb_info["port"] = self.mongodb_config.get("port", "unknown")
+        
         return {
             "database_available": self.is_database_available(),
-            "mongodb": {
-                "available": self.mongodb_available,
-                "host": self.mongodb_config["host"],
-                "port": self.mongodb_config["port"]
-            },
+            "mongodb": mongodb_info,
             "redis": {
                 "available": self.redis_available,
                 "host": self.redis_config["host"],

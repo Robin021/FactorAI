@@ -33,6 +33,7 @@ class GraphSetup:
         conditional_logic: ConditionalLogic,
         config: Dict[str, Any] = None,
         react_llm = None,
+        progress_callback = None,
     ):
         """Initialize with required components."""
         self.quick_thinking_llm = quick_thinking_llm
@@ -47,6 +48,7 @@ class GraphSetup:
         self.conditional_logic = conditional_logic
         self.config = config or {}
         self.react_llm = react_llm
+        self.progress_callback = progress_callback
 
     def setup_graph(
         self, selected_analysts=["market", "social", "news", "fundamentals"]
@@ -90,21 +92,21 @@ class GraphSetup:
 
             # 所有LLM都使用标准分析师
             analyst_nodes["market"] = create_market_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["market"] = create_msg_delete()
             tool_nodes["market"] = self.tool_nodes["market"]
 
         if "social" in selected_analysts:
             analyst_nodes["social"] = create_social_media_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["social"] = create_msg_delete()
             tool_nodes["social"] = self.tool_nodes["social"]
 
         if "news" in selected_analysts:
             analyst_nodes["news"] = create_news_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["news"] = create_msg_delete()
             tool_nodes["news"] = self.tool_nodes["news"]
@@ -131,7 +133,7 @@ class GraphSetup:
 
             # 所有LLM都使用标准分析师（包含强制工具调用机制）
             analyst_nodes["fundamentals"] = create_fundamentals_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["fundamentals"] = create_msg_delete()
             tool_nodes["fundamentals"] = self.tool_nodes["fundamentals"]
@@ -139,7 +141,7 @@ class GraphSetup:
         if "technical" in selected_analysts:
             # 使用通用分析师模式，专注于技术分析
             analyst_nodes["technical"] = create_market_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["technical"] = create_msg_delete()
             tool_nodes["technical"] = self.tool_nodes["technical"]
@@ -147,7 +149,7 @@ class GraphSetup:
         if "sentiment" in selected_analysts:
             # 使用社交媒体分析师作为情绪分析师
             analyst_nodes["sentiment"] = create_social_media_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["sentiment"] = create_msg_delete()
             tool_nodes["sentiment"] = self.tool_nodes["sentiment"]
@@ -155,7 +157,7 @@ class GraphSetup:
         if "risk" in selected_analysts:
             # 使用基本面分析师作为风险分析师
             analyst_nodes["risk"] = create_fundamentals_analyst(
-                self.quick_thinking_llm, self.toolkit
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
             )
             delete_nodes["risk"] = create_msg_delete()
             tool_nodes["risk"] = self.tool_nodes["risk"]

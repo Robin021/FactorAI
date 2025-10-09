@@ -763,9 +763,31 @@ def get_YFin_data(
     )
 
     if end_date > "2025-03-25":
-        raise Exception(
-            f"Get_YFin_Data: {end_date} is outside of the data range of 2015-01-01 to 2025-03-25"
-        )
+        # Instead of raising an exception, try to use online data as fallback
+        logger.warning(f"⚠️ [Get_YFin_Data] 请求日期 {end_date} 超出离线数据范围 (2015-01-01 到 2025-03-25)")
+        logger.info(f"🔄 [Get_YFin_Data] 尝试使用在线数据源作为备用方案...")
+        
+        try:
+            # Try to use online data as fallback
+            online_data = get_YFin_data_online(symbol, start_date, end_date)
+            logger.info(f"✅ [Get_YFin_Data] 在线数据获取成功，作为离线数据的备用方案")
+            return online_data
+        except Exception as e:
+            logger.error(f"❌ [Get_YFin_Data] 在线数据备用方案也失败: {e}")
+            # If online fallback also fails, provide a helpful error message
+            error_msg = f"""❌ 数据获取失败
+
+**问题**: 请求的日期范围 ({start_date} 到 {end_date}) 超出了离线数据的可用范围 (2015-01-01 到 2025-03-25)
+
+**建议解决方案**:
+1. 使用在线工具: 设置 online_tools=True 或使用 get_YFin_data_online
+2. 调整日期范围: 使用 2025-03-25 或更早的日期
+3. 更新数据文件: 下载更新的股票数据文件
+
+**当前配置**: 离线模式，数据文件最新日期为 2025-03-25
+**请求日期**: {end_date}
+"""
+            return error_msg
 
     # Extract just the date part for comparison
     data["DateOnly"] = data["Date"].str[:10]

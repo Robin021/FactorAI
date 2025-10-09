@@ -39,6 +39,7 @@ class ProgressData:
     current_step_name: str
     timestamp: float
     status: AnalysisStatus
+    step_results: Dict[str, Any] = None  # 存储每个步骤的结果
 
 class SimpleProgressTracker:
     """简单进度跟踪器 - 轮询方案"""
@@ -72,34 +73,18 @@ class SimpleProgressTracker:
                 SimpleProgressTracker._memory_store = {}
         
     def _generate_dynamic_steps(self) -> List[ProgressStep]:
-        """根据分析师数量动态生成分析步骤"""
+        """根据实际分析流程生成7个真实步骤"""
+        # 真实的7步分析流程
         steps = [
-            ProgressStep("数据验证", "验证股票代码并预获取数据", 0.05),
-            ProgressStep("环境准备", "检查API密钥和环境配置", 0.02),
-            ProgressStep("成本预估", "预估分析成本", 0.01),
-            ProgressStep("参数配置", "配置分析参数和模型", 0.02),
-            ProgressStep("引擎初始化", "初始化AI分析引擎", 0.05),
+            ProgressStep("股票识别", "🔍 识别股票类型并获取基本信息", 0.10),
+            ProgressStep("市场分析", "📈 技术指标分析和价格走势研究", 0.15),
+            ProgressStep("基本面分析", "📊 财务数据分析和估值评估", 0.15),
+            ProgressStep("新闻分析", "📰 新闻事件影响和行业动态分析", 0.10),
+            ProgressStep("情绪分析", "💭 社交媒体情绪和市场热度分析", 0.10),
+            ProgressStep("投资辩论", "⚖️ 多空观点辩论和投资决策制定", 0.25),
+            ProgressStep("风险评估", "🛡️ 风险管理评估和最终决策优化", 0.15),
         ]
         
-        # 为每个分析师添加专门的步骤
-        analyst_weight = 0.8 / len(self.analysts)
-        analyst_names = {
-            'market': '市场分析师',
-            'fundamentals': '基本面分析师', 
-            'technical': '技术分析师',
-            'sentiment': '情绪分析师',
-            'news': '新闻分析师'
-        }
-        
-        for analyst in self.analysts:
-            analyst_name = analyst_names.get(analyst, analyst)
-            steps.append(ProgressStep(
-                f"{analyst_name}分析",
-                f"{analyst_name}正在进行专业分析",
-                analyst_weight
-            ))
-        
-        steps.append(ProgressStep("结果整理", "整理分析结果和生成报告", 0.05))
         return steps
     
     def _estimate_total_duration(self) -> float:
@@ -167,30 +152,73 @@ class SimpleProgressTracker:
         
         logger.info(f"Progress updated for {self.analysis_id}: {progress_percentage:.1%} - {message}")
     
+    def update_step_result(self, step_name: str, result_data: Dict[str, Any]):
+        """更新步骤结果"""
+        # 获取当前进度数据
+        current_progress = self.get_progress()
+        if current_progress:
+            if current_progress.step_results is None:
+                current_progress.step_results = {}
+            current_progress.step_results[step_name] = result_data
+            self._save_progress(current_progress)
+            logger.info(f"Step result updated for {self.analysis_id}: {step_name}")
+    
+    def complete_step(self, step_index: int, result_summary: str, detailed_result: Dict[str, Any] = None):
+        """完成一个步骤并保存结果"""
+        if step_index < len(self.steps):
+            self.steps[step_index].status = "completed"
+            step_name = self.steps[step_index].name
+            
+            # 更新进度
+            progress_percentage = self._calculate_weighted_progress()
+            message = f"✅ {step_name}完成: {result_summary}"
+            
+            self.update_progress(message, step_index + 1)  # 移动到下一步
+            
+            # 保存步骤结果
+            if detailed_result:
+                self.update_step_result(step_name, {
+                    "summary": result_summary,
+                    "details": detailed_result,
+                    "completed_at": time.time()
+                })
+    
     def _detect_step_from_message(self, message: str) -> Optional[int]:
-        """智能检测当前步骤"""
+        """智能检测当前步骤 - 基于真实分析流程"""
         message_lower = message.lower()
         
-        if "开始股票分析" in message:
-            return 0
-        elif "验证" in message or "预获取" in message:
-            return 0
-        elif "环境" in message or "api" in message_lower:
+        # 优先匹配更具体的关键词，避免误判
+        
+        # 步骤1: 市场分析 (优先检测，避免被步骤0误判)
+        if any(keyword in message for keyword in ["市场分析师开始", "市场分析师完成", "Market Analyst", "技术指标分析", "价格走势研究"]):
             return 1
-        elif "成本" in message or "预估" in message:
+        
+        # 步骤2: 基本面分析  
+        elif any(keyword in message for keyword in ["基本面分析师开始", "基本面分析师完成", "Fundamentals Analyst", "财务数据分析", "估值评估"]):
             return 2
-        elif "配置" in message or "参数" in message:
+        
+        # 步骤3: 新闻分析
+        elif any(keyword in message for keyword in ["新闻分析师开始", "新闻分析师完成", "News Analyst", "新闻事件影响", "行业动态分析"]):
             return 3
-        elif "初始化" in message or "引擎" in message:
+        
+        # 步骤4: 情绪分析
+        elif any(keyword in message for keyword in ["社交媒体分析师开始", "社交媒体分析师完成", "Social Media Analyst", "情绪分析", "市场热度分析"]):
             return 4
-        elif any(analyst in message for analyst in ["市场分析师", "基本面分析师", "技术分析师"]):
-            # 找到对应的分析师步骤
-            for i, step in enumerate(self.steps):
-                if "分析师" in step.name and any(keyword in message for keyword in step.name.split()):
-                    return i
-        elif "整理" in message or "结果" in message:
-            return len(self.steps) - 1
-        elif "完成" in message or "成功" in message:
+        
+        # 步骤5: 投资辩论
+        elif any(keyword in message for keyword in ["Bull Researcher", "Bear Researcher", "Research Manager", "投资辩论", "多空观点", "投资决策制定"]):
+            return 5
+        
+        # 步骤6: 风险评估
+        elif any(keyword in message for keyword in ["Risk Judge", "Risky Analyst", "Safe Analyst", "Neutral Analyst", "风险管理", "风险评估", "最终决策优化"]):
+            return 6
+        
+        # 步骤0: 股票识别 (放在后面，避免过度匹配)
+        elif any(keyword in message for keyword in ["股票识别", "识别股票类型", "获取基本信息", "开始分析"]):
+            return 0
+        
+        # 分析完成 - 设置为最后一步
+        elif any(keyword in message for keyword in ["分析成功完成", "✅ 分析", "分析结束"]):
             return len(self.steps) - 1
             
         return None
@@ -200,7 +228,12 @@ class SimpleProgressTracker:
         if self.current_step >= len(self.steps):
             return 1.0
             
+        # 计算已完成步骤的权重 + 当前步骤的权重
         completed_weight = sum(step.weight for step in self.steps[:self.current_step])
+        if self.current_step < len(self.steps):
+            # 当前步骤也算作已完成的权重
+            completed_weight += self.steps[self.current_step].weight
+            
         total_weight = sum(step.weight for step in self.steps)
         
         return min(completed_weight / total_weight, 1.0)
@@ -255,12 +288,12 @@ class SimpleProgressTracker:
     def mark_completed(self, success: bool = True):
         """标记分析完成"""
         self.status = AnalysisStatus.COMPLETED if success else AnalysisStatus.FAILED
-        self.current_step = len(self.steps) - 1
+        self.current_step = len(self.steps)  # 设置为超过最后一步，确保100%进度
         
         if success:
-            self.update_progress("✅ 分析成功完成！")
+            self.update_progress("✅ 分析成功完成！", len(self.steps) - 1)
         else:
-            self.update_progress("❌ 分析执行失败")
+            self.update_progress("❌ 分析执行失败", len(self.steps) - 1)
     
     def mark_cancelled(self):
         """标记分析取消"""

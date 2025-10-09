@@ -244,4 +244,131 @@
 .analysis-tabs .ant-tabs-content-holder .ant-tabs-content .ant-tabs-tabpane {
   padding: 0;
   margin: 0;
+}/
+* 删除功能相关样式 */
+.analysis-history .history-list .ant-card {
+  transition: all 0.3s ease;
+  border: 1px solid #d9d9d9;
+}
+
+.analysis-history .history-list .ant-card:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.analysis-history .history-list .ant-card.selected {
+  border-color: #1890ff;
+  background-color: #f6ffed;
+}
+
+.batch-delete-toolbar {
+  background: #fff2e8;
+  border: 1px solid #ffbb96;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.batch-delete-toolbar .ant-typography {
+  margin: 0;
+  color: #d46b08;
+}
+
+.delete-confirm-content {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.delete-confirm-item {
+  padding: 8px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  margin: 4px 0;
+  border-left: 3px solid #1890ff;
+}
+
+.delete-confirm-warning {
+  color: #ff4d4f;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+/* 状态标签样式优化 */
+.analysis-status-tag {
+  font-weight: 500;
+  border-radius: 12px;
+  padding: 2px 8px;
+}
+
+/* 选择框样式 */
+.analysis-checkbox {
+  margin-right: 12px;
+}
+
+.analysis-checkbox .ant-checkbox-disabled {
+  opacity: 0.3;
+}
+
+/* 批量操作按钮样式 */
+.batch-operations {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.batch-delete-button {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: white;
+  font-weight: 500;
+}
+
+.batch-delete-button:hover {
+  background: #ff7875;
+  border-color: #ff7875;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .batch-delete-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .batch-operations {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .analysis-history .history-list .ant-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  .analysis-history .history-list .ant-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .analysis-history .history-list .ant-col:last-child {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 576px) {
+  .delete-confirm-content {
+    max-height: 200px;
+  }
+  
+  .batch-operations {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .batch-operations .ant-btn {
+    width: 100%;
+  }
 }

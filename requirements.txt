@@ -7,7 +7,7 @@ openai>=1.0.0,<2.0.0
 langchain-openai>=0.1.0
 langchain-experimental
 pandas
-yfinance
+yfinance>=0.2.66
 praw
 feedparser
 stockstats
@@ -33,7 +33,6 @@ langchain-google-genai
 google-genai>=0.1.0
 google-generativeai>=0.8.0
 dashscope
-streamlit
 plotly
 psutil
 pytdx  # 通达信数据接口（已弃用，保留兼容性）

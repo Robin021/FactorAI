@@ -77,7 +77,7 @@ class InstallationTester:
         print("📚 检查依赖包...")
         
         dependencies = [
-            ('streamlit', 'Web框架'),
+            ('fastapi', 'Web框架'),
             ('pandas', '数据处理'),
             ('numpy', '数值计算'),
             ('requests', 'HTTP请求'),
@@ -171,7 +171,7 @@ class InstallationTester:
         print("🌐 检查Web应用...")
         
         web_files = [
-            ('web/app.py', 'Streamlit主应用'),
+            ('backend/main.py', 'FastAPI主应用'),
             ('web/components/sidebar.py', '侧边栏组件'),
             ('start_web.py', '启动脚本')
         ]

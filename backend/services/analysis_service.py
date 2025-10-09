@@ -89,15 +89,8 @@ class AnalysisService:
                 analysis_id
             )
             
-            # Update progress with detailed result processing
-            await self._update_progress(analysis_id, 80.0, "🔄 整合分析结果...", "结果整合")
-            await asyncio.sleep(2)
-            await self._update_progress(analysis_id, 85.0, "📊 生成图表和可视化...", "图表生成")
-            await asyncio.sleep(2)
-            await self._update_progress(analysis_id, 90.0, "📝 编写分析报告...", "报告生成")
-            await asyncio.sleep(2)
-            await self._update_progress(analysis_id, 95.0, "🎨 优化报告格式...", "格式优化")
-            await asyncio.sleep(1)
+            # 分析完成后的处理
+            await self._update_progress(analysis_id, 100.0, "✅ 分析成功完成！", "完成")
             
             # Process and format results
             result_data = await self._process_analysis_results(final_state, decision)
@@ -169,31 +162,62 @@ class AnalysisService:
         analysis_id: str
     ):
         """
-        Run the TradingAgents analysis with progress tracking
+        Run the TradingAgents analysis with real-time progress tracking
         """
         # Check for cancellation
         if await self._is_cancelled(analysis_id):
             raise AnalysisException("Analysis was cancelled")
         
-        # Update progress with detailed market analysis steps
-        await self._update_progress(analysis_id, 25.0, "📊 开始市场数据收集...", "数据收集")
-        await asyncio.sleep(2)
-        await self._update_progress(analysis_id, 30.0, "📈 执行技术指标分析...", "技术分析")
-        await asyncio.sleep(3)
-        await self._update_progress(analysis_id, 40.0, "💼 进行基本面分析...", "基本面分析")
-        await asyncio.sleep(3)
-        await self._update_progress(analysis_id, 50.0, "📰 分析市场新闻和情绪...", "情绪分析")
-        await asyncio.sleep(2)
-        await self._update_progress(analysis_id, 60.0, "🔄 运行多智能体协作分析...", "智能体分析")
-        await asyncio.sleep(4)
+        # Define progress callback for real-time updates
+        async def progress_callback(message: str, step: int = None, total_steps: int = None, llm_result: str = None, analyst_type: str = None):
+            """Progress callback for real-time updates - 支持LLM结果传递"""
+            try:
+                # Calculate progress based on step (7 total steps)
+                if step is not None:
+                    # 确保step从0开始，计算正确的进度百分比
+                    progress_percentage = ((step + 1) / 7.0) * 80 + 20  # 20-100%范围，前面20%用于初始化
+                    step_names = ["股票识别", "市场分析", "基本面分析", "新闻分析", "情绪分析", "投资辩论", "风险评估"]
+                    step_name = step_names[min(step, 6)]
+                    current_step_number = step + 1  # 传递给前端的步骤编号（1-7）
+                    await self._update_progress(analysis_id, progress_percentage, message, step_name, llm_result, analyst_type, current_step_number)
+                else:
+                    # Auto-detect step from message
+                    if "股票识别" in message or "股票类型" in message or "识别股票" in message:
+                        await self._update_progress(analysis_id, 31.4, message, "股票识别", llm_result, analyst_type, 1)
+                    elif "市场分析师" in message or "Market Analyst" in message or "技术分析" in message:
+                        await self._update_progress(analysis_id, 42.9, message, "市场分析", llm_result, analyst_type, 2)
+                    elif "基本面分析师" in message or "Fundamentals Analyst" in message or "财务分析" in message:
+                        await self._update_progress(analysis_id, 54.3, message, "基本面分析", llm_result, analyst_type, 3)
+                    elif "新闻分析师" in message or "News Analyst" in message or "新闻" in message:
+                        await self._update_progress(analysis_id, 65.7, message, "新闻分析", llm_result, analyst_type, 4)
+                    elif "社交媒体分析师" in message or "Social Media Analyst" in message or "情绪" in message:
+                        await self._update_progress(analysis_id, 77.1, message, "情绪分析", llm_result, analyst_type, 5)
+                    elif any(keyword in message for keyword in ["Bull Researcher", "Bear Researcher", "Research Manager", "投资辩论", "多空"]):
+                        await self._update_progress(analysis_id, 88.6, message, "投资辩论", llm_result, analyst_type, 6)
+                    elif any(keyword in message for keyword in ["Risk Judge", "风险管理", "Risky Analyst", "Safe Analyst", "风险评估"]):
+                        await self._update_progress(analysis_id, 100.0, message, "风险评估", llm_result, analyst_type, 7)
+                    else:
+                        # 默认情况，不更新步骤编号
+                        await self._update_progress(analysis_id, None, message, None, llm_result, analyst_type)
+            except Exception as e:
+                logger.error(f"Progress callback error: {e}")
         
-        # Run the analysis in a separate thread to avoid blocking
+        # Run the analysis in a separate thread with progress callback
         loop = asyncio.get_event_loop()
         
         def run_analysis():
-            return trading_graph.propagate(stock_code, analysis_date)
+            # Create a wrapper to handle async callback in sync context
+            def sync_progress_callback(message: str, step: int = None, total_steps: int = None, llm_result: str = None, analyst_type: str = None):
+                # Schedule the async callback - 支持LLM结果传递
+                try:
+                    future = asyncio.run_coroutine_threadsafe(progress_callback(message, step, total_steps, llm_result, analyst_type), loop)
+                    future.result(timeout=1.0)  # Wait up to 1 second
+                except Exception as e:
+                    logger.error(f"Sync progress callback error: {e}")
+            
+            return trading_graph.propagate(stock_code, analysis_date, sync_progress_callback)
         
-        # Execute with periodic progress updates
+        # Execute analysis with real-time progress updates
         final_state, decision = await loop.run_in_executor(None, run_analysis)
         
         return final_state, decision
@@ -359,8 +383,13 @@ class AnalysisService:
         if progress is not None:
             update_data["progress"] = progress
         
-        if status == AnalysisStatus.RUNNING and "started_at" not in update_data:
-            update_data["started_at"] = datetime.utcnow()
+        # 如果状态变为RUNNING，且数据库中还没有started_at，则设置开始时间
+        if status == AnalysisStatus.RUNNING:
+            # 检查数据库中是否已经有started_at
+            analysis_doc = await self.db.analyses.find_one({"_id": ObjectId(analysis_id)})
+            if analysis_doc and not analysis_doc.get("started_at"):
+                update_data["started_at"] = datetime.utcnow()
+                logger.info(f"🚀 Analysis {analysis_id} started at {update_data['started_at']}")
         elif status in [AnalysisStatus.COMPLETED, AnalysisStatus.FAILED, AnalysisStatus.CANCELLED]:
             update_data["completed_at"] = datetime.utcnow()
         
@@ -376,20 +405,65 @@ class AnalysisService:
     async def _update_progress(
         self,
         analysis_id: str,
-        progress: float,
+        progress: float = None,
         message: str = None,
-        current_step: str = None
+        current_step: str = None,
+        llm_result: str = None,
+        analyst_type: str = None,
+        current_step_number: int = None
     ):
         """
         Update analysis progress in Redis for real-time updates
         """
+        # 计算已用时间
+        elapsed_time = 0
+        estimated_remaining = 0
+        
+        try:
+            # 从数据库获取分析开始时间
+            analysis_doc = await self.db.analyses.find_one({"_id": ObjectId(analysis_id)})
+            if analysis_doc and analysis_doc.get("started_at"):
+                started_at = analysis_doc["started_at"]
+                elapsed_time = (datetime.utcnow() - started_at).total_seconds()
+                
+                # 根据当前进度估算剩余时间
+                if progress and progress > 0:
+                    total_estimated_time = elapsed_time * (100.0 / progress)
+                    estimated_remaining = max(0, total_estimated_time - elapsed_time)
+        except Exception as e:
+            logger.warning(f"Failed to calculate elapsed time: {e}")
+        
+        # 构建进度数据
         progress_data = {
             "status": "running",  # 添加状态信息
-            "progress": progress,
-            "message": message,
-            "current_step": current_step,
+            "elapsed_time": elapsed_time,
+            "estimated_remaining": estimated_remaining,
             "updated_at": datetime.utcnow().isoformat()
         }
+        
+        # 只在有进度值时更新进度相关字段
+        if progress is not None:
+            progress_data["progress"] = progress
+            progress_data["progress_percentage"] = progress / 100.0  # 添加0-1格式的进度
+        
+        # 只在有消息时更新消息
+        if message is not None:
+            progress_data["message"] = message
+        
+        # 只在有步骤信息时更新步骤
+        if current_step is not None:
+            progress_data["current_step_name"] = current_step
+        
+        # 只在有步骤编号时更新步骤编号
+        if current_step_number is not None:
+            progress_data["current_step"] = current_step_number
+            progress_data["total_steps"] = 7
+        
+        # 添加LLM结果信息
+        if llm_result:
+            progress_data["llm_result"] = llm_result
+        if analyst_type:
+            progress_data["analyst_type"] = analyst_type
         
         redis_key = f"analysis_progress:{analysis_id}"
         await self.redis.setex(
@@ -399,13 +473,17 @@ class AnalysisService:
         )
         
         # 添加调试日志
-        logger.info(f"📊 Progress updated: {progress}% - {message} (Redis key: {redis_key})")
+        if progress is not None:
+            logger.info(f"📊 Progress updated: {progress}% - {message} (Redis key: {redis_key})")
+        else:
+            logger.info(f"📊 Progress message updated: {message} (Redis key: {redis_key})")
         
-        # Also update database
-        await self.db.analyses.update_one(
-            {"_id": ObjectId(analysis_id)},
-            {"$set": {"progress": progress}}
-        )
+        # 只在有进度值时更新数据库
+        if progress is not None:
+            await self.db.analyses.update_one(
+                {"_id": ObjectId(analysis_id)},
+                {"$set": {"progress": progress}}
+            )
     
     async def _complete_analysis(self, analysis_id: str, result_data: AnalysisResult):
         """
@@ -429,6 +507,13 @@ class AnalysisService:
             86400,  # 24 hours TTL
             json.dumps(result_data.dict())
         )
+        
+        # 🔧 新增：保存分析结果到MongoDB（用于历史记录和报告管理）
+        try:
+            await self._save_to_mongodb(analysis_id, result_data)
+        except Exception as e:
+            logger.error(f"Failed to save analysis to MongoDB: {e}")
+            # 不影响主流程，继续执行
         
         # Clean up progress cache
         await self.redis.delete(f"analysis_progress:{analysis_id}")
@@ -457,6 +542,78 @@ class AnalysisService:
         """
         cancel_flag = await self.redis.get(f"analysis_cancel:{analysis_id}")
         return cancel_flag is not None
+    
+    async def _save_to_mongodb(self, analysis_id: str, result_data: AnalysisResult):
+        """
+        保存分析结果到MongoDB（用于历史记录和报告管理）
+        """
+        try:
+            # 获取分析记录
+            analysis_doc = await self.db.analyses.find_one({"_id": ObjectId(analysis_id)})
+            if not analysis_doc:
+                logger.error(f"Analysis document not found: {analysis_id}")
+                return
+            
+            # 准备MongoDB文档
+            stock_symbol = analysis_doc.get("stock_code", "")
+            timestamp = datetime.utcnow()
+            
+            # 构建分析结果摘要
+            summary = result_data.summary or {}
+            recommendation = summary.get("recommendation", "HOLD")
+            confidence_score = summary.get("confidence_score", 0.5)
+            
+            # 构建报告内容
+            reports = {}
+            if result_data.technical_analysis:
+                reports["technical_analysis"] = result_data.technical_analysis.get("content", "")
+            if result_data.fundamental_analysis:
+                reports["fundamental_analysis"] = result_data.fundamental_analysis.get("content", "")
+            if result_data.news_analysis:
+                reports["news_analysis"] = result_data.news_analysis.get("content", "")
+            if result_data.risk_assessment:
+                reports["risk_assessment"] = result_data.risk_assessment.get("content", "")
+            if summary.get("final_decision"):
+                reports["final_decision"] = summary["final_decision"]
+            
+            # 构建MongoDB文档
+            mongodb_doc = {
+                "analysis_id": analysis_id,
+                "stock_symbol": stock_symbol,
+                "analysis_date": timestamp.strftime('%Y-%m-%d'),
+                "timestamp": timestamp,
+                "status": "completed",
+                "source": "backend_api",
+                
+                # 分析结果摘要
+                "summary": {
+                    "recommendation": recommendation,
+                    "confidence_score": confidence_score,
+                    "final_decision": summary.get("final_decision", "")
+                },
+                "analysts": analysis_doc.get("config", {}).get("analysts", []),
+                "research_depth": 1,  # 默认研究深度
+                
+                # 报告内容
+                "reports": reports,
+                
+                # 原始数据
+                "raw_data": result_data.raw_data or {},
+                
+                # 元数据
+                "created_at": timestamp,
+                "updated_at": timestamp,
+                "user_id": str(analysis_doc.get("user_id", "")),
+                "market_type": analysis_doc.get("market_type", "")
+            }
+            
+            # 保存到MongoDB
+            await self.db.analysis_reports.insert_one(mongodb_doc)
+            logger.info(f"✅ Analysis result saved to MongoDB: {analysis_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to save analysis to MongoDB: {e}")
+            raise
 
 
 # Dependency function

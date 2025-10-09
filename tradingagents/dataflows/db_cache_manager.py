@@ -58,8 +58,11 @@ class DatabaseCacheManager:
         mongodb_password = os.getenv("MONGODB_PASSWORD", "tradingagents123")
         redis_password = os.getenv("REDIS_PASSWORD", "tradingagents123")
 
-        self.mongodb_url = mongodb_url or os.getenv("MONGODB_URL", f"mongodb://admin:{mongodb_password}@localhost:{mongodb_port}")
-        self.redis_url = redis_url or os.getenv("REDIS_URL", f"redis://:{redis_password}@localhost:{redis_port}")
+        # 优先使用环境变量，然后根据环境判断主机名
+        mongodb_host = os.getenv("MONGODB_HOST", "mongodb" if os.getenv("DOCKER_ENV") else "localhost")
+        self.mongodb_url = mongodb_url or os.getenv("MONGODB_URL", f"mongodb://admin:{mongodb_password}@{mongodb_host}:{mongodb_port}")
+        redis_host = os.getenv("REDIS_HOST", "redis" if os.getenv("DOCKER_ENV") else "localhost")
+        self.redis_url = redis_url or os.getenv("REDIS_URL", f"redis://:{redis_password}@{redis_host}:{redis_port}")
         self.mongodb_db_name = mongodb_db
         self.redis_db = redis_db
         

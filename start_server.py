@@ -63,10 +63,13 @@ def start_server(host="0.0.0.0", port=8000, reload=True, workers=1):
     print("📊 支持市场: A股 + 美股 + 港股")
     print("=" * 60)
     
-    # 构建启动命令
+    # 构建启动命令 - 确保使用当前激活的Python环境
+    python_executable = sys.executable
+    print(f"🐍 使用Python: {python_executable}")
+    
     cmd = [
-        sys.executable, "-m", "uvicorn",
-        "tradingagents_server:app",
+        python_executable, "-m", "uvicorn",
+        "backend.tradingagents_server:app",
         "--host", host,
         "--port", str(port),
         "--log-level", "info"

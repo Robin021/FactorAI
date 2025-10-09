@@ -58,8 +58,13 @@ async def start_analysis(
         )
     
     # Check if user has reached analysis limit (optional rate limiting)
+    user_query = {"$or": [
+        {"user_id": current_user.id},
+        {"user_id": str(current_user.id)},
+        {"user_id": current_user.username}
+    ]}
     active_analyses = await db.analyses.count_documents({
-        "user_id": current_user.id,
+        **user_query,
         "status": {"$in": [AnalysisStatus.PENDING.value, AnalysisStatus.RUNNING.value]}
     })
     
@@ -134,7 +139,7 @@ async def get_analysis_progress(
     progress_data = None
     redis_keys_to_try = [
         f"analysis_progress:{analysis_id}",  # React版本格式
-        f"progress:{analysis_id}",           # Streamlit版本格式
+        f"progress:{analysis_id}",           # 备用格式
         f"task_progress:analysis_{analysis_id}"  # TaskQueue格式
     ]
     
@@ -149,7 +154,7 @@ async def get_analysis_progress(
             import json
             progress_info = json.loads(progress_data)
             
-            # 返回兼容前端 SimpleAnalysisProgress 组件的格式
+            # 返回兼容前端 SevenStepProgress 组件的格式
             # 优先使用 progress_percentage (0-1格式)，如果没有则从 progress (0-100) 转换
             progress_percentage = progress_info.get("progress_percentage")
             if progress_percentage is None:
@@ -160,13 +165,16 @@ async def get_analysis_progress(
                 "analysis_id": analysis_id,
                 "status": progress_info.get("status", analysis.status.value),
                 "current_step": progress_info.get("current_step", 0),
-                "total_steps": progress_info.get("total_steps", 6),
+                "total_steps": progress_info.get("total_steps", 7),
                 "progress_percentage": progress_percentage,  # 0-1 的小数格式
                 "message": progress_info.get("message", "正在分析..."),
                 "elapsed_time": progress_info.get("elapsed_time", 0),
                 "estimated_remaining": progress_info.get("estimated_time_remaining", progress_info.get("estimated_remaining", 0)),
                 "current_step_name": progress_info.get("current_step_name") or progress_info.get("current_step") or "分析中",
-                "timestamp": datetime.utcnow().timestamp()
+                "timestamp": datetime.utcnow().timestamp(),
+                # 🔧 新增：LLM分析结果
+                "llm_result": progress_info.get("llm_result"),
+                "analyst_type": progress_info.get("analyst_type")
             }
         except Exception as e:
             logger.warning(f"Failed to parse progress data from Redis: {e}")
@@ -176,8 +184,20 @@ async def get_analysis_progress(
     progress_percentage = analysis.progress / 100.0 if analysis.progress else 0.0
     
     # 根据进度估算当前步骤
-    total_steps = 6
+    total_steps = 7
     current_step = int(progress_percentage * total_steps)
+    
+    # 计算已用时间
+    elapsed_time = 0
+    estimated_remaining = 0
+    
+    if analysis.started_at:
+        elapsed_time = (datetime.utcnow() - analysis.started_at).total_seconds()
+        
+        # 根据当前进度估算剩余时间
+        if analysis.progress and analysis.progress > 0:
+            total_estimated_time = elapsed_time * (100.0 / analysis.progress)
+            estimated_remaining = max(0, total_estimated_time - elapsed_time)
     
     # 根据状态返回消息
     status_messages = {
@@ -195,8 +215,8 @@ async def get_analysis_progress(
         "total_steps": total_steps,
         "progress_percentage": progress_percentage,
         "message": status_messages.get(analysis.status.value, "未知状态"),
-        "elapsed_time": 0,
-        "estimated_remaining": 0,
+        "elapsed_time": elapsed_time,
+        "estimated_remaining": estimated_remaining,
         "current_step_name": f"步骤 {current_step + 1}/{total_steps}",
         "timestamp": datetime.utcnow().timestamp()
     }
@@ -238,11 +258,11 @@ async def get_analysis_status(
         )
     
     # Get real-time progress from Redis if available
-    # 尝试多种Redis键格式，兼容Streamlit版本和React版本
+    # 尝试多种Redis键格式，兼容不同版本
     progress_data = None
     redis_keys_to_try = [
         f"analysis_progress:{analysis_id}",  # React版本格式
-        f"progress:{analysis_id}",           # Streamlit版本格式
+        f"progress:{analysis_id}",           # 备用格式
         f"task_progress:analysis_{analysis_id}"  # TaskQueue格式
     ]
     
@@ -351,6 +371,18 @@ async def get_analysis_result(
     return _convert_to_analysis_response(analysis)
 
 
+@router.get("/{analysis_id}/results", response_model=Analysis)
+async def get_analysis_results(
+    analysis_id: str,
+    current_user: UserInDB = Depends(require_permissions([Permissions.ANALYSIS_READ])),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Get analysis results (alias for /result endpoint for frontend compatibility)
+    """
+    return await get_analysis_result(analysis_id, current_user, db)
+
+
 @router.get("/history", response_model=AnalysisListResponse)
 async def get_analysis_history(
     stock_code: Optional[str] = None,
@@ -372,8 +404,13 @@ async def get_analysis_history(
     if page_size < 1 or page_size > 100:
         page_size = 20
     
-    # Build query filter
-    query_filter = {"user_id": current_user.id}
+    # Build query filter - handle both ObjectId and string user_id formats
+    user_id_query = {"$or": [
+        {"user_id": current_user.id},  # ObjectId format
+        {"user_id": str(current_user.id)},  # String format
+        {"user_id": current_user.username}  # Username format (for legacy data)
+    ]}
+    query_filter = user_id_query
     
     if stock_code:
         query_filter["stock_code"] = stock_code.upper()
@@ -532,8 +569,13 @@ async def get_analysis_stats(
     Get analysis statistics for the current user
     """
     # Get status counts
+    user_match = {"$or": [
+        {"user_id": current_user.id},
+        {"user_id": str(current_user.id)},
+        {"user_id": current_user.username}
+    ]}
     pipeline = [
-        {"$match": {"user_id": current_user.id}},
+        {"$match": user_match},
         {"$group": {"_id": "$status", "count": {"$sum": 1}}}
     ]
     
@@ -546,13 +588,13 @@ async def get_analysis_stats(
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     
     recent_count = await db.analyses.count_documents({
-        "user_id": current_user.id,
+        **user_match,
         "created_at": {"$gte": thirty_days_ago}
     })
     
     # Get most analyzed stocks
     pipeline = [
-        {"$match": {"user_id": current_user.id}},
+        {"$match": user_match},
         {"$group": {"_id": "$stock_code", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
         {"$limit": 10}

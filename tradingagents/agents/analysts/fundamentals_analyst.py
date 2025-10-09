@@ -81,7 +81,7 @@ def _get_company_name_for_fundamentals(ticker: str, market_info: dict) -> str:
         return f"股票{ticker}"
 
 
-def create_fundamentals_analyst(llm, toolkit):
+def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
     @log_analyst_module("fundamentals")
     def fundamentals_analyst_node(state):
         logger.debug(f"📊 [DEBUG] ===== 基本面分析师节点开始 =====")
@@ -93,6 +93,13 @@ def create_fundamentals_analyst(llm, toolkit):
         logger.debug(f"📊 [DEBUG] 输入参数: ticker={ticker}, date={current_date}")
         logger.debug(f"📊 [DEBUG] 当前状态中的消息数量: {len(state.get('messages', []))}")
         logger.debug(f"📊 [DEBUG] 现有基本面报告: {state.get('fundamentals_report', 'None')}")
+        
+        # 🔧 从状态中获取进度回调（优先）或使用传入的回调
+        callback = state.get("progress_callback") or progress_callback
+        
+        # 通知进度回调
+        if callback:
+            callback(f"📊 基本面分析师开始分析 {ticker}", 2)
 
         # 获取股票市场信息
         from tradingagents.utils.stock_utils import StockUtils
@@ -132,7 +139,7 @@ def create_fundamentals_analyst(llm, toolkit):
             logger.debug(f"📊 [DEBUG] 🔧 统一工具将自动处理: {market_info['market_name']}")
         else:
             # 离线模式：优先使用FinnHub数据，SimFin作为补充
-            if is_china:
+            if market_info['is_china']:
                 # A股使用本地缓存数据
                 tools = [
                     toolkit.get_china_stock_data,
@@ -290,6 +297,15 @@ def create_fundamentals_analyst(llm, toolkit):
                 analyst_name="基本面分析师"
             )
             
+            # 🔧 添加进度回调 - Google模型路径
+            callback = state.get("progress_callback") or progress_callback
+            if callback:
+                preview = report[:500] + "..." if len(report) > 500 else report
+                logger.info(f"🔧 [DEBUG] 基本面分析师调用进度回调(Google路径): ✅ 基本面分析师完成分析: {ticker}")
+                callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
+            else:
+                logger.warning(f"⚠️ [DEBUG] 基本面分析师没有找到进度回调函数(Google路径)")
+            
             return {"fundamentals_report": report}
         else:
             # 非Google模型的处理逻辑
@@ -307,6 +323,17 @@ def create_fundamentals_analyst(llm, toolkit):
                     logger.debug(f"📊 [DEBUG] 工具调用 {len(tool_calls_info)}: {tc}")
                 
                 logger.info(f"📊 [基本面分析师] 工具调用: {tool_calls_info}")
+                
+                # 🔧 添加进度回调 - 工具调用完成
+                callback = state.get("progress_callback") or progress_callback
+                if callback:
+                    report = result.content if hasattr(result, 'content') else str(result)
+                    preview = report[:500] + "..." if len(report) > 500 else report
+                    logger.info(f"🔧 [DEBUG] 基本面分析师调用进度回调(工具调用路径): ✅ 基本面分析师完成分析: {ticker}")
+                    callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
+                else:
+                    logger.warning(f"⚠️ [DEBUG] 基本面分析师没有找到进度回调函数(工具调用路径)")
+                
                 return {
                     "messages": [result],
                     "fundamentals_report": result.content if hasattr(result, 'content') else str(result)
@@ -388,10 +415,30 @@ def create_fundamentals_analyst(llm, toolkit):
                     logger.error(f"❌ [DEBUG] 强制工具调用分析失败: {e}")
                     report = f"基本面分析失败：{str(e)}"
                 
+                # 🔧 无论成功还是失败，都调用进度回调
+                callback = state.get("progress_callback") or progress_callback
+                if callback:
+                    # 截取前500字符作为预览，避免消息过长
+                    preview = report[:500] + "..." if len(report) > 500 else report
+                    logger.info(f"🔧 [DEBUG] 基本面分析师调用进度回调: ✅ 基本面分析师完成分析: {ticker}")
+                    callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
+                else:
+                    logger.warning(f"⚠️ [DEBUG] 基本面分析师没有找到进度回调函数")
+                
                 return {"fundamentals_report": report}
 
         # 这里不应该到达，但作为备用
         logger.debug(f"📊 [DEBUG] 返回状态: fundamentals_report长度={len(result.content) if hasattr(result, 'content') else 0}")
+        # 通知进度回调完成
+        callback = state.get("progress_callback") or progress_callback
+        if callback:
+            # 获取LLM结果
+            report = result.content if hasattr(result, 'content') else str(result)
+            # 截取前500字符作为预览，避免消息过长
+            preview = report[:500] + "..." if len(report) > 500 else report
+            logger.info(f"🔧 [DEBUG] 基本面分析师调用进度回调: ✅ 基本面分析师完成分析: {ticker}")
+            callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
+        
         return {
             "messages": [result],
             "fundamentals_report": result.content if hasattr(result, 'content') else str(result)

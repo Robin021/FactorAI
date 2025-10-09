@@ -75,11 +75,18 @@ def _get_company_name_for_social_media(ticker: str, market_info: dict) -> str:
         return f"股票{ticker}"
 
 
-def create_social_media_analyst(llm, toolkit):
+def create_social_media_analyst(llm, toolkit, progress_callback=None):
     @log_analyst_module("social_media")
     def social_media_analyst_node(state):
         current_date = state["trade_date"]
         ticker = state["company_of_interest"]
+        
+        # 🔧 从状态中获取进度回调（优先）或使用传入的回调
+        callback = state.get("progress_callback") or progress_callback
+        
+        # 通知进度回调
+        if callback:
+            callback(f"💭 社交媒体分析师开始分析 {ticker}", 4)
         
         # 获取股票市场信息
         from tradingagents.utils.stock_utils import StockUtils
@@ -205,6 +212,13 @@ def create_social_media_analyst(llm, toolkit):
             if len(result.tool_calls) == 0:
                 report = result.content
 
+        # 通知进度回调完成
+        callback = state.get("progress_callback") or progress_callback
+        if callback:
+            # 截取前500字符作为预览，避免消息过长
+            preview = report[:500] + "..." if len(report) > 500 else report
+            callback(f"✅ 社交媒体分析师完成分析: {ticker}", 4, 7, preview, "社交媒体分析师")
+        
         return {
             "messages": [result],
             "sentiment_report": report,
