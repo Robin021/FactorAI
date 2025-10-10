@@ -4,10 +4,10 @@ TradingAgents-CN 服务器
 智能股票分析平台 - FastAPI 后端服务
 """
 
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, WebSocket, WebSocketDisconnect, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 import os
@@ -21,9 +21,16 @@ import hashlib
 import time
 import uuid
 
-# 设置日志（需要在import MongoDB之前，因为异常处理需要用到logger）
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 设置统一日志系统（优先读取 TRADINGAGENTS_LOG_LEVEL 等环境变量）
+try:
+    from tradingagents.utils.logging_init import init_logging
+    from tradingagents.utils.logging_manager import get_logger
+    init_logging()
+    logger = get_logger('backend.tradingagents_server')
+except Exception:
+    # 回退到基础日志，避免启动失败
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
 # MongoDB支持
 try:
@@ -79,7 +86,7 @@ except ImportError:
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# 加载环境变量 - 支持多种路径
+# 加载环境变量 - 支持多种路径（尽早加载，便于日志等级等生效）
 env_file_paths = [
     project_root / ".env",  # backend/.env (当前目录)
     project_root.parent / ".env",  # 项目根目录/.env
@@ -96,6 +103,16 @@ for env_file in env_file_paths:
 
 if not env_file_loaded:
     print("⚠️ 未找到 .env 文件，使用默认环境变量")
+
+# 依据环境变量初始化统一日志（确保TRADINGAGENTS_LOG_LEVEL生效）
+try:
+    from tradingagents.utils.logging_init import init_logging
+    from tradingagents.utils.logging_manager import get_logger
+    init_logging()
+    logger = get_logger('backend.tradingagents_server')
+    logger.info(f"日志级别: {os.getenv('TRADINGAGENTS_LOG_LEVEL', 'INFO')}")
+except Exception:
+    pass
 
 app = FastAPI(
     title="TradingAgents-CN API",
@@ -222,6 +239,39 @@ if MONGODB_AVAILABLE:
         mongodb_client = None
         mongodb_db = None
 
+# ======== 简易WS广播管理（兼容旧服务）======== #
+from threading import Lock
+ws_loop = None  # 保存事件循环，便于后台线程调度发送
+ws_connections = set()  # 所有兼容WS连接
+ws_analysis_subscribers: Dict[str, set] = {}  # analysis_id -> set(WebSocket)
+ws_lock = Lock()
+
+def _ws_schedule_send(ws: WebSocket, text: str):
+    global ws_loop
+    try:
+        if ws_loop is None:
+            return
+        fut = asyncio.run_coroutine_threadsafe(ws.send_text(text), ws_loop)
+        _ = fut
+    except Exception as e:
+        logger.debug(f"WS发送调度失败: {e}")
+
+def _broadcast_analysis_progress(analysis_id: str, payload: Dict[str, Any]):
+    try:
+        with ws_lock:
+            subscribers = list(ws_analysis_subscribers.get(analysis_id, set()))
+        if not subscribers:
+            return
+        import json
+        text = json.dumps({
+            "type": "analysis_progress",
+            "data": payload,
+        })
+        for ws in subscribers:
+            _ws_schedule_send(ws, text)
+    except Exception as e:
+        logger.debug(f"WS广播失败: {e}")
+
 # 模拟用户数据库
 fake_users_db = {
     "admin": {
@@ -253,6 +303,8 @@ class AnalysisRequest(BaseModel):
     symbol: str
     market_type: str = "US"
     analysis_type: str = "comprehensive"
+    analysts: Optional[list] = None
+    research_depth: Optional[int] = None
 
 class AnalysisResponse(BaseModel):
     status: str
@@ -495,7 +547,9 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
                 "progress": 0.0,
                 "config": {
                     "analysis_type": request.analysis_type,
-                    "username": current_user["username"]
+                    "analysts": request.analysts or [],
+                    "research_depth": request.research_depth or 2,
+                    "username": current_user["username"],
                 },
                 "created_at": datetime.utcnow(),
                 "result_data": None,
@@ -536,11 +590,21 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
         "user": current_user["username"],
         "user_sub": current_user.get("sub", ""),
         "market_type": request.market_type,
-        "analysis_type": request.analysis_type
+        "analysis_type": request.analysis_type,
+        "analysts": request.analysts or [],
+        "research_depth": request.research_depth or 2,
     }
     
     # 启动真实分析（start_real_analysis 内部会创建后台线程）
-    start_real_analysis(analysis_id, request.symbol.upper(), request.market_type, request.analysis_type, current_user["username"])
+    start_real_analysis(
+        analysis_id,
+        request.symbol.upper(),
+        request.market_type,
+        request.analysis_type,
+        current_user["username"],
+        analysts=request.analysts or [],
+        research_depth=request.research_depth or 2,
+    )
     
     return AnalysisResponse(
         status="started",
@@ -553,64 +617,332 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
 @app.get("/api/v1/analysis/{analysis_id}/status")
 async def get_analysis_status(analysis_id: str, current_user: dict = Depends(get_current_user)):
     """查询分析状态 (需要登录)"""
-    
-    # 模拟状态返回
-    return {
-        "analysis_id": analysis_id,
-        "status": "completed",
-        "progress": 100,
-        "message": "分析已完成",
-        "user": current_user["username"],
-        "created_at": "2024-01-01T00:00:00Z",
-        "completed_at": "2024-01-01T00:05:00Z"
-    }
+    # 优先从内存进度读取
+    progress_data = analysis_progress_store.get(analysis_id)
+    if not progress_data:
+        # 兼容：尝试从Redis读取
+        if redis_client:
+            try:
+                import json
+                key = f"analysis_progress:{analysis_id}"
+                raw = redis_client.get(key)
+                if raw:
+                    progress_data = json.loads(raw)
+            except Exception:
+                progress_data = None
+
+    if progress_data:
+        return {
+            "analysis_id": analysis_id,
+            "status": progress_data.get("status", "running"),
+            "progress": progress_data.get("progress", 0),
+            "message": progress_data.get("message", progress_data.get("current_step_name", "分析中")),
+            "user": current_user["username"],
+            "created_at": progress_data.get("timestamp"),
+            "completed_at": progress_data.get("updated_at") if progress_data.get("status") == "completed" else None,
+        }
+
+    # 未找到，返回404
+    raise HTTPException(status_code=404, detail="分析未找到")
 
 # 分析结果获取 (需要认证)
 @app.get("/api/v1/analysis/{analysis_id}/results")
 async def get_analysis_results(analysis_id: str, current_user: dict = Depends(get_current_user)):
-    """获取分析结果 (需要登录)"""
-    
-    progress_data = analysis_progress_store.get(analysis_id)
-    if not progress_data:
-        raise HTTPException(status_code=404, detail="分析未找到")
-    
-    if progress_data.get("status") != "completed":
-        raise HTTPException(status_code=400, detail="分析尚未完成")
-    
-    # 返回真实的分析结果
-    results = progress_data.get("results", {})
-    if not results:
-        raise HTTPException(status_code=404, detail="分析结果未找到")
-    
-    return {
-        "analysis_id": analysis_id,
-        "symbol": progress_data.get("symbol"),
-        "status": progress_data.get("status"),
-        "user": current_user["username"],
-        "results": results,
-        "created_at": progress_data.get("timestamp"),
-        "completed_at": progress_data.get("timestamp")
-    }
+    """获取分析结果 (需要登录)
 
-# 获取用户的分析历史 (需要认证)
+    兼容多来源：
+    1) 内存进度存储 analysis_progress_store
+    2) Redis 进度缓存（完成时写入）
+    3) MongoDB 持久化记录（result_data 字段）
+    """
+
+    # 1) 优先从内存读取
+    progress_data = analysis_progress_store.get(analysis_id)
+    if progress_data:
+        if progress_data.get("status") != "completed":
+            raise HTTPException(status_code=400, detail="分析尚未完成")
+
+        results = progress_data.get("results") or progress_data.get("result_data") or {}
+        if results:
+            return {
+                "analysis_id": analysis_id,
+                "symbol": progress_data.get("symbol"),
+                "status": progress_data.get("status"),
+                "user": current_user["username"],
+                "results": results,
+                "created_at": progress_data.get("timestamp"),
+                "completed_at": progress_data.get("updated_at") or progress_data.get("timestamp"),
+            }
+        # 继续尝试其他来源
+
+    # 2) Redis 回退（仅在完成时会写入完整结构）
+    if redis_client:
+        try:
+            import json as _json
+            redis_key = f"analysis_progress:{analysis_id}"
+            raw = redis_client.get(redis_key)
+            if raw:
+                data = _json.loads(raw)
+                if data.get("status") == "completed":
+                    results = data.get("results") or data.get("result_data") or {}
+                    if results:
+                        return {
+                            "analysis_id": analysis_id,
+                            "symbol": data.get("symbol"),
+                            "status": data.get("status"),
+                            "user": current_user["username"],
+                            "results": results,
+                            "created_at": data.get("timestamp"),
+                            "completed_at": data.get("updated_at") or data.get("timestamp"),
+                        }
+        except Exception as _e:
+            logger.debug(f"Redis 回退读取失败: {_e}")
+
+    # 3) MongoDB 回退（读取持久化的 result_data）
+    if mongodb_db is not None:
+        try:
+            from bson import ObjectId
+            mongodb_id = None
+            try:
+                mongodb_id = ObjectId(analysis_id)
+            except Exception:
+                mongodb_id = None
+
+            if mongodb_id is not None:
+                # 根据客户端类型选择同步/异步
+                if hasattr(mongodb_client, '_is_sync') and getattr(mongodb_client, '_is_sync'):
+                    doc = mongodb_db.analyses.find_one({"_id": mongodb_id})
+                else:
+                    doc = await mongodb_db.analyses.find_one({"_id": mongodb_id})
+
+                if doc:
+                    status = doc.get("status")
+                    if status != "completed":
+                        raise HTTPException(status_code=400, detail="分析尚未完成")
+                    results = doc.get("result_data") or {}
+                    if results:
+                        return {
+                            "analysis_id": analysis_id,
+                            "symbol": doc.get("stock_code") or doc.get("symbol"),
+                            "status": status,
+                            "user": current_user["username"],
+                            "results": results,
+                            "created_at": doc.get("created_at"),
+                            "completed_at": doc.get("completed_at"),
+                        }
+        except Exception as _e:
+            logger.warning(f"⚠️ MongoDB 回退读取失败: {_e}")
+
+    # 未找到任何结果
+    if progress_data:
+        # 友好降级：如果任务已完成但结果尚未可读，返回占位数据，避免前端报错
+        status_val = progress_data.get("status")
+        if status_val == "completed":
+            return {
+                "analysis_id": analysis_id,
+                "symbol": progress_data.get("symbol"),
+                "status": status_val,
+                "user": current_user["username"],
+                "results": None,  # 占位，前端将展示“正在加载结果”
+                "created_at": progress_data.get("timestamp"),
+                "completed_at": progress_data.get("updated_at") or progress_data.get("timestamp"),
+                "message": "结果生成中，请稍后刷新"
+            }
+        # 其他情况保持原有错误
+        raise HTTPException(status_code=404, detail="分析结果未找到")
+    else:
+        raise HTTPException(status_code=404, detail="分析未找到")
+
+# WebSocket统计（兼容前端探测），避免404噪音
+@app.get("/api/v1/ws/stats")
+async def get_ws_stats():
+    try:
+        total = len(analysis_progress_store)
+        running = sum(1 for v in analysis_progress_store.values() if v.get("status") in ("starting", "running"))
+        completed = sum(1 for v in analysis_progress_store.values() if v.get("status") == "completed")
+        failed = sum(1 for v in analysis_progress_store.values() if v.get("status") == "failed")
+        return {
+            "connections": 0,
+            "connected_clients": 0,
+            "subscriptions": {},
+            "analysis_subscribers": {},
+            "analysis_counts": {
+                "total": total,
+                "running": running,
+                "completed": completed,
+                "failed": failed,
+            },
+            "message": "compat stub"
+        }
+    except Exception:
+        return {"connections": 0, "connected_clients": 0, "analysis_counts": {"total": 0}}
+
+# 轻量级 WebSocket 端点，避免 403，并兼容前端最基本订阅协议
+@app.websocket("/api/v1/ws")
+async def websocket_compat_endpoint(websocket: WebSocket, token: str = Query(default=None)):
+    global ws_loop
+    await websocket.accept()
+    try:
+        # 缓存事件循环（供后台线程广播时使用）
+        try:
+            ws_loop = asyncio.get_running_loop()
+        except Exception:
+            ws_loop = None
+        with ws_lock:
+            ws_connections.add(websocket)
+        # 连接确认
+        await websocket.send_text('{"type":"authentication","data":{"status":"connected"}}')
+        while True:
+            try:
+                raw = await websocket.receive_text()
+            except WebSocketDisconnect:
+                break
+            except Exception:
+                break
+            # 简单协议处理：返回心跳或通知，避免前端报错
+            try:
+                import json
+                msg = json.loads(raw)
+                mtype = msg.get("type", "")
+                if mtype == "subscribe_notifications":
+                    await websocket.send_text('{"type":"notification","data":{"title":"WS已连接","type":"info"}}')
+                elif mtype == "subscribe_analysis":
+                    analysis_id = (msg.get("data") or {}).get("analysis_id")
+                    if analysis_id:
+                        with ws_lock:
+                            ws_analysis_subscribers.setdefault(analysis_id, set()).add(websocket)
+                        await websocket.send_text('{"type":"notification","data":{"title":"已订阅分析","type":"success"}}')
+                    else:
+                        await websocket.send_text('{"type":"error","data":{"error_code":"MISSING_ANALYSIS_ID","error_message":"analysis_id required"}}')
+                elif mtype == "unsubscribe_analysis":
+                    analysis_id = (msg.get("data") or {}).get("analysis_id")
+                    if analysis_id:
+                        with ws_lock:
+                            subs = ws_analysis_subscribers.get(analysis_id)
+                            if subs and websocket in subs:
+                                subs.discard(websocket)
+                                if not subs:
+                                    ws_analysis_subscribers.pop(analysis_id, None)
+                        await websocket.send_text('{"type":"notification","data":{"title":"已取消订阅","type":"info"}}')
+                    else:
+                        await websocket.send_text('{"type":"error","data":{"error_code":"MISSING_ANALYSIS_ID","error_message":"analysis_id required"}}')
+                else:
+                    await websocket.send_text('{"type":"heartbeat","data":{}}')
+            except Exception:
+                await websocket.send_text('{"type":"heartbeat","data":{}}')
+    finally:
+        try:
+            with ws_lock:
+                ws_connections.discard(websocket)
+                # 从所有订阅中移除
+                empty_keys = []
+                for aid, subs in ws_analysis_subscribers.items():
+                    subs.discard(websocket)
+                    if not subs:
+                        empty_keys.append(aid)
+                for k in empty_keys:
+                    ws_analysis_subscribers.pop(k, None)
+            await websocket.close()
+        except Exception:
+            pass
+
+# 获取用户的分析历史 (需要认证) - 优先MongoDB，回退内存
 @app.get("/api/v1/analysis/history")
-async def get_analysis_history(current_user: dict = Depends(get_current_user)):
+async def get_analysis_history(
+    page: int = 1,
+    page_size: int = 20,
+    current_user: dict = Depends(get_current_user),
+):
     """获取用户的分析历史 (需要登录)"""
-    
+
+    # 优先MongoDB持久化数据
+    if mongodb_db is not None:
+        try:
+            user_key = current_user.get("sub") or current_user.get("username")
+            query = {"$or": [
+                {"user_id": user_key},
+                {"user_id": str(user_key)},
+                {"user_id": current_user.get("username")},
+            ]}
+
+            page = max(1, int(page))
+            page_size = max(1, min(100, int(page_size)))
+            skip = (page - 1) * page_size
+
+            analyses = []
+            total = 0
+
+            # 根据客户端类型（同步/异步）选择不同实现
+            if hasattr(mongodb_client, '_is_sync') and getattr(mongodb_client, '_is_sync'):
+                # 同步 PyMongo
+                total = mongodb_db.analyses.count_documents(query)
+                cursor = (
+                    mongodb_db.analyses
+                    .find(query)
+                    .sort("created_at", -1)
+                    .skip(skip)
+                    .limit(page_size)
+                )
+                for doc in cursor:
+                    analyses.append({
+                        "id": str(doc.get("_id")),
+                        "user_id": doc.get("user_id"),
+                        "stock_code": doc.get("stock_code") or doc.get("symbol"),
+                        "status": doc.get("status", "unknown"),
+                        "progress": doc.get("progress", 0.0),
+                        "created_at": doc.get("created_at"),
+                        "started_at": doc.get("started_at"),
+                        "completed_at": doc.get("completed_at"),
+                        "market_type": doc.get("market_type"),
+                        "analysis_type": (doc.get("config") or {}).get("analysis_type", "comprehensive"),
+                        "result_data": doc.get("result_data"),
+                        "error_message": doc.get("error_message"),
+                    })
+            else:
+                # 异步 Motor
+                total = await mongodb_db.analyses.count_documents(query)
+                cursor = (
+                    mongodb_db.analyses
+                    .find(query)
+                    .sort("created_at", -1)
+                    .skip(skip)
+                    .limit(page_size)
+                )
+                async for doc in cursor:
+                    analyses.append({
+                        "id": str(doc.get("_id")),
+                        "user_id": doc.get("user_id"),
+                        "stock_code": doc.get("stock_code") or doc.get("symbol"),
+                        "status": doc.get("status", "unknown"),
+                        "progress": doc.get("progress", 0.0),
+                        "created_at": doc.get("created_at"),
+                        "started_at": doc.get("started_at"),
+                        "completed_at": doc.get("completed_at"),
+                        "market_type": doc.get("market_type"),
+                        "analysis_type": (doc.get("config") or {}).get("analysis_type", "comprehensive"),
+                        "result_data": doc.get("result_data"),
+                        "error_message": doc.get("error_message"),
+                    })
+
+            return {
+                "analyses": analyses,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }
+        except Exception as e:
+            logger.warning(f"⚠️ MongoDB查询分析历史失败，回退内存: {e}")
+
+    # 回退到内存（仅当前进程）
     user_analyses = []
     current_username = current_user["username"]
     current_user_sub = current_user.get("sub", "")
-    
+
     for analysis_id, data in analysis_progress_store.items():
-        # 只返回当前用户的分析记录
         analysis_user = data.get("user", "")
         analysis_user_sub = data.get("user_sub", "")
-        
-        # 通过用户名或sub匹配（sub更可靠）
-        if (analysis_user == current_username or 
-            (current_user_sub and analysis_user_sub == current_user_sub)):
-            
-            analysis_info = {
+        if (analysis_user == current_username or (current_user_sub and analysis_user_sub == current_user_sub)):
+            user_analyses.append({
                 "analysis_id": analysis_id,
                 "symbol": data.get("symbol", ""),
                 "status": data.get("status", "unknown"),
@@ -620,22 +952,34 @@ async def get_analysis_history(current_user: dict = Depends(get_current_user)):
                 "current_step_name": data.get("current_step_name", ""),
                 "elapsed_time": data.get("elapsed_time", 0),
                 "market_type": data.get("market_type", ""),
-                "analysis_type": data.get("analysis_type", "")
-            }
-            user_analyses.append(analysis_info)
-    
-    # 按最后更新时间排序，最新的在前面
+                "analysis_type": data.get("analysis_type", ""),
+            })
+
     user_analyses.sort(key=lambda x: x.get("last_update", 0), reverse=True)
-    
+    start = (page - 1) * page_size
+    end = start + page_size
+    paged = user_analyses[start:end]
+
     return {
-        "analyses": user_analyses,
-        "total": len(user_analyses)
+        "analyses": paged,
+        "total": len(user_analyses),
+        "page": page,
+        "page_size": page_size,
     }
 
 # Authing SSO 回调处理
 @app.get("/api/v1/auth/authing/callback")
 async def authing_callback(code: str, state: str = None):
     """处理 Authing SSO 回调"""
+    # 统一重定向到前端回调页，由前端调用 exchange 接口完成令牌交换
+    try:
+        frontend_callback = f"http://localhost:3000/auth/callback?code={code}"
+        if state is not None:
+            frontend_callback += f"&state={state}"
+        return RedirectResponse(url=frontend_callback, status_code=302)
+    except Exception:
+        # 兜底：回退到登录页
+        return RedirectResponse(url="http://localhost:3000/login", status_code=302)
     try:
         # 从环境变量读取 Authing 配置
         authing_app_id = os.getenv("AUTHING_APP_ID")
@@ -973,6 +1317,113 @@ async def authing_callback(code: str, state: str = None):
         """
         return HTMLResponse(content=error_html)
 
+# Authing SSO code 兑换接口（返回JSON，供前端调用）
+@app.post("/api/v1/auth/authing/exchange")
+async def authing_exchange(payload: dict):
+    """将Authing返回的code兑换为本系统access_token并返回JSON"""
+    try:
+        import requests
+        code = payload.get("code")
+        state = payload.get("state")  # 可按需校验
+        redirect_uri = payload.get("redirect_uri") or os.getenv("AUTHING_REDIRECT_URI")
+
+        if not code:
+            raise HTTPException(status_code=400, detail="缺少code参数")
+
+        # 读取 Authing 配置
+        authing_app_id = os.getenv("AUTHING_APP_ID")
+        authing_app_secret = os.getenv("AUTHING_APP_SECRET")
+        authing_app_host = os.getenv("AUTHING_APP_HOST")
+
+        if not all([authing_app_id, authing_app_secret, authing_app_host, redirect_uri]):
+            raise HTTPException(status_code=500, detail="Authing 配置不完整")
+
+        # 第一步：用 code 换取 access_token
+        token_url = f"{authing_app_host}/oidc/token"
+        token_data = {
+            "client_id": authing_app_id,
+            "client_secret": authing_app_secret,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": redirect_uri,
+        }
+        token_response = requests.post(token_url, data=token_data)
+        if not token_response.ok:
+            raise HTTPException(status_code=400, detail=f"获取token失败: {token_response.text}")
+        token_info = token_response.json()
+        provider_access_token = token_info.get("access_token")
+        if not provider_access_token:
+            raise HTTPException(status_code=400, detail="未获取到access_token")
+
+        # 第二步：用 access_token 获取用户信息
+        userinfo_url = f"{authing_app_host}/oidc/me"
+        headers = {"Authorization": f"Bearer {provider_access_token}"}
+        userinfo_response = requests.get(userinfo_url, headers=headers)
+        if not userinfo_response.ok:
+            raise HTTPException(status_code=400, detail=f"获取用户信息失败: {userinfo_response.text}")
+        user_info = userinfo_response.json()
+
+        # 标准化用户信息
+        sub = user_info.get("sub")
+        if not sub:
+            raise HTTPException(status_code=400, detail="用户信息缺少sub")
+        username = (
+            user_info.get("preferred_username")
+            or user_info.get("username")
+            or user_info.get("phone_number")
+            or sub
+        )
+        email = user_info.get("email")
+        if not email:
+            phone = user_info.get("phone_number")
+            email = f"{phone}@authing.demo" if phone else f"{username}@authing.demo"
+        display_name = user_info.get("name") or user_info.get("nickname") or username
+
+        user_data = {
+            "username": username,
+            "email": email,
+            "name": display_name,
+            "phone": user_info.get("phone_number", ""),
+            "sub": sub,
+            "avatar": user_info.get("picture", ""),
+            "roles": user_info.get("roles", []),
+            "extended_fields": {
+                "unionid": user_info.get("unionid"),
+                "external_id": user_info.get("external_id"),
+            },
+            "role": "user",
+            "permissions": ["read"],
+            "is_active": True,
+            "auth_type": "sso",
+            "auth_provider": "authing",
+        }
+
+        # 写入/更新模拟用户数据库
+        fake_users_db[user_data["username"]] = {**user_data, "password_hash": "sso_user"}
+
+        # 颁发本系统访问令牌
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user_data["username"]}, expires_delta=access_token_expires
+        )
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "username": user_data["username"],
+                "email": user_data["email"],
+                "role": user_data["role"],
+                "permissions": user_data["permissions"],
+            },
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Authing exchange 失败: {e}")
+        raise HTTPException(status_code=500, detail="SSO 登录处理失败")
+
 # 分析进度轮询接口
 @app.get("/api/v1/analysis/{analysis_id}/progress")
 async def get_analysis_progress(analysis_id: str, current_user: dict = Depends(get_current_user)):
@@ -990,131 +1441,448 @@ async def get_analysis_progress(analysis_id: str, current_user: dict = Depends(g
 @app.post("/api/v1/analysis/{analysis_id}/cancel")
 async def cancel_analysis(analysis_id: str, current_user: dict = Depends(get_current_user)):
     """取消分析任务"""
-    
+    # 1) 内存进度（优先）
     progress_data = analysis_progress_store.get(analysis_id)
-    if not progress_data:
-        raise HTTPException(status_code=404, detail="分析任务未找到")
-    
-    # 检查分析是否已经完成
-    if progress_data.get("status") in ["completed", "failed", "cancelled"]:
-        return {"message": f"分析已经{progress_data.get('status')}，无法取消"}
-    
-    # 更新状态为已取消
-    progress_data["status"] = "cancelled"
-    progress_data["message"] = "分析已被用户取消"
-    progress_data["end_time"] = time.time()
-    
-    # 更新存储
-    analysis_progress_store[analysis_id] = progress_data
-    
-    return {"message": "分析已成功取消"}
+    if progress_data:
+        # 若已终态，直接返回
+        if progress_data.get("status") in ["completed", "failed", "cancelled"]:
+            return {"message": f"分析已处于{progress_data.get('status')}状态"}
+        # 标记取消
+        progress_data.update({
+            "status": "cancelled",
+            "message": "分析已被用户取消",
+            "end_time": time.time(),
+            "updated_at": datetime.now().isoformat(),
+        })
+        analysis_progress_store[analysis_id] = progress_data
 
-# PDF报告下载接口
+    # 2) Redis（用于跨进程/页面读取）
+    if redis_client:
+        try:
+            import json
+            redis_key = f"analysis_progress:{analysis_id}"
+            existing = redis_client.get(redis_key)
+            if existing:
+                try:
+                    data = json.loads(existing)
+                except Exception:
+                    data = {}
+            else:
+                data = {}
+            data.update({
+                "status": "cancelled",
+                "message": "分析已被用户取消",
+                "updated_at": datetime.now().isoformat(),
+            })
+            redis_client.setex(redis_key, 3600, json.dumps(data))
+        except Exception:
+            pass
+
+    # 3) MongoDB（持久化状态）
+    if mongodb_db is not None:
+        try:
+            from bson import ObjectId
+            mongodb_id = None
+            try:
+                mongodb_id = ObjectId(analysis_id)
+            except Exception:
+                mongodb_id = None
+            if mongodb_id is not None:
+                await mongodb_db.analyses.update_one(
+                    {"_id": mongodb_id},
+                    {"$set": {"status": "cancelled", "completed_at": datetime.utcnow()}}
+                )
+        except Exception:
+            pass
+
+    # 4) 返回幂等成功（即使内存中不存在该任务，也视为取消请求已受理）
+    return {"message": "已处理取消请求", "analysis_id": analysis_id, "status": "ok"}
+
+# 获取单个分析（简化版，避免前端偶发GET请求404）
+@app.get("/api/v1/analysis/{analysis_id}")
+async def get_analysis_brief(analysis_id: str, current_user: dict = Depends(get_current_user)):
+    # 先从内存
+    data = analysis_progress_store.get(analysis_id)
+    if data:
+        return {
+            "id": analysis_id,
+            "symbol": data.get("symbol"),
+            "status": data.get("status"),
+            "progress": data.get("progress", 0),
+            "created_at": data.get("timestamp"),
+            "completed_at": data.get("updated_at") if data.get("status") == "completed" else None,
+        }
+    # 再尝试MongoDB
+    if mongodb_db is not None:
+        try:
+            from bson import ObjectId
+            doc = await mongodb_db.analyses.find_one({"_id": ObjectId(analysis_id)})
+            if doc:
+                return {
+                    "id": str(doc.get("_id")),
+                    "symbol": doc.get("stock_code") or doc.get("symbol"),
+                    "status": doc.get("status"),
+                    "progress": doc.get("progress", 0.0),
+                    "created_at": doc.get("created_at"),
+                    "completed_at": doc.get("completed_at"),
+                }
+        except Exception:
+            pass
+    raise HTTPException(status_code=404, detail="Analysis not found")
+
+# 删除分析记录
+@app.delete("/api/v1/analysis/{analysis_id}")
+async def delete_analysis_record(analysis_id: str, current_user: dict = Depends(get_current_user)):
+    deleted = False
+    # 先删内存
+    if analysis_id in analysis_progress_store:
+        analysis_progress_store.pop(analysis_id, None)
+        deleted = True
+    # 删Redis缓存
+    if redis_client:
+        try:
+            redis_client.delete(f"analysis_progress:{analysis_id}")
+            redis_client.delete(f"analysis_result:{analysis_id}")
+        except Exception:
+            pass
+    # 删MongoDB
+    if mongodb_db is not None:
+        try:
+            from bson import ObjectId
+            result = await mongodb_db.analyses.delete_one({"_id": ObjectId(analysis_id)})
+            if result.deleted_count > 0:
+                deleted = True
+        except Exception:
+            # 可能不是合法ObjectId，忽略
+            pass
+    if not deleted:
+        # 为提升前端体验，返回幂等删除成功（即使不存在也视为已删除）
+        return {"message": "Analysis not found or already deleted", "analysis_id": analysis_id, "status": "ok"}
+    return {"message": "Analysis deleted", "analysis_id": analysis_id, "status": "ok"}
+
+"""下载与导出相关的工具方法"""
+
+
+def _safe_filename(name: str) -> bool:
+    return not (".." in name or "/" in name or "\\" in name)
+
+
+def _utf16be_hex(s: str) -> str:
+    """Encode text as UTF-16BE hex string for PDF (with BOM)."""
+    try:
+        data = s.encode("utf-16-be", errors="replace")
+    except Exception:
+        data = str(s).encode("utf-16-be", errors="replace")
+    return "<" + (b"\xfe\xff" + data).hex().upper() + ">"
+
+
+def _generate_minimal_pdf(title_text: str, meta_text: str, body: str) -> bytes:
+    import io as _io
+    buf = _io.BytesIO()
+    w = buf.write
+    w(b"%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")
+    # 1 Catalog
+    pos1 = buf.tell(); w(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
+    # 2 Pages
+    pos2 = buf.tell(); w(b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n")
+    # 4 Font (CJK-capable Type0 font using UniGB-UCS2-H)
+    pos4 = buf.tell(); w(
+        b"4 0 obj\n"+
+        b"<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Name /F1 "
+        b"/Encoding /UniGB-UCS2-H /DescendantFonts [5 0 R] >>\nendobj\n"
+    )
+    # 5 Descendant CIDFont (minimal)
+    pos5 = buf.tell(); w(
+        b"5 0 obj\n"+
+        b"<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light "
+        b"/CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> "
+        b"/FontDescriptor 6 0 R /DW 1000 >>\nendobj\n"
+    )
+    # 6 FontDescriptor (minimal metrics)
+    pos6 = buf.tell(); w(
+        b"6 0 obj\n"+
+        b"<< /Type /FontDescriptor /FontName /STSong-Light /Flags 4 "
+        b"/FontBBox [-250 -250 1000 1000] /ItalicAngle 0 /Ascent 1000 /Descent -250 /CapHeight 800 /StemV 80 >>\nendobj\n"
+    )
+    # 7 Contents
+    lines = [
+        "BT",
+        "/F1 18 Tf",
+        "72 740 Td",
+        f"{_utf16be_hex(title_text)} Tj",
+        "/F1 11 Tf",
+        "0 -24 Td",
+    ]
+    if meta_text:
+        for meta_line in meta_text.split("\n"):
+            lines.append(f"{_utf16be_hex(meta_line)} Tj")
+            lines.append("0 -14 Td")
+    if body:
+        for body_line in body.split("\n"):
+            safe = body_line[:1000]
+            lines.append(f"{_utf16be_hex(safe)} Tj")
+            lines.append("0 -14 Td")
+    lines.append("ET")
+    content_stream = "\n".join(lines).encode("ascii")
+    pos7 = buf.tell()
+    w(f"7 0 obj\n<< /Length {len(content_stream)} >>\nstream\n".encode("ascii"))
+    w(content_stream)
+    w(b"\nendstream\nendobj\n")
+    # 3 Page
+    pos3 = buf.tell(); w(b"3 0 obj\n" +
+                         b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R " +
+                         b"/Resources << /Font << /F1 4 0 R >> >> >>\nendobj\n")
+    # xref
+    xref_pos = buf.tell()
+    xref_entries = [0, pos1, pos2, pos3, pos4, pos5, pos6, pos7]
+    w(b"xref\n0 8\n")
+    w(b"0000000000 65535 f \n")
+    for p in xref_entries[1:]:
+        w(f"{p:010d} 00000 n \n".encode("ascii"))
+    # trailer
+    w(b"trailer\n")
+    w(b"<< /Size 8 /Root 1 0 R >>\n")
+    w(b"startxref\n")
+    w(f"{xref_pos}\n".encode("ascii"))
+    w(b"%%EOF\n")
+    return buf.getvalue()
+
+
+# PDF报告下载接口（增强：自动查找文件，找不到则在线生成）
 @app.get("/api/v1/analysis/{analysis_id}/download/pdf")
 async def download_analysis_pdf(analysis_id: str, current_user: dict = Depends(get_current_user)):
-    """下载分析报告PDF"""
-    from fastapi.responses import FileResponse
-    import os
+    from fastapi.responses import FileResponse, StreamingResponse
     from pathlib import Path
-    
+    import io
+
+    # 读取进度
     progress_data = analysis_progress_store.get(analysis_id)
+    if not progress_data and mongodb_db is not None:
+        # 尝试从MongoDB确认是否存在记录
+        try:
+            from bson import ObjectId
+            oid = None
+            try:
+                oid = ObjectId(analysis_id)
+            except Exception:
+                oid = None
+            if oid is not None:
+                if hasattr(mongodb_client, '_is_sync') and getattr(mongodb_client, '_is_sync'):
+                    doc = mongodb_db.analyses.find_one({"_id": oid})
+                else:
+                    doc = await mongodb_db.analyses.find_one({"_id": oid})
+                if doc:
+                    # 构造一个最小进度数据用于后续逻辑
+                    progress_data = {
+                        "status": doc.get("status"),
+                        "symbol": doc.get("stock_code") or doc.get("symbol"),
+                        "timestamp": doc.get("created_at"),
+                        "updated_at": doc.get("completed_at"),
+                        "result_data": doc.get("result_data") or {},
+                    }
+        except Exception:
+            pass
+
     if not progress_data:
         raise HTTPException(status_code=404, detail="分析未找到")
-    
+
     if progress_data.get("status") != "completed":
         raise HTTPException(status_code=400, detail="分析尚未完成")
-    
-    # 查找PDF文件
-    symbol = progress_data.get("symbol", "UNKNOWN")
-    # 在 Docker 中，results 目录在 /app/data
-    results_dir = Path("/app/data") / symbol / "2025-09-29" / "reports"
-    if not results_dir.exists():
-        # 本地开发环境的路径
-        results_dir = Path("results") / symbol / "2025-09-29" / "reports"
-    
-    # 查找PDF文件
-    pdf_files = list(results_dir.glob("*.pdf"))
-    if not pdf_files:
-        # 如果没有PDF，尝试查找markdown文件并提示
-        md_files = list(results_dir.glob("*.md"))
-        if md_files:
-            raise HTTPException(status_code=404, detail="PDF文件未生成，但有Markdown报告可用")
-        else:
-            raise HTTPException(status_code=404, detail="报告文件未找到")
-    
-    # 返回第一个找到的PDF文件
-    pdf_file = pdf_files[0]
-    if not pdf_file.exists():
-        raise HTTPException(status_code=404, detail="PDF文件不存在")
-    
-    return FileResponse(
-        path=str(pdf_file),
-        filename=f"{symbol}_analysis_report.pdf",
-        media_type="application/pdf"
+
+    symbol = (progress_data.get("symbol") or "UNKNOWN").upper()
+
+    # 1) 优先尝试在磁盘上查找PDF（不再依赖固定日期路径）
+    try:
+        candidates = [Path("/app/data") / symbol, Path("results") / symbol]
+        found_pdf = None
+        for base in candidates:
+            if base.exists():
+                # 查找 reports 目录下或任意子目录的PDF
+                pdf_list = list(base.rglob("reports/*.pdf")) or list(base.rglob("*.pdf"))
+                if pdf_list:
+                    # 选择最新修改时间的文件
+                    pdf_list.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                    found_pdf = pdf_list[0]
+                    break
+        if found_pdf and found_pdf.exists():
+            return FileResponse(
+                path=str(found_pdf),
+                filename=f"{symbol}_analysis_report.pdf",
+                media_type="application/pdf"
+            )
+    except Exception:
+        # 忽略磁盘搜索异常，转为在线生成
+        pass
+
+    # 2) 在线生成简要PDF（从结果数据提取摘要）
+    # 尝试从多处获取结果
+    results = progress_data.get("results") or progress_data.get("result_data") or {}
+    if not results and mongodb_db is not None:
+        try:
+            from bson import ObjectId
+            oid = None
+            try:
+                oid = ObjectId(analysis_id)
+            except Exception:
+                oid = None
+            if oid is not None:
+                if hasattr(mongodb_client, '_is_sync') and getattr(mongodb_client, '_is_sync'):
+                    doc = mongodb_db.analyses.find_one({"_id": oid})
+                else:
+                    doc = await mongodb_db.analyses.find_one({"_id": oid})
+                if doc:
+                    results = doc.get("result_data") or {}
+        except Exception:
+            pass
+
+    # 做一个简要摘要
+    title = f"{symbol} 分析报告"
+    created = progress_data.get("timestamp") or ""
+    completed = progress_data.get("updated_at") or ""
+    meta_lines = []
+    if created:
+        meta_lines.append(f"创建时间: {created}")
+    if completed:
+        meta_lines.append(f"完成时间: {completed}")
+    meta_text = "\n".join(meta_lines)
+
+    summary_lines = []
+    try:
+        # 优先从 state 中提取详细字段
+        state = {}
+        if isinstance(results, dict):
+            state = results.get("state") or {}
+        # 兼容顶层直接包含字段的情况
+        def pick(k: str):
+            v = None
+            if isinstance(state, dict) and k in state:
+                v = state.get(k)
+            elif isinstance(results, dict) and k in results:
+                v = results.get(k)
+            return v
+
+        ordered_keys = [
+            "final_trade_decision",
+            "trader_investment_plan",
+            "investment_plan",
+            "fundamentals_report",
+            "market_report",
+            "sentiment_report",
+            "risk_assessment",
+        ]
+
+        for key in ordered_keys:
+            val = pick(key)
+            if not val:
+                continue
+            if isinstance(val, str):
+                txt = val.strip()
+                if txt:
+                    summary_lines.append(f"【{key}】 {txt[:800]}")
+            elif isinstance(val, dict):
+                inner = [f"{k}: {str(v)[:200]}" for k, v in list(val.items())[:5]]
+                if inner:
+                    summary_lines.append(f"【{key}】 " + "; ".join(inner))
+
+        # 决策信息
+        decision = None
+        if isinstance(results, dict):
+            decision = results.get("decision")
+        if isinstance(decision, dict):
+            action = decision.get("action")
+            reason = decision.get("reasoning")
+            tp = decision.get("target_price")
+            parts = []
+            if action: parts.append(f"操作: {action}")
+            if tp not in (None, "N/A", "None", ""): parts.append(f"目标价: {tp}")
+            if reason: parts.append(f"理由: {str(reason)[:400]}")
+            if parts:
+                summary_lines.insert(0, "【决策】 " + "; ".join(parts))
+    except Exception:
+        pass
+
+    if not summary_lines:
+        # 如果没有任何内容可用，返回404与原始语义一致
+        # 但更友好地提示
+        pdf_bytes = _generate_minimal_pdf(title, meta_text, "暂无可导出的报告摘要")
+    else:
+        body_text = "\n".join(summary_lines)
+        pdf_bytes = _generate_minimal_pdf(title, meta_text, body_text)
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={symbol}_analysis_report.pdf"
+        }
     )
 
-# 获取报告文件列表
 @app.get("/api/v1/analysis/{analysis_id}/files")
 async def get_analysis_files(analysis_id: str, current_user: dict = Depends(get_current_user)):
-    """获取分析报告文件列表"""
-    
+    """获取分析报告文件列表（增强：自动遍历查找）"""
+    from pathlib import Path
+
     progress_data = analysis_progress_store.get(analysis_id)
     if not progress_data:
         raise HTTPException(status_code=404, detail="分析未找到")
-    
+
     if progress_data.get("status") != "completed":
         raise HTTPException(status_code=400, detail="分析尚未完成")
-    
-    # 查找报告文件
-    symbol = progress_data.get("symbol", "UNKNOWN")
-    # 在 Docker 中，results 目录在 /app/data
-    results_dir = Path("/app/data") / symbol / "2025-09-29" / "reports"
-    if not results_dir.exists():
-        # 本地开发环境的路径
-        results_dir = Path("results") / symbol / "2025-09-29" / "reports"
-    
+
+    symbol = (progress_data.get("symbol") or "UNKNOWN").upper()
+    candidates = [Path("/app/data") / symbol, Path("results") / symbol]
     files = []
-    if results_dir.exists():
-        for file_path in results_dir.iterdir():
-            if file_path.is_file():
-                files.append({
-                    "name": file_path.name,
-                    "type": file_path.suffix.lower(),
-                    "size": file_path.stat().st_size,
-                    "url": f"/api/v1/analysis/{analysis_id}/download/{file_path.name}"
-                })
-    
+    try:
+        for base in candidates:
+            if base.exists():
+                for p in list(base.rglob("reports/*")) or list(base.rglob("*")):
+                    if p.is_file():
+                        files.append({
+                            "name": p.name,
+                            "type": p.suffix.lower(),
+                            "size": p.stat().st_size,
+                            "url": f"/api/v1/analysis/{analysis_id}/download/{p.name}"
+                        })
+                break
+    except Exception:
+        files = []
+
     return {"files": files}
 
-# 下载任意报告文件
 @app.get("/api/v1/analysis/{analysis_id}/download/{filename}")
 async def download_analysis_file(analysis_id: str, filename: str, current_user: dict = Depends(get_current_user)):
-    """下载指定的分析报告文件"""
+    """下载指定的分析报告文件（增强：自动遍历查找）"""
     from fastapi.responses import FileResponse
-    import os
     from pathlib import Path
-    
+
     progress_data = analysis_progress_store.get(analysis_id)
     if not progress_data:
         raise HTTPException(status_code=404, detail="分析未找到")
-    
-    # 安全检查：防止路径遍历攻击
-    if ".." in filename or "/" in filename or "\\" in filename:
+
+    # 安全检查
+    if not _safe_filename(filename):
         raise HTTPException(status_code=400, detail="无效的文件名")
-    
-    # 查找文件
-    symbol = progress_data.get("symbol", "UNKNOWN")
-    # 在 Docker 中，results 目录在 /app/data
-    results_dir = Path("/app/data") / symbol / "2025-09-29" / "reports"
-    if not results_dir.exists():
-        # 本地开发环境的路径
-        results_dir = Path("results") / symbol / "2025-09-29" / "reports"
-    file_path = results_dir / filename
-    
-    if not file_path.exists():
+
+    symbol = (progress_data.get("symbol") or "UNKNOWN").upper()
+    candidates = [Path("/app/data") / symbol, Path("results") / symbol]
+
+    found = None
+    try:
+        for base in candidates:
+            if base.exists():
+                for p in base.rglob(filename):
+                    if p.is_file():
+                        found = p
+                        break
+            if found:
+                break
+    except Exception:
+        found = None
+
+    if not found or not found.exists():
         raise HTTPException(status_code=404, detail="文件不存在")
-    
-    # 确定媒体类型
+
+    # 媒体类型
     media_type = "application/octet-stream"
     if filename.endswith(".pdf"):
         media_type = "application/pdf"
@@ -1124,15 +1892,19 @@ async def download_analysis_file(analysis_id: str, filename: str, current_user: 
         media_type = "text/plain"
     elif filename.endswith(".json"):
         media_type = "application/json"
-    
-    return FileResponse(
-        path=str(file_path),
-        filename=filename,
-        media_type=media_type
-    )
+
+    return FileResponse(path=str(found), filename=filename, media_type=media_type)
 
 # 启动真实分析 - 重构版本，消除重复执行
-def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysis_type: str, username: str):
+def start_real_analysis(
+    analysis_id: str,
+    symbol: str,
+    market_type: str,
+    analysis_type: str,
+    username: str,
+    analysts: Optional[list] = None,
+    research_depth: Optional[int] = None,
+):
     """启动真实的股票分析 - 修复重复执行问题"""
     import threading
     import time
@@ -1167,111 +1939,9 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
             if str(project_root) not in sys.path:
                 sys.path.insert(0, str(project_root))
             
-            # 进度回调函数 - 兼容TradingAgents的两参数调用
-            def progress_callback(message, step=0, total_steps=7):
-                try:
-                    current_time = time.time()
-                    elapsed_time = current_time - analysis_progress_store[analysis_id].get("start_time", current_time)
-                    
-                    # TradingAgents调用时: progress_callback(message, step)
-                    # 我们的调用时: progress_callback(message, step, total_steps)
-                    progress_percentage = (step + 1) / total_steps if total_steps > 0 else 0
-                    
-                    progress_data = {
-                        "status": "running" if progress_percentage < 1.0 else "completed",
-                        "current_step": step,
-                        "total_steps": total_steps,
-                        "progress_percentage": progress_percentage,
-                        "progress": progress_percentage * 100,
-                        "current_step_name": message,
-                        "message": message,
-                        "elapsed_time": int(elapsed_time),
-                        "last_update": current_time,
-                        "timestamp": datetime.now().isoformat()
-                    }
-                    
-                    # 更新内存存储
-                    analysis_progress_store[analysis_id].update(progress_data)
-                    
-                    # 写入Redis
-                    if redis_client:
-                        try:
-                            import json
-                            redis_key = f"analysis_progress:{analysis_id}"
-                            redis_client.setex(redis_key, 3600, json.dumps(progress_data))
-                        except Exception as redis_error:
-                            logger.warning(f"Failed to write progress to Redis: {redis_error}")
-                    
-                    logger.info(f"分析 {analysis_id} 进度: {int(progress_percentage * 100)}% - {message}")
-                except Exception as e:
-                    logger.error(f"进度回调失败: {e}")
+            # 进度回调在后续统一定义（支持7步权重），此处删除重复定义
             
-            # 直接执行TradingAgents分析 - 只执行一次
-            try:
-                from tradingagents.graph.trading_graph import TradingAgentsGraph
-                from tradingagents.default_config import DEFAULT_CONFIG
-                
-                logger.info("✅ 使用真实TradingAgents分析引擎")
-                
-                # 创建配置
-                config = DEFAULT_CONFIG.copy()
-                config['llm_provider'] = "deepseek"
-                config['deep_think_llm'] = "deepseek-chat"
-                config['quick_think_llm'] = "deepseek-chat"
-                
-                # 统一的分析师配置 - 避免重复
-                selected_analysts = ["market", "fundamentals", "social"]
-                
-                # ��录开始时间
-                analysis_progress_store[analysis_id]["start_time"] = time.time()
-                
-                # 创建TradingAgents图实例
-                trading_graph = TradingAgentsGraph(selected_analysts=selected_analysts, config=config)
-                
-                progress_callback("🔍 初始化TradingAgents分析引擎", 0, 7)
-                
-                # 在开始分析前检查是否已被取消
-                if analysis_progress_store[analysis_id].get("status") == "cancelled":
-                    logger.info(f"Analysis {analysis_id} was cancelled before execution")
-                    return
-                
-                # 执行分析 - 只执行一次
-                final_state, decision = trading_graph.propagate(
-                    company_name=symbol,
-                    trade_date=datetime.now().strftime("%Y-%m-%d"),
-                    progress_callback=progress_callback
-                )
-                
-                progress_callback("✅ 分析完成，正在整理结果", 6, 7)
-                
-                # 构建结果
-                result = {
-                    'success': True,
-                    'stock_symbol': symbol,
-                    'analysis_date': datetime.now().strftime("%Y-%m-%d"),
-                    'analysts': selected_analysts,
-                    'research_depth': 2,
-                    'llm_provider': "deepseek",
-                    'llm_model': "deepseek-chat",
-                    'state': final_state,
-                    'decision': decision
-                }
-                
-            except ImportError as e:
-                logger.error(f"❌ 无法导入TradingAgents: {e}")
-                result = {
-                    "success": False,
-                    "error": f"TradingAgents分析引擎导入失败: {str(e)}",
-                    "stock_symbol": symbol
-                }
-            except Exception as e:
-                logger.error(f"❌ 分析执行失败: {e}")
-                result = {
-                    "success": False,
-                    "error": f"分析执行失败: {str(e)}",
-                    "stock_symbol": symbol
-                }
-            
+            # 统一采用run_stock_analysis路径，移除直接执行以避免重复
             # 尝试导入并使用真正的TradingAgents分析引擎
             try:
                 # 导入TradingAgents核心组件
@@ -1294,6 +1964,9 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     config['llm_provider'] = llm_provider
                     config['deep_think_llm'] = llm_model
                     config['quick_think_llm'] = llm_model
+                    # 强制启用在线工具/新闻，避免本地YFin数据文件缺失导致的数据错误
+                    config['online_tools'] = True
+                    config['online_news'] = True
                     
                     # 将analysts转换为正确的格式
                     if isinstance(analysts, list):
@@ -1356,7 +2029,7 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                 USE_BACKEND_SERVICE = False
             
             # 进度回调函数 - 支持7步真实进度系统
-            def progress_callback(message, step=None, total_steps=None):
+            def progress_callback(message, step=None, total_steps=None, llm_result=None, analyst_type=None, *extra_args, **extra_kwargs):
                 # 检查是否已被取消
                 if analysis_progress_store[analysis_id].get("status") == "cancelled":
                     logger.info(f"Analysis {analysis_id} was cancelled, stopping execution")
@@ -1428,7 +2101,7 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                         detected_step = 6
                     
                     # 分析完成
-                    elif any(keyword in message for keyword in ["分析成功完成", "✅ 分析", "所有分析师完成"]):
+                    elif any(keyword in message for keyword in ["分析成功完成", "✅ 分析", "所有分析师完成", "分析完成，正在整理结果"]):
                         detected_step = 6
                         progress_percentage = 1.0
                     
@@ -1447,6 +2120,11 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                         current_step_name = analysis_progress_store[analysis_id].get("current_step_name", "分析中")
                         total_step_num = 7
                 
+                # 在非最终完成消息时，避免将进度设置为100%
+                is_final_message = any(k in message for k in ["分析完成", "正在整理结果", "最终决策", "完成！"])  # 仅这些消息允许100%
+                if progress_percentage >= 1.0 and not is_final_message:
+                    progress_percentage = 0.95
+
                 # 确保所有变量都有默认值
                 if 'current_step_name' not in locals():
                     current_step_name = analysis_progress_store[analysis_id].get("current_step_name", "分析中")
@@ -1502,7 +2180,8 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     display_message = f"正在执行 {current_step_name}..."
                 
                 progress_data = {
-                    "status": "running" if progress_percentage < 1.0 else "completed",
+                    # 只有在最终完成消息时才标记为completed，其他情况保持running
+                    "status": "completed" if (progress_percentage >= 1.0 and is_final_message) else "running",
                     "current_step": current_step_num - 1,  # 转换为0-based索引供前端使用
                     "total_steps": total_step_num,
                     "progress_percentage": progress_percentage,  # 保持0-1之间的小数
@@ -1545,11 +2224,35 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                 else:
                     # 其他情况只记录debug级别
                     logger.debug(f"分析 {analysis_id} 进度保持: {progress_percent_display}% - {message}")
+
+                # 通过WS向订阅者广播进度
+                try:
+                    payload = {
+                        "analysisId": analysis_id,
+                        "progress": float(progress_percent_display),
+                        "status": progress_data.get("status", "running"),
+                        "message": progress_data.get("message", ""),
+                        "currentStep": progress_data.get("current_step_name", ""),
+                        "timestamp": progress_data.get("timestamp"),
+                    }
+                    _broadcast_analysis_progress(analysis_id, payload)
+                except Exception as _e:
+                    logger.debug(f"WS进度广播失败: {_e}")
+                
+                # 记录LLM阶段结果，供前端调试查看
+                if llm_result:
+                    llm_results = analysis_progress_store[analysis_id].setdefault("llm_results", {})
+                    analyst_key = analyst_type or (f"step_{current_step_num}" if current_step_num else "unknown")
+                    llm_results[analyst_key] = {
+                        "result": llm_result,
+                        "timestamp": datetime.now().isoformat()
+                    }
             
             # 设置分析参数 - 使用与TradingAgentsGraph相同的分析师配置
             analysis_date = datetime.now().strftime("%Y-%m-%d")
-            analysts = ["market", "fundamentals", "social"]  # 与TradingAgentsGraph保持一致，避免重复
-            research_depth = 2  # 基础分析
+            # 使用前端传入的分析师列表，默认仅包含已选择的；若为空则退回到基础三人组
+            analysts_list = analysts if analysts else ["market", "fundamentals"]
+            depth = int(research_depth) if research_depth else 2
             llm_provider = "deepseek"  # 使用DeepSeek
             llm_model = "deepseek-chat"
             
@@ -1575,8 +2278,8 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
             result = run_stock_analysis(
                 stock_symbol=symbol,
                 analysis_date=analysis_date,
-                analysts=analysts,
-                research_depth=research_depth,
+                analysts=analysts_list,
+                research_depth=depth,
                 llm_provider=llm_provider,
                 llm_model=llm_model,
                 market_type=market_type_name,
@@ -1616,6 +2319,20 @@ def start_real_analysis(analysis_id: str, symbol: str, market_type: str, analysi
                     logger.info(f"✅ 分析完成状态已写入Redis: {analysis_id}")
                 except Exception as redis_error:
                     logger.warning(f"Failed to write completion status to Redis: {redis_error}")
+            
+            # WS广播最终完成
+            try:
+                payload = {
+                    "analysisId": analysis_id,
+                    "progress": 100.0,
+                    "status": final_status,
+                    "message": final_message,
+                    "currentStep": final_message,
+                    "timestamp": final_progress_data.get("timestamp"),
+                }
+                _broadcast_analysis_progress(analysis_id, payload)
+            except Exception as _e:
+                logger.debug(f"WS完成广播失败: {_e}")
             
             # 更新MongoDB数据库状态
             if mongodb_db is not None:
@@ -1741,5 +2458,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=True,
-        log_level="critical"  # 几乎不显示日志
+        log_level=os.getenv("TRADINGAGENTS_LOG_LEVEL", "info").lower()
     )

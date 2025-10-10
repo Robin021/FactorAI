@@ -46,7 +46,7 @@
    - 点击进入应用详情
 
 2. **检查回调地址配置**
-   - 确保回调地址包含：`http://localhost:3000/api/v1/auth/authing/callback`
+   - 确保回调地址包含：`http://localhost:3000/auth/callback`
    - 如果有多个回调地址，确保格式完全一致
 
 3. **检查用户权限**
