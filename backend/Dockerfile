@@ -1,8 +1,15 @@
 # TradingAgents Backend Service
 FROM python:3.10-slim-bookworm
 
-# 安装uv包管理器
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple uv
+# 安装 uv（多镜像源回退，避免某些镜像未同步导致失败）
+RUN set -eux; \
+    for src in \
+        https://pypi.tuna.tsinghua.edu.cn/simple \
+        https://pypi.org/simple \
+        https://mirrors.aliyun.com/pypi/simple; do \
+      echo "Installing uv from $src"; \
+      python -m pip install --no-cache-dir -i "$src" uv && break || echo "uv not available on $src"; \
+    done
 
 WORKDIR /app
 
