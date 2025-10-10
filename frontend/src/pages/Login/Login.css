@@ -9,13 +9,13 @@
 .login-card {
   width: 100%;
   max-width: 380px;
-  background: rgba(255, 255, 255, 0.85) !important;
-  background-color: rgba(255, 255, 255, 0.85) !important;
-  border: 1px solid rgba(74, 108, 247, 0.2);
+  background: var(--card-bg) !important;
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 32px 28px;
   backdrop-filter: blur(15px);
-  box-shadow: 0 8px 32px rgba(74, 108, 247, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-color);
 }
 
 .login-card .ant-card-body {
@@ -42,27 +42,27 @@
 
 .brand-title {
   margin: 0 !important;
-  color: #2940ab !important;
+  color: var(--text-primary) !important;
   font-weight: 600 !important;
   font-size: 24px !important;
   margin-bottom: 4px !important;
 }
 
 .brand-subtitle {
-  color: rgba(41, 64, 171, 0.7);
+  color: var(--text-secondary);
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 400;
 }
 
 .feature-tag {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  color: var(--accent-color);
   padding: 4px 12px;
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
-  border: 1px solid rgba(102, 126, 234, 0.2);
+  border: 1px solid var(--border-color);
 }
 
 .login-card .ant-form-item {
@@ -75,7 +75,7 @@
 
 .login-card .ant-input-affix-wrapper .anticon,
 .login-card .ant-input-password .anticon {
-  color: rgba(41, 64, 171, 0.6) !important;
+  color: var(--text-secondary) !important;
   margin-right: 12px !important;
 }
 
@@ -88,23 +88,23 @@
   height: 48px;
   font-size: 16px;
   font-weight: 600;
-  background: #4a6cf7;
+  background: var(--accent-color);
   color: white;
   border: none;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(74, 108, 247, 0.3);
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .ant-btn-primary:hover:not(:disabled) {
-  background: #3b5bf0;
+  background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(74, 108, 247, 0.4);
+  box-shadow: 0 4px 12px var(--shadow-color);
 }
 
 .sso-button {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
   margin-bottom: 24px !important;
   backdrop-filter: blur(8px) !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -125,11 +125,11 @@
 }
 
 .sso-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  color: white !important;
+  background: var(--shadow-color) !important;
+  border-color: var(--accent-color) !important;
+  color: var(--text-primary) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 8px 24px var(--shadow-color) !important;
 }
 
 .sso-button:hover:not(:disabled)::before {
@@ -158,28 +158,29 @@
 
 /* Checkbox styling */
 .ant-checkbox-wrapper {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .ant-checkbox-wrapper:hover .ant-checkbox-inner {
-  border-color: #1890ff;
+  border-color: var(--accent-color);
 }
 
 /* Link button styling */
 .ant-btn-link {
-  color: #1890ff;
+  color: var(--accent-color);
   padding: 0;
   height: auto;
   font-size: 14px;
 }
 
 .ant-btn-link:hover:not(:disabled) {
-  color: #40a9ff;
+  color: var(--accent-hover);
 }
 
 .ant-btn-link:disabled {
-  color: #bfbfbf;
+  color: var(--text-secondary);
+  opacity: 0.65;
 }
 
 /* Responsive design */
@@ -206,7 +207,7 @@
 }
 
 .login-footer p {
-  color: #8c8c8c;
+  color: var(--text-secondary);
   font-size: 12px;
   margin: 0;
   line-height: 1.4;
@@ -214,12 +215,12 @@
 
 /* 分隔线样式 */
 .ant-divider {
-  border-color: rgba(0, 0, 0, 0.08);
+  border-color: var(--border-color);
   margin: 24px 0;
 }
 
 .ant-divider-inner-text {
-  color: #8c8c8c;
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
 }
@@ -234,25 +235,25 @@
 }
 
 .ant-checkbox-wrapper {
-  color: rgba(41, 64, 171, 0.8) !important;
+  color: var(--text-secondary) !important;
   font-size: 14px;
   font-weight: 500;
 }
 
 .ant-checkbox-inner {
   border-radius: 4px !important;
-  border-color: rgba(74, 108, 247, 0.4) !important;
+  border-color: var(--border-color) !important;
   background: rgba(255, 255, 255, 0.7) !important;
 }
 
 .ant-checkbox-wrapper:hover .ant-checkbox-inner {
-  border-color: #4a6cf7 !important;
+  border-color: var(--accent-color) !important;
   background: rgba(255, 255, 255, 0.85) !important;
 }
 
 .ant-checkbox-checked .ant-checkbox-inner {
-  background-color: #4a6cf7 !important;
-  border-color: #4a6cf7 !important;
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
 }
 
 .ant-checkbox-checked .ant-checkbox-inner::after {
@@ -268,7 +269,7 @@
 }
 
 .ant-btn-link:hover:not(:disabled) {
-  color: #4a6cf7 !important;
+  color: var(--accent-color) !important;
 }
 
 /* 警告框样式优化 */

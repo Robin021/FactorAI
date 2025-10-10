@@ -68,7 +68,7 @@ describe('Login Flow Integration Tests', () => {
       );
 
       // Verify initial state
-      expect(screen.getByText('TradingAgents')).toBeInTheDocument();
+      expect(screen.getByText('因子智投（Factor AI）')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('用户名')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('密码')).toBeInTheDocument();
 

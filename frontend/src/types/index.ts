@@ -31,6 +31,8 @@ export interface AnalysisRequest {
   symbol: string;
   market_type?: string;
   analysis_type?: string;
+  analysts?: string[];
+  research_depth?: number;
 }
 
 export interface Analysis {

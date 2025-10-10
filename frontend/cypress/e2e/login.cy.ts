@@ -34,8 +34,8 @@ describe('Login Flow E2E Tests', () => {
     cy.visit('/login');
     
     // Check page elements
-    cy.contains('TradingAgents').should('be.visible');
-    cy.contains('股票分析平台').should('be.visible');
+    cy.contains('因子智投').should('be.visible');
+    cy.contains('因子驱动的智能投研平台').should('be.visible');
     cy.get('[placeholder="用户名"]').should('be.visible');
     cy.get('[placeholder="密码"]').should('be.visible');
     cy.get('button[type="submit"]').should('contain', '登录');

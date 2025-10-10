@@ -89,6 +89,9 @@ export class AnalysisService {
           risk_assessment: results.state?.risk_assessment || '',
           investment_plan: results.state?.investment_plan || '',
           final_trade_decision: results.state?.final_trade_decision || '',
+          // 新增：研究团队辩论与风险管理辩论状态（用于详细报告展示）
+          investment_debate_state: results.state?.investment_debate_state || null,
+          risk_debate_state: results.state?.risk_debate_state || null,
           decision: results.decision || {},
           // 保留原始数据
           ...results
@@ -226,19 +229,7 @@ export class AnalysisService {
   // Cancel running analysis
   async cancelAnalysis(id: string): Promise<void> {
     try {
-      const response = await fetch(`/api/v1/analysis/${id}/cancel`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to cancel analysis');
-      }
-
+      await apiClient.post(`/analysis/${id}/cancel`);
       console.log(`Analysis ${id} cancelled successfully`);
     } catch (error: any) {
       throw new Error(error.message || 'Failed to cancel analysis');
@@ -247,18 +238,13 @@ export class AnalysisService {
 
   // Export analysis report
   async exportAnalysis(id: string, format: 'pdf' | 'excel' | 'word' | 'json'): Promise<Blob> {
-    const response = await fetch(`/api/v1/analysis/${id}/export?format=${format}`, {
+    // 使用 apiClient，自动携带 Authorization
+    const response = await apiClient.request({
+      url: `/analysis/${id}/export?format=${format}`,
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      },
+      responseType: 'blob',
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to export analysis');
-    }
-
-    return response.blob();
+    return response as unknown as Blob;
   }
 
   // Share analysis report

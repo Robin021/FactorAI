@@ -176,13 +176,13 @@
 }
 
 .data-source-config .ant-btn-primary {
-  background: #1890ff;
-  border-color: #1890ff;
+  background: var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 .data-source-config .ant-btn-primary:hover {
-  background: #40a9ff;
-  border-color: #40a9ff;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .data-source-config .ant-btn-danger {
@@ -211,7 +211,7 @@
 .data-source-config .priority-number {
   font-weight: 600;
   font-size: 16px;
-  color: #1890ff;
+  color: var(--accent-color);
 }
 
 /* Market tags */
@@ -248,7 +248,7 @@
 .data-source-config .status-tag-configured {
   background: #e6f7ff;
   border-color: #91d5ff;
-  color: #1890ff;
+  color: var(--accent-color);
 }
 
 .data-source-config .status-tag-missing {
@@ -277,11 +277,11 @@
 .data-source-config .doc-link .ant-btn-link {
   padding: 0;
   height: auto;
-  color: #1890ff;
+  color: var(--accent-color);
 }
 
 .data-source-config .doc-link .ant-btn-link:hover {
-  color: #40a9ff;
+  color: var(--accent-hover);
 }
 
 /* Test results */
@@ -312,5 +312,5 @@
 }
 
 .data-source-config .anticon-info-circle:hover {
-  color: #1890ff;
+  color: var(--accent-color);
 }

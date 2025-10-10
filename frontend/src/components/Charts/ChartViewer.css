@@ -80,8 +80,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.6);
   z-index: 4;
+}
+
+/* 暗色主题下使用更柔和的深色遮罩 */
+[data-theme="dark"] .chart-container .ant-spin-spinning::after {
+  background: rgba(0, 0, 0, 0.35);
 }
 
 /* Responsive adjustments */

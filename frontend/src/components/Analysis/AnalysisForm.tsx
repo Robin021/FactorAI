@@ -138,6 +138,8 @@ const AnalysisForm: React.FC = () => {
         symbol: values.stockCode.toUpperCase(),
         market_type: values.marketType === 'A股' ? 'CN' : values.marketType === '美股' ? 'US' : 'HK',
         analysis_type: 'comprehensive',
+        analysts: values.analysts,
+        research_depth: values.researchDepth,
       };
 
       await startAnalysis(analysisRequest);
@@ -253,7 +255,7 @@ const AnalysisForm: React.FC = () => {
                   <InfoCircleOutlined />
                   研究深度
                   <Tooltip title="级别越高分析越详细但耗时更长">
-                    <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                    <InfoCircleOutlined style={{ color: 'var(--info-color)' }} />
                   </Tooltip>
                 </Space>
               }

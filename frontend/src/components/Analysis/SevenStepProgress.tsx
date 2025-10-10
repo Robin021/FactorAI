@@ -23,6 +23,7 @@ import {
   StopOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
+import { webSocketService } from '@/services/websocket';
 
 const { Title, Text } = Typography;
 
@@ -208,6 +209,8 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        // 避免浏览器缓存导致的陈旧进度
+        cache: 'no-store'
       });
 
       if (response.ok) {
@@ -266,6 +269,35 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
   const fetchProgressRef = useRef(fetchProgress);
   fetchProgressRef.current = fetchProgress;
 
+  // 使用 WebSocket 进行实时更新（与轮询并行，谁先到用谁）
+  useEffect(() => {
+    const listener = (data: any) => {
+      if (!data || data.analysisId !== analysisId) return;
+      setProgressData(prev => ({
+        analysis_id: analysisId,
+        status: (data.status || prev?.status || 'running') as any,
+        current_step: typeof data.currentStep === 'number' ? (data.currentStep < 1 ? data.currentStep + 1 : data.currentStep) : (prev?.current_step || 0),
+        total_steps: prev?.total_steps || 7,
+        progress_percentage: typeof data.progress === 'number' ? Math.max(0, Math.min(1, data.progress / 100)) : (prev?.progress_percentage || 0),
+        message: data.message || prev?.message || '分析中...',
+        elapsed_time: prev?.elapsed_time || 0,
+        estimated_remaining: prev?.estimated_remaining || 0,
+        current_step_name: prev?.current_step_name || '分析中',
+        timestamp: Date.now(),
+      } as any));
+    };
+
+    try {
+      webSocketService.subscribeToAnalysis(analysisId, listener);
+    } catch (e) {
+      // 忽略WS错误，轮询仍然有效
+    }
+
+    return () => {
+      try { webSocketService.unsubscribeFromAnalysis(analysisId, listener); } catch (_) {}
+    };
+  }, [analysisId]);
+
   // 取消分析
   const handleCancel = useCallback(async () => {
     try {
@@ -303,7 +335,7 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
     // 设置简单的轮询定时器
     intervalRef.current = setInterval(() => {
       fetchProgressRef.current();
-    }, 10000); // 5秒轮询间隔
+    }, 3000); // 3秒轮询间隔
 
     return () => {
       if (intervalRef.current) {
@@ -327,19 +359,29 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
   const getUpdatedSteps = useCallback(() => {
     if (!progressData) return analysisSteps;
 
-    // 使用current_step（1-7）来确定步骤状态
-    const currentStepNumber = progressData.current_step || 0;
-    
+    // 兼容不同后端：有的返回0-based（0-6），有的返回1-based（1-7），还有可能是字符串
+    const raw = (progressData as any).current_step;
+    let currentStepNumber = 0; // 统一成 1-7 的编号
+
+    if (typeof raw === 'number') {
+      currentStepNumber = raw < 1 ? raw + 1 : raw; // 0-based -> +1
+    } else if (typeof raw === 'string') {
+      const n = parseInt(raw, 10);
+      if (!Number.isNaN(n)) currentStepNumber = n < 1 ? n + 1 : n;
+    }
+
+    // 如果还拿不到，尝试用进度百分比推断当前步骤
+    if (!currentStepNumber && typeof progressData.progress_percentage === 'number') {
+      const total = progressData.total_steps || analysisSteps.length;
+      const p = Math.max(0, Math.min(1, progressData.progress_percentage));
+      currentStepNumber = Math.min(total, Math.max(1, Math.ceil(p * total)));
+    }
+
     return analysisSteps.map((step, index) => {
-      const stepNumber = index + 1;  // 步骤编号从1开始
-      
-      if (stepNumber < currentStepNumber) {
-        return { ...step, status: 'completed' as const };
-      } else if (stepNumber === currentStepNumber) {
-        return { ...step, status: 'running' as const };
-      } else {
-        return { ...step, status: 'pending' as const };
-      }
+      const stepNumber = index + 1; // 1-based
+      if (stepNumber < currentStepNumber) return { ...step, status: 'completed' as const };
+      if (stepNumber === currentStepNumber) return { ...step, status: 'running' as const };
+      return { ...step, status: 'pending' as const };
     });
   }, [progressData, analysisSteps]);
 
@@ -391,7 +433,7 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
           >
             刷新
           </Button>
-          {showCancelButton && status === 'running' && (
+          {showCancelButton && (status === 'running' || status === 'pending') && (
             <Button type="text" danger icon={<StopOutlined />} onClick={handleCancel} size="small">
               取消
             </Button>
@@ -425,7 +467,6 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
                 '100%': '#87d068',
               }}
               trailColor="#f0f0f0"
-              strokeWidth={8}
               showInfo={true}
             />
           </div>
@@ -439,27 +480,23 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
           {/* 7步骤详细显示 */}
           <div style={{ marginBottom: 16 }}>
             <Title level={5}>分析步骤</Title>
-            <Timeline>
-              {currentSteps.map(step => (
-                <Timeline.Item
-                  key={step.id}
-                  color={
-                    step.status === 'completed'
-                      ? 'green'
-                      : step.status === 'running'
-                        ? 'blue'
-                        : 'gray'
-                  }
-                  dot={
-                    step.status === 'completed' ? (
-                      <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                    ) : step.status === 'running' ? (
-                      <PlayCircleOutlined spin style={{ color: '#1890ff' }} />
-                    ) : (
-                      <ClockCircleOutlined style={{ color: '#d9d9d9' }} />
-                    )
-                  }
-                >
+            <Timeline
+              items={currentSteps.map(step => ({
+                color:
+                  step.status === 'completed'
+                    ? 'green'
+                    : step.status === 'running'
+                      ? 'blue'
+                      : 'gray',
+                dot:
+                  step.status === 'completed' ? (
+                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                  ) : step.status === 'running' ? (
+                    <PlayCircleOutlined spin style={{ color: 'var(--accent-color)' }} />
+                  ) : (
+                    <ClockCircleOutlined style={{ color: '#d9d9d9' }} />
+                  ),
+                children: (
                   <div>
                     <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                       {step.icon} {step.name} ({step.weight}%)
@@ -469,9 +506,9 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
                       {step.subTasks.join(' • ')}
                     </div>
                   </div>
-                </Timeline.Item>
-              ))}
-            </Timeline>
+                ),
+              }))}
+            />
           </div>
 
           {/* 时间统计 */}
@@ -492,7 +529,7 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
                     title="预计剩余"
                     value={formatTime(estimated_remaining || 0)}
                     prefix={<ClockCircleOutlined />}
-                    valueStyle={{ fontSize: '16px', color: '#1890ff' }}
+                    valueStyle={{ fontSize: '16px', color: 'var(--accent-color)' }}
                   />
                 </Col>
               )}
@@ -533,7 +570,7 @@ const SevenStepProgress: React.FC<SevenStepProgressProps> = ({
                 <span
                   style={{
                     fontWeight: 'bold',
-                    color: '#1890ff',
+                    color: 'var(--accent-color)',
                     marginRight: 8,
                   }}
                 >

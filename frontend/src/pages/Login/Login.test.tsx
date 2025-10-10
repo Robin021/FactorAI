@@ -48,8 +48,8 @@ describe('Login Component', () => {
       </MockRouter>
     );
 
-    expect(screen.getByText('TradingAgents')).toBeInTheDocument();
-    expect(screen.getByText('股票分析平台')).toBeInTheDocument();
+    expect(screen.getByText('因子智投（Factor AI）')).toBeInTheDocument();
+    expect(screen.getByText('因子驱动的智能投研平台')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('用户名')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('密码')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '登录' })).toBeInTheDocument();

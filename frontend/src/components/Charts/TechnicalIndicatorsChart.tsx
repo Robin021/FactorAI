@@ -88,13 +88,13 @@ const TechnicalIndicatorsChart: React.FC<TechnicalIndicatorsChartProps> = ({
               type: 'line',
               data: data.map(item => item.rsi || null),
               lineStyle: {
-                color: '#1890ff',
+                color: '#0f766e',
                 width: 2,
               },
               areaStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  { offset: 0, color: 'rgba(24, 144, 255, 0.3)' },
-                  { offset: 1, color: 'rgba(24, 144, 255, 0.1)' },
+                  { offset: 0, color: 'rgba(15, 118, 110, 0.3)' },
+                  { offset: 1, color: 'rgba(15, 118, 110, 0.1)' },
                 ]),
               },
               markLine: {
@@ -157,7 +157,7 @@ const TechnicalIndicatorsChart: React.FC<TechnicalIndicatorsChartProps> = ({
               name: 'MACD',
               type: 'line',
               data: data.map(item => item.macd?.macd || null),
-              lineStyle: { color: '#1890ff', width: 2 },
+              lineStyle: { color: '#0f766e', width: 2 },
               showSymbol: false,
             },
             {
@@ -232,7 +232,7 @@ const TechnicalIndicatorsChart: React.FC<TechnicalIndicatorsChartProps> = ({
               name: '中轨',
               type: 'line',
               data: data.map(item => item.bollinger?.middle || null),
-              lineStyle: { color: '#1890ff', width: 2 },
+              lineStyle: { color: '#0f766e', width: 2 },
               showSymbol: false,
             },
             {
@@ -292,7 +292,7 @@ const TechnicalIndicatorsChart: React.FC<TechnicalIndicatorsChartProps> = ({
               name: 'K',
               type: 'line',
               data: data.map(item => item.kdj?.k || null),
-              lineStyle: { color: '#1890ff', width: 2 },
+              lineStyle: { color: '#0f766e', width: 2 },
               showSymbol: false,
             },
             {

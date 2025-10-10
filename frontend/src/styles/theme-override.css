@@ -1,27 +1,7 @@
 /* 强制主题覆盖 - 最高优先级 */
 
 /* 全局背景和文字 */
-html[data-theme="light"] {
-  --primary-bg: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --text-primary: #1a237e;
-  --text-secondary: rgba(26, 35, 126, 0.8);
-  --border-color: rgba(74, 108, 247, 0.3);
-  --accent-color: #4a6cf7;
-  --accent-hover: #3b5bf0;
-  --shadow-color: rgba(74, 108, 247, 0.1);
-}
-
-html[data-theme="dark"] {
-  --primary-bg: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
-  --card-bg: rgba(255, 255, 255, 0.05);
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.8);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --accent-color: #00d4aa;
-  --accent-hover: #00b894;
-  --shadow-color: rgba(0, 212, 170, 0.2);
-}
+/* 变量定义集中在 themes.css，这里仅保留覆盖规则 */
 
 /* 强制应用背景 */
 html[data-theme] {
@@ -40,9 +20,7 @@ html[data-theme] #root {
 }
 
 /* 强制所有文字颜色 */
-html[data-theme] * {
-  color: var(--text-primary) !important;
-}
+/* 移除对所有元素的全局强制文字颜色，避免误伤组件与图表 */
 
 /* Ant Design 组件强制覆盖 */
 html[data-theme] .ant-layout {
@@ -108,6 +86,14 @@ html[data-theme] .anticon {
   color: inherit !important;
 }
 
+/* 暗色主题下，选中菜单使用左侧高亮条方案 */
+html[data-theme="dark"] .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-primary) !important;
+  border-left: 3px solid var(--accent-color) !important;
+  padding-left: 10px !important;
+}
+
 /* 输入框 */
 html[data-theme] .ant-input,
 html[data-theme] .ant-input-affix-wrapper {
@@ -132,10 +118,10 @@ html[data-theme] .ant-layout-content {
   color: var(--text-primary) !important;
 }
 
-/* 强制所有div背景透明，让主背景透出来 */
-html[data-theme] div:not(.ant-card):not(.ant-btn):not(.ant-input-affix-wrapper) {
+/* 注意：过度的全局透明背景会影响组件可读性，暂不强制 */
+/* html[data-theme] div:not(.ant-card):not(.ant-btn):not(.ant-input-affix-wrapper) {
   background: transparent !important;
-}
+} */
 
 /* 特殊处理一些可能有白色背景的容器 */
 html[data-theme] .ant-tabs-content,

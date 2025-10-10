@@ -6,5 +6,5 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
+  background: var(--primary-bg);
 }

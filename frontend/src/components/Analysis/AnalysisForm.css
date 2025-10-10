@@ -60,12 +60,12 @@
 }
 
 .analyst-checkbox:hover {
-  border-color: #1890ff;
+  border-color: var(--accent-color);
   background: #f6ffed;
 }
 
 .analyst-checkbox.ant-checkbox-wrapper-checked {
-  border-color: #1890ff;
+  border-color: var(--accent-color);
   background: #e6f7ff;
 }
 
@@ -80,7 +80,7 @@
 }
 
 .ant-slider-mark-text-active {
-  color: #1890ff;
+  color: var(--accent-color);
   font-weight: 500;
 }
 

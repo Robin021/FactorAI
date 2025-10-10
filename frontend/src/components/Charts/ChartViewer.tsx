@@ -111,7 +111,7 @@ const ChartViewer: React.FC<ChartViewerProps> = ({
                 width: 2,
               },
               itemStyle: {
-                color: '#1890ff',
+                color: '#0f766e',
               },
             },
           ],
@@ -206,7 +206,7 @@ const ChartViewer: React.FC<ChartViewerProps> = ({
                 return Math.sqrt(data[2] || 20);
               },
               itemStyle: {
-                color: '#1890ff',
+                color: '#0f766e',
                 opacity: 0.6,
               },
             },

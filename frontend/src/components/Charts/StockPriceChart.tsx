@@ -235,7 +235,7 @@ const StockPriceChart: React.FC<StockPriceChartProps> = ({
           lineStyle: {
             opacity: 0.8,
             width: 1,
-            color: '#1890ff',
+            color: '#0f766e',
           },
           showSymbol: false,
         },

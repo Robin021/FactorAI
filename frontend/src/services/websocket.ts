@@ -28,9 +28,34 @@ class WebSocketService {
   private reconnectDelay = 1000;
   private isConnecting = false;
   private listeners: Map<string, Set<(data: any) => void>> = new Map();
+  private enabled = false;
+  private supportChecked = false;
 
   constructor() {
-    this.connect();
+    // 延迟检查后端是否支持WebSocket，避免在不支持时反复403重连
+    this.checkSupportAndConnect();
+  }
+
+  private async checkSupportAndConnect(): Promise<void> {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch('/api/v1/ws/stats', {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      this.supportChecked = true;
+      if (res.ok) {
+        this.enabled = true;
+        this.connect();
+      } else {
+        console.info('WebSocket not enabled on backend, using polling only');
+        this.enabled = false;
+      }
+    } catch (_) {
+      // 后端不支持或网络失败，退回轮询
+      this.supportChecked = true;
+      this.enabled = false;
+      console.info('WebSocket probe failed, fallback to polling');
+    }
   }
 
   private getWebSocketUrl(): string {
@@ -42,6 +67,14 @@ class WebSocketService {
   }
 
   connect(): void {
+    if (!this.supportChecked) {
+      // 尚未完成支持探测，等探测完成后再连接
+      return;
+    }
+    if (!this.enabled) {
+      // 后端不支持，跳过连接
+      return;
+    }
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
@@ -67,9 +100,12 @@ class WebSocketService {
     this.isConnecting = false;
     this.reconnectAttempts = 0;
     
-    // Subscribe to analysis progress updates
-    this.subscribe('analysis_progress');
-    this.subscribe('notifications');
+    // Subscribe to notifications channel (server expects explicit message type)
+    this.send({
+      type: 'subscribe_notifications',
+      data: {},
+      timestamp: Date.now(),
+    });
   }
 
   private handleMessage(event: MessageEvent): void {
@@ -160,42 +196,21 @@ class WebSocketService {
   }
 
   // Public methods
-  subscribe(messageType: string, listener?: (data: any) => void): void {
-    if (!this.listeners.has(messageType)) {
-      this.listeners.set(messageType, new Set());
-    }
-    
-    if (listener) {
-      this.listeners.get(messageType)!.add(listener);
-    }
-    
-    // Send subscription message to server
-    this.send({
-      type: 'subscribe',
-      data: { messageType },
-      timestamp: Date.now(),
-    });
+  // Generic local listener registry (client side only)
+  subscribeLocal(messageType: string, listener: (data: any) => void): void {
+    if (!this.listeners.has(messageType)) this.listeners.set(messageType, new Set());
+    this.listeners.get(messageType)!.add(listener);
   }
 
-  unsubscribe(messageType: string, listener?: (data: any) => void): void {
-    if (listener) {
-      const listeners = this.listeners.get(messageType);
-      if (listeners) {
-        listeners.delete(listener);
-        if (listeners.size === 0) {
-          this.listeners.delete(messageType);
-        }
-      }
-    } else {
+  unsubscribeLocal(messageType: string, listener?: (data: any) => void): void {
+    if (!listener) {
       this.listeners.delete(messageType);
+      return;
     }
-    
-    // Send unsubscription message to server
-    this.send({
-      type: 'unsubscribe',
-      data: { messageType },
-      timestamp: Date.now(),
-    });
+    const set = this.listeners.get(messageType);
+    if (!set) return;
+    set.delete(listener);
+    if (set.size === 0) this.listeners.delete(messageType);
   }
 
   send(message: WebSocketMessage): void {
@@ -220,13 +235,23 @@ class WebSocketService {
 
   // Subscribe to analysis progress for a specific analysis
   subscribeToAnalysis(analysisId: string, listener?: (data: AnalysisProgressMessage) => void): void {
-    const messageType = `analysis_progress_${analysisId}`;
-    this.subscribe(messageType, listener);
+    // Register local listener for progress events
+    if (listener) this.subscribeLocal('analysis_progress', listener as any);
+    // Tell server to subscribe this connection to the analysis
+    this.send({
+      type: 'subscribe_analysis',
+      data: { analysis_id: analysisId },
+      timestamp: Date.now(),
+    });
   }
 
   unsubscribeFromAnalysis(analysisId: string, listener?: (data: AnalysisProgressMessage) => void): void {
-    const messageType = `analysis_progress_${analysisId}`;
-    this.unsubscribe(messageType, listener);
+    if (listener) this.unsubscribeLocal('analysis_progress', listener as any);
+    this.send({
+      type: 'unsubscribe_analysis',
+      data: { analysis_id: analysisId },
+      timestamp: Date.now(),
+    });
   }
 }
 

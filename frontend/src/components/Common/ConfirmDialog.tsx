@@ -43,7 +43,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       case 'danger':
         return <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />;
       case 'info':
-        return <QuestionCircleOutlined style={{ color: '#1890ff' }} />;
+        return <QuestionCircleOutlined style={{ color: 'var(--info-color)' }} />;
       default:
         return <ExclamationCircleOutlined style={{ color: '#faad14' }} />;
     }

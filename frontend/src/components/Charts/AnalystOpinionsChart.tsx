@@ -212,7 +212,7 @@ const AnalystOpinionsChart: React.FC<AnalystOpinionsChartProps> = ({
                   value={avgTargetPrice}
                   precision={2}
                   prefix="¥"
-                  valueStyle={{ color: '#1890ff' }}
+                  valueStyle={{ color: 'var(--accent-color)' }}
                 />
               </Col>
               <Col span={6}>

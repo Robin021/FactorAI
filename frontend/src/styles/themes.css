@@ -2,15 +2,20 @@
 
 /* 白天模式 - 月白清雅 */
 [data-theme="light"] {
-  --primary-bg: linear-gradient(135deg, #f5f7fa 0%, #e8f0fe 100%);
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --text-primary: #1a237e;
-  --text-secondary: rgba(26, 35, 126, 0.8);
-  --border-color: rgba(74, 108, 247, 0.3);
-  --accent-color: #4a6cf7;
-  --accent-hover: #3b5bf0;
-  --input-bg: rgba(255, 255, 255, 0.7);
-  --shadow-color: rgba(74, 108, 247, 0.1);
+  --primary-bg: linear-gradient(135deg, #f7fafc 0%, #f0fdfa 100%);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --text-primary: #0f172a;
+  --text-secondary: rgba(15, 23, 42, 0.74);
+  --border-color: rgba(15, 118, 110, 0.22);
+  --accent-color: #0f766e; /* 深青：更柔和、更现代 */
+  --accent-hover: #0b5f56;
+  --input-bg: rgba(255, 255, 255, 0.78);
+  --shadow-color: rgba(15, 118, 110, 0.14);
+  /* 状态色 */
+  --success-color: #3f8600;
+  --info-color: #1890ff;
+  --warning-color: #faad14;
+  --purple-color: #722ed1;
 }
 
 /* 黑夜模式 - 极夜黑曜 */
@@ -19,11 +24,16 @@
   --card-bg: rgba(255, 255, 255, 0.05);
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.8);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --accent-color: #00d4aa;
-  --accent-hover: #00b894;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --accent-color: #0f766e; /* 深青色，黑底更协调 */
+  --accent-hover: #0b5f56;
   --input-bg: rgba(255, 255, 255, 0.05);
-  --shadow-color: rgba(0, 212, 170, 0.2);
+  --shadow-color: rgba(15, 118, 110, 0.25);
+  /* 状态色（暗色优化） */
+  --success-color: #52c41a;
+  --info-color: #60a5fa;
+  --warning-color: #faad14;
+  --purple-color: #b37feb;
 }
 
 /* 应用主题变量 - 使用更高优先级 */
@@ -271,6 +281,14 @@ html[data-theme] .login-card {
   color: inherit !important;
 }
 
+/* 暗色主题下，选中菜单改为“左边高亮条 + 微背景”，避免大块纯色底 */
+[data-theme="dark"] .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text-primary) !important;
+  border-left: 3px solid var(--accent-color) !important;
+  padding-left: 10px !important;
+}
+
 /* Header和按钮样式修复 */
 [data-theme] .ant-btn-text {
   color: var(--text-primary) !important;
@@ -298,4 +316,10 @@ html[data-theme] .login-card {
 [data-theme] h5,
 [data-theme] h6 {
   color: var(--text-primary) !important;
+}
+[data-theme="light"] .ant-menu-item-selected {
+  background: rgba(15, 118, 110, 0.12) !important;
+  color: var(--accent-color) !important;
+  border-left: 3px solid var(--accent-color) !important;
+  padding-left: 10px !important;
 }

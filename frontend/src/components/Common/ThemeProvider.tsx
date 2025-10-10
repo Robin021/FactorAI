@@ -45,7 +45,7 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const themeConfig: ThemeConfig = {
     algorithm: themeMode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
-      colorPrimary: themeMode === 'dark' ? '#00d4aa' : '#4a6cf7',
+      colorPrimary: '#0f766e',
       borderRadius: 8,
       wireframe: false,
     },
@@ -58,7 +58,7 @@ const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       Menu: {
         darkItemBg: 'rgba(255, 255, 255, 0.05)',
         darkSubMenuItemBg: 'rgba(255, 255, 255, 0.03)',
-        darkItemSelectedBg: '#00d4aa',
+        darkItemSelectedBg: 'rgba(255, 255, 255, 0.06)',
       },
       Card: {
         borderRadiusLG: 12,

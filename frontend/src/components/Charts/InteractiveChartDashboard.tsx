@@ -6,8 +6,6 @@ import TechnicalIndicatorsChart from './TechnicalIndicatorsChart';
 import AnalystOpinionsChart from './AnalystOpinionsChart';
 import type { StockPriceData, TechnicalData, AnalystOpinion, ChartSettings } from '../../types/charts';
 import dayjs from 'dayjs';
-
-const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
 
 interface DashboardChartSettings extends Omit<ChartSettings, 'timeRange'> {

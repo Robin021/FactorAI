@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginCredentials } from '@/types';
 import './Login.css';
-import '@/styles/themes.css';
+import { BRAND_NAME, BRAND_TAGLINE } from '@/constants/brand';
 
 const { Title } = Typography;
 
@@ -166,9 +166,9 @@ const Login: React.FC = () => {
             <div className="logo-icon">📈</div>
           </div>
           <Title level={2} className="brand-title">
-            TradingAgents-CN
+            {BRAND_NAME}
           </Title>
-          <p className="brand-subtitle">智能股票分析平台</p>
+          <p className="brand-subtitle">{BRAND_TAGLINE}</p>
         </div>
 
         {/* Error Alert */}
@@ -280,7 +280,7 @@ const Login: React.FC = () => {
 
 
         <div className="login-footer">
-          <p>© 2024 TradingAgents-CN</p>
+          <p>© 2024 {BRAND_NAME}</p>
         </div>
       </Card>
     </div>

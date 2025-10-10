@@ -12,7 +12,7 @@ import {
   Spin,
   message,
 } from 'antd';
-import {
+import { 
   BarChartOutlined,
   FileTextOutlined,
   DownloadOutlined,
@@ -29,7 +29,7 @@ import { useAnalysis } from '@/hooks/useAnalysis';
 import './AnalysisResults.css';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+// Tabs 使用 items API
 
 interface AnalysisResultsProps {
   analysis: Analysis | null;
@@ -61,9 +61,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             <title>股票分析报告 - ${analysis.stockCode}</title>
             <style>
               body { font-family: 'Microsoft YaHei', Arial, sans-serif; margin: 20px; line-height: 1.6; }
-              .header { text-align: center; border-bottom: 2px solid #1890ff; padding-bottom: 20px; margin-bottom: 30px; }
+              .header { text-align: center; border-bottom: 2px solid #0f766e; padding-bottom: 20px; margin-bottom: 30px; }
               .section { margin-bottom: 30px; }
-              .section h2 { color: #1890ff; border-left: 4px solid #1890ff; padding-left: 10px; }
+              .section h2 { color: #0f766e; border-left: 4px solid #0f766e; padding-left: 10px; }
               pre { white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 5px; }
             </style>
           </head>
@@ -212,10 +212,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
         >
           <Card size="small" style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <TrophyOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
+              <TrophyOutlined style={{ fontSize: '24px', color: 'var(--success-color)' }} />
               <div>
                 <Text type="secondary">置信度</Text>
-                <Title level={4} style={{ margin: 0, color: '#52c41a' }}>
+                <Title level={4} style={{ margin: 0, color: 'var(--success-color)' }}>
                   {getConfidence()}
                 </Title>
               </div>
@@ -224,10 +224,10 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
 
           <Card size="small" style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <DollarOutlined style={{ fontSize: '24px', color: '#faad14' }} />
+              <DollarOutlined style={{ fontSize: '24px', color: 'var(--warning-color)' }} />
               <div>
                 <Text type="secondary">目标价格</Text>
-                <Title level={4} style={{ margin: 0, color: '#faad14' }}>
+                <Title level={4} style={{ margin: 0, color: 'var(--warning-color)' }}>
                   ¥{getTargetPrice()}
                 </Title>
               </div>
@@ -244,7 +244,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
                       ? '#52c41a'
                       : getRecommendation() === '卖出'
                         ? '#ff4d4f'
-                        : '#1890ff',
+                        : 'var(--accent-color)',
                 }}
               />
               <div>
@@ -258,7 +258,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
                         ? '#52c41a'
                         : getRecommendation() === '卖出'
                           ? '#ff4d4f'
-                          : '#1890ff',
+                          : 'var(--accent-color)',
                   }}
                 >
                   {getRecommendation()}
@@ -394,43 +394,39 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
         </Space>
       </div>
 
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane
-          tab={
-            <span>
-              <BarChartOutlined />
-              概览
-            </span>
-          }
-          key="overview"
-        >
-          {renderOverview()}
-        </TabPane>
-
-        <TabPane
-          tab={
-            <span>
-              <FileTextOutlined />
-              分析师报告
-            </span>
-          }
-          key="reports"
-        >
-          {renderAnalystReports()}
-        </TabPane>
-
-        <TabPane
-          tab={
-            <span>
-              <LineChartOutlined />
-              图表分析
-            </span>
-          }
-          key="charts"
-        >
-          {renderCharts()}
-        </TabPane>
-      </Tabs>
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'overview',
+            label: (
+              <span>
+                <BarChartOutlined /> 概览
+              </span>
+            ),
+            children: renderOverview(),
+          },
+          {
+            key: 'reports',
+            label: (
+              <span>
+                <FileTextOutlined /> 分析师报告
+              </span>
+            ),
+            children: renderAnalystReports(),
+          },
+          {
+            key: 'charts',
+            label: (
+              <span>
+                <LineChartOutlined /> 图表分析
+              </span>
+            ),
+            children: renderCharts(),
+          },
+        ]}
+      />
     </Card>
   );
 };

@@ -38,13 +38,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ open, onClose }
   const getIcon = (type: Notification['type']) => {
     switch (type) {
       case 'success':
-        return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+        return <CheckCircleOutlined style={{ color: 'var(--success-color)' }} />;
       case 'error':
         return <CloseCircleOutlined style={{ color: '#ff4d4f' }} />;
       case 'warning':
-        return <ExclamationCircleOutlined style={{ color: '#faad14' }} />;
+        return <ExclamationCircleOutlined style={{ color: 'var(--warning-color)' }} />;
       default:
-        return <InfoCircleOutlined style={{ color: '#1890ff' }} />;
+        return <InfoCircleOutlined style={{ color: 'var(--info-color)' }} />;
     }
   };
 
@@ -150,6 +150,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ open, onClose }
       width={400}
       open={open}
       onClose={onClose}
+      bodyStyle={{ padding: 0, maxHeight: 'calc(100vh - 64px)', overflow: 'auto' }}
     >
       {notifications.length === 0 ? (
         <Empty

@@ -7,14 +7,12 @@ import AnalysisResults from '@/components/Analysis/AnalysisResults';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import { analysisService } from '@/services/analysis';
 import './Analysis.css';
-import '@/styles/themes.css';
-import '@/styles/theme-override.css';
+import PageHeader from '@/components/Common/PageHeader';
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 const Analysis: React.FC = () => {
-  const { currentAnalysis, analysisHistory, refreshHistory, setCurrentAnalysis, historyLoading } =
+  const { currentAnalysis, analysisHistory, refreshHistory, setCurrentAnalysis, historyLoading, cancelAnalysis } =
     useAnalysis();
   const [activeTab, setActiveTab] = React.useState('analysis');
   const [selectedAnalyses, setSelectedAnalyses] = React.useState<string[]>([]);
@@ -80,7 +78,8 @@ const Analysis: React.FC = () => {
     }
 
     const selectedItems = analysisHistory.filter(item => selectedAnalyses.includes(item.id));
-    const runningItems = selectedItems.filter(item => item.status === 'running' || item.status === 'pending');
+    // 仅运行中的任务禁止批量删除；等待中/已取消允许删除
+    const runningItems = selectedItems.filter(item => item.status === 'running');
     
     if (runningItems.length > 0) {
       message.warning(`无法删除 ${runningItems.length} 个运行中的分析，请先取消这些分析`);
@@ -146,7 +145,7 @@ const Analysis: React.FC = () => {
     if (checked) {
       // 只选择非运行中的分析
       const selectableIds = analysisHistory
-        .filter(item => item.status !== 'running' && item.status !== 'pending')
+        .filter(item => item.status !== 'running')
         .map(item => item.id);
       setSelectedAnalyses(selectableIds);
     } else {
@@ -165,9 +164,8 @@ const Analysis: React.FC = () => {
 
     if (!currentAnalysis) return;
 
-    // 运行中 -> 自动切到 实时进度（但不要打断用户正在看历史记录）
+    // 运行中 -> 不再强制切换Tab，保持用户当前视图（避免无法回到分析界面）
     if (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending') {
-      if (activeTab !== 'history' && activeTab !== 'progress') setActiveTab('progress');
       return;
     }
 
@@ -183,11 +181,23 @@ const Analysis: React.FC = () => {
 
   const renderAnalysisContent = () => (
     <Row gutter={[24, 24]} style={{ margin: 0 }}>
-      <Col xs={24} sm={24} md={10} lg={8} xl={8}>
+      <Col 
+        xs={{ span: 24, order: 2 }} 
+        sm={{ span: 24, order: 2 }} 
+        md={{ span: 10, order: 1 }} 
+        lg={{ span: 8, order: 1 }} 
+        xl={{ span: 8, order: 1 }}
+      >
         <AnalysisForm />
       </Col>
 
-      <Col xs={24} sm={24} md={14} lg={16} xl={16}>
+      <Col 
+        xs={{ span: 24, order: 1 }} 
+        sm={{ span: 24, order: 1 }} 
+        md={{ span: 14, order: 2 }} 
+        lg={{ span: 16, order: 2 }} 
+        xl={{ span: 16, order: 2 }}
+      >
         <AnalysisResults analysis={currentAnalysis} />
       </Col>
     </Row>
@@ -230,8 +240,8 @@ const Analysis: React.FC = () => {
           {analysisHistory.length > 0 && (
             <>
               <Checkbox
-                indeterminate={selectedAnalyses.length > 0 && selectedAnalyses.length < analysisHistory.filter(item => item.status !== 'running' && item.status !== 'pending').length}
-                checked={selectedAnalyses.length > 0 && selectedAnalyses.length === analysisHistory.filter(item => item.status !== 'running' && item.status !== 'pending').length}
+                indeterminate={selectedAnalyses.length > 0 && selectedAnalyses.length < analysisHistory.filter(item => item.status !== 'running').length}
+                checked={selectedAnalyses.length > 0 && selectedAnalyses.length === analysisHistory.filter(item => item.status !== 'running').length}
                 onChange={(e) => handleSelectAll(e.target.checked)}
               >
                 全选
@@ -255,7 +265,8 @@ const Analysis: React.FC = () => {
       </Space>
       {historyLoading ? (
         <div style={{ padding: 24, textAlign: 'center' }}>
-          <Spin tip="加载历史记录中..." />
+          <Spin size="large" />
+          <div style={{ marginTop: 8, color: '#999' }}>加载历史记录中...</div>
         </div>
       ) : analysisHistory.length === 0 ? (
         <Empty description="暂无历史分析记录" />
@@ -267,7 +278,7 @@ const Analysis: React.FC = () => {
                 <Col flex="none" style={{ marginRight: 12 }}>
                   <Checkbox
                     checked={selectedAnalyses.includes(item.id)}
-                    disabled={item.status === 'running' || item.status === 'pending'}
+                    disabled={item.status === 'running'}
                     onChange={(e) => handleSelectAnalysis(item.id, e.target.checked)}
                   />
                 </Col>
@@ -298,6 +309,22 @@ const Analysis: React.FC = () => {
                 </Col>
                 <Col>
                   <Space>
+                    {(item.status === 'running' || item.status === 'pending') && (
+                      <Button
+                        type="link"
+                        onClick={async () => {
+                          try {
+                            await cancelAnalysis(item.id);
+                            message.success('已发送取消请求');
+                            refreshHistory();
+                          } catch (e: any) {
+                            message.error(e?.message || '取消失败');
+                          }
+                        }}
+                      >
+                        取消
+                      </Button>
+                    )}
                     <Button
                       type="link"
                       onClick={() => {
@@ -311,7 +338,7 @@ const Analysis: React.FC = () => {
                       type="link"
                       danger
                       onClick={() => handleDeleteAnalysis(item.id)}
-                      disabled={item.status === 'running' || item.status === 'pending'}
+                      disabled={item.status === 'running'}
                     >
                       删除
                     </Button>
@@ -327,47 +354,49 @@ const Analysis: React.FC = () => {
 
   return (
     <div className="analysis-page">
-      <Tabs activeKey={activeTab} onChange={setActiveTab} className="analysis-tabs" size="large">
-        <TabPane
-          tab={
-            <span>
-              <BarChartOutlined />
-              分析与结果
-            </span>
-          }
-          key="analysis"
-        >
-          {renderAnalysisContent()}
-        </TabPane>
-
-        <TabPane
-          tab={
-            <span>
-              <SettingOutlined />
-              实时进度
-              {currentAnalysis &&
-                (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending') && (
-                  <span className="progress-indicator" />
-                )}
-            </span>
-          }
-          key="progress"
-        >
-          {renderProgressContent()}
-        </TabPane>
-
-        <TabPane
-          tab={
-            <span>
-              <HistoryOutlined />
-              历史记录
-            </span>
-          }
-          key="history"
-        >
-          {renderHistoryContent()}
-        </TabPane>
-      </Tabs>
+      <PageHeader title="股票分析" subTitle="选择参数并查看结果与历史" />
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        className="analysis-tabs"
+        size="large"
+        items={[
+          {
+            key: 'analysis',
+            label: (
+              <span>
+                <BarChartOutlined />
+                分析与结果
+              </span>
+            ),
+            children: renderAnalysisContent(),
+          },
+          {
+            key: 'progress',
+            label: (
+              <span>
+                <SettingOutlined />
+                实时进度
+                {currentAnalysis &&
+                  (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending') && (
+                    <span className="progress-indicator" />
+                  )}
+              </span>
+            ),
+            children: renderProgressContent(),
+          },
+          {
+            key: 'history',
+            label: (
+              <span>
+                <HistoryOutlined />
+                历史记录
+              </span>
+            ),
+            children: renderHistoryContent(),
+          },
+        ]}
+      />
     </div>
   );
 };

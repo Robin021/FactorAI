@@ -46,10 +46,12 @@ import { Analysis } from '@/types';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { analysisService } from '@/services/analysis';
 import ChartViewer from '@/components/Charts/ChartViewer';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './AnalysisReport.css';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+// Tabs 使用 items API
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
@@ -169,6 +171,15 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
   const analysis = currentAnalysis;
   const resultData = analysis?.resultData || {};
 
+  // 基于股票代码推断货币符号（简单判断：A股=¥，港股=HK$，美股=$）
+  // 注意：不要在早期 return 之后再使用 hook，使用普通求值避免 hooks 次数不一致
+  const currencySymbol = (() => {
+    const code = analysis?.stockCode || '';
+    if (/^\d{6}$/.test(code)) return '¥'; // A股6位数字
+    if (/^\d{4,5}\.HK$/i.test(code)) return 'HK$'; // 港股
+    return '$'; // 其他默认美元
+  })();
+
   // 从后端返回的数据结构中提取信息
   const decision = resultData.decision || {};
   const reports = {
@@ -177,6 +188,37 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
     fundamental: resultData.fundamentals_report || '',
     sentiment: resultData.sentiment_report || '',
     news: resultData.news_report || ''
+  };
+
+  // 组装“研究团队决策”与“风险管理团队决策”Markdown内容
+  const buildResearchTeamDecision = (): string => {
+    const debate = resultData.investment_debate_state || {};
+    const bull = debate?.bull_history || '';
+    const bear = debate?.bear_history || '';
+    const judge = debate?.judge_decision || '';
+    if (!bull && !bear && !judge) return '';
+    return [
+      '### 🔬 研究团队决策',
+      bull ? `#### 📈 多头研究员分析\n${bull}` : '',
+      bear ? `#### 📉 空头研究员分析\n${bear}` : '',
+      judge ? `#### 🎯 研究经理综合决策\n${judge}` : ''
+    ].filter(Boolean).join('\n\n');
+  };
+
+  const buildRiskManagementDecision = (): string => {
+    const risk = resultData.risk_debate_state || {};
+    const risky = risk?.current_risky_response || risk?.risky_history || '';
+    const safe = risk?.current_safe_response || risk?.safe_history || '';
+    const neutral = risk?.current_neutral_response || risk?.neutral_history || '';
+    const judge = risk?.judge_decision || '';
+    if (!risky && !safe && !neutral && !judge) return '';
+    return [
+      '### 🛡️ 风险管理团队决策',
+      risky ? `#### 🚀 激进分析师\n${risky}` : '',
+      safe ? `#### 🛡️ 保守分析师\n${safe}` : '',
+      neutral ? `#### ⚖️ 中性分析师\n${neutral}` : '',
+      judge ? `#### 🎯 投资组合经理最终决策\n${judge}` : ''
+    ].filter(Boolean).join('\n\n');
   };
 
   // 报告分类和组织
@@ -198,6 +240,22 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       data: {
         report: reports.fundamental,
         summary: '基本面分析报告'
+      }
+    },
+    research: {
+      title: '研究团队决策',
+      icon: <FileTextOutlined />,
+      data: {
+        report: buildResearchTeamDecision(),
+        summary: '多空辩论与研究经理综合结论'
+      }
+    },
+    risk_management: {
+      title: '风险管理团队决策',
+      icon: <ExclamationCircleOutlined />,
+      data: {
+        report: buildRiskManagementDecision(),
+        summary: '风险评估多角度观点与最终决策'
       }
     },
     technical: {
@@ -250,8 +308,8 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
                 title="目标价格"
                 value={overviewData.targetPrice}
                 precision={2}
-                prefix="$"
-                valueStyle={{ color: '#faad14' }}
+                prefix={currencySymbol}
+                valueStyle={{ color: 'var(--warning-color)' }}
                 suffix={
                   <Tooltip title="基于分析师预测的目标价格">
                     <InfoCircleOutlined />
@@ -333,8 +391,10 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
         {data.report && (
           <Card title="详细报告">
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-              {data.report}
+            <div className="markdown-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {data.report}
+              </ReactMarkdown>
             </div>
           </Card>
         )}
@@ -363,11 +423,9 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
         {data.recommendations && (
           <Card title="建议">
-            <Timeline>
-              {data.recommendations.map((rec: string, index: number) => (
-                <Timeline.Item key={index}>{rec}</Timeline.Item>
-              ))}
-            </Timeline>
+            <Timeline
+              items={data.recommendations.map((rec: string) => ({ children: rec }))}
+            />
           </Card>
         )}
       </div>
@@ -473,18 +531,60 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       message.loading(`正在导出为 ${format} 格式...`, 0);
 
       if (format === 'pdf') {
-        // 下载PDF
-        const blob = await analysisService.downloadAnalysisPDF(id);
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${analysis?.stockCode || 'analysis'}_report.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        // 与“分析与结果”页面导出保持一致：打开新窗口写入简化 HTML 再打印
         message.destroy();
-        message.success('PDF 报告下载成功');
+        const rd: any = resultData || {};
+        const printContent = `
+          <html>
+            <head>
+              <meta charset="utf-8" />
+              <title>股票分析报告 - ${analysis?.stockCode || ''}</title>
+              <style>
+                body { font-family: 'Microsoft YaHei', Arial, sans-serif; margin: 20px; line-height: 1.6; color: #333; }
+                .header { text-align: center; border-bottom: 2px solid #0f766e; padding-bottom: 20px; margin-bottom: 30px; }
+                .section { margin-bottom: 30px; }
+                .section h2 { color: #0f766e; border-left: 4px solid #0f766e; padding-left: 10px; }
+                pre { white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 5px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>股票分析报告</h1>
+                <p><strong>股票代码:</strong> ${analysis?.stockCode || ''}</p>
+                <p><strong>分析日期:</strong> ${analysis?.createdAt ? new Date(analysis.createdAt).toLocaleDateString('zh-CN') : ''}</p>
+              </div>
+              <div class="section">
+                <h2>📊 投资建议</h2>
+                <pre>${rd.trader_investment_plan || rd.investment_plan || '暂无投资建议'}</pre>
+              </div>
+              <div class="section">
+                <h2>📈 基本面分析</h2>
+                <pre>${rd.fundamentals_report || '暂无基本面分析'}</pre>
+              </div>
+              <div class="section">
+                <h2>📉 技术面分析</h2>
+                <pre>${rd.market_report || '暂无技术面分析'}</pre>
+              </div>
+              <div class="section">
+                <h2>💭 市场情绪分析</h2>
+                <pre>${rd.sentiment_report || '暂无情绪分析'}</pre>
+              </div>
+              <div class="section">
+                <h2>⚠️ 风险评估</h2>
+                <pre>${rd.risk_assessment || '暂无风险评估'}</pre>
+              </div>
+            </body>
+          </html>`;
+
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write(printContent);
+          win.document.close();
+          win.onload = () => { win.print(); win.close(); };
+          message.success('正在生成 PDF...');
+        } else {
+          message.error('无法打开打印窗口，请检查浏览器设置');
+        }
       } else if (format === 'json') {
         // 导出JSON数据
         const jsonData = JSON.stringify(analysis?.resultData || {}, null, 2);
@@ -600,49 +700,30 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
           onChange={setActiveTab}
           className="report-tabs"
           tabPosition="top"
-        >
-          <TabPane
-            tab={
-              <span>
-                <BarChartOutlined />
-                概览
-              </span>
-            }
-            key="overview"
-          >
-            {renderOverview()}
-          </TabPane>
-
-          {Object.entries(reportSections).slice(1).map(([key, section]) => (
-            <TabPane
-              tab={
+          items={[
+            {
+              key: 'overview',
+              label: (
+                <span>
+                  <BarChartOutlined /> 概览
+                </span>
+              ),
+              children: renderOverview(),
+              forceRender: true,
+            },
+            ...Object.entries(reportSections).slice(1).map(([key, section]) => ({
+              key,
+              label: (
                 <span>
                   {section.icon}
                   {section.title}
                 </span>
-              }
-              key={key}
-            >
-              {renderDetailedAnalysis(key)}
-            </TabPane>
-          ))}
-
-          <TabPane
-            tab={
-              <span>
-                <FileTextOutlined />
-                原始数据
-              </span>
-            }
-            key="raw"
-          >
-            <Card title="原始分析数据">
-              <pre style={{ background: '#f5f5f5', padding: '16px', borderRadius: '4px', overflow: 'auto' }}>
-                {JSON.stringify(resultData, null, 2)}
-              </pre>
-            </Card>
-          </TabPane>
-        </Tabs>
+              ),
+              children: renderDetailedAnalysis(key),
+              forceRender: true,
+            })),
+          ]}
+        />
       </div>
 
       {/* 历史记录对话框 */}
@@ -705,6 +786,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
           </Space>
         </div>
       </Modal>
+
     </div>
   );
 };

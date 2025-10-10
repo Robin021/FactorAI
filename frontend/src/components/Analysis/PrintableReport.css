@@ -1,10 +1,10 @@
 /* Printable Report Styles */
 .printable-report {
-  background: white;
+  background: var(--card-bg);
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
-  color: #333;
+  color: var(--text-primary);
 }
 
 /* Header Styles */
@@ -14,7 +14,7 @@
   align-items: flex-start;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #1890ff;
+  border-bottom: 2px solid var(--accent-color);
 }
 
 .header-content {
@@ -23,7 +23,7 @@
 
 .report-title {
   margin: 0 0 0.5rem 0 !important;
-  color: #1890ff;
+  color: var(--accent-color);
   font-size: 2rem;
   font-weight: 700;
 }
@@ -37,17 +37,17 @@
 .stock-code {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-primary);
 }
 
 .report-date {
   font-size: 0.95rem;
-  color: #8c8c8c;
+  color: var(--text-secondary);
 }
 
 .header-logo {
   text-align: right;
-  color: #8c8c8c;
+  color: var(--text-secondary);
 }
 
 /* Section Styles */
@@ -55,18 +55,18 @@
   margin-bottom: 2rem;
   border-radius: 8px;
   box-shadow: none;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
 }
 
 .print-section .ant-card-head {
-  background: #fafafa;
-  border-bottom: 1px solid #e8e8e8;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .print-section .ant-card-head-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-primary);
 }
 
 .print-section .ant-card-body {
@@ -83,14 +83,14 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: #fafafa;
+  background: var(--card-bg);
   border-radius: 6px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
 }
 
 .stat-icon {
   font-size: 2rem;
-  color: #1890ff;
+  color: var(--accent-color);
   min-width: 32px;
 }
 
@@ -116,7 +116,7 @@
 
 .summary-text h4 {
   margin-bottom: 0.75rem;
-  color: #262626;
+  color: var(--text-primary);
 }
 
 .summary-text .ant-typography {
@@ -148,7 +148,7 @@
 .key-points h5,
 .recommendations h5 {
   margin-bottom: 0.75rem;
-  color: #262626;
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 600;
 }
@@ -157,20 +157,20 @@
   background: #fafafa;
   padding: 0.75rem;
   border-radius: 4px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   margin-bottom: 0.5rem;
 }
 
 .metric-item .ant-statistic-title {
   font-size: 0.875rem;
-  color: #8c8c8c;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
 
 .metric-item .ant-statistic-content {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-primary);
 }
 
 .recommendation-list {
@@ -197,29 +197,29 @@
 /* Descriptions Customization */
 .print-section .ant-descriptions-item-label {
   font-weight: 600;
-  color: #595959;
-  background: #fafafa;
+  color: var(--text-primary);
+  background: var(--card-bg);
 }
 
 .print-section .ant-descriptions-item-content {
-  color: #262626;
+  color: var(--text-primary);
 }
 
 /* Disclaimer Styles */
 .disclaimer {
-  background: #fff7e6;
-  border: 1px solid #ffd591;
+  background: var(--warning-bg, #fff7e6);
+  border: 1px solid var(--warning-border, #ffd591);
 }
 
 .disclaimer .ant-card-head {
-  background: #fff2e8;
-  border-bottom: 1px solid #ffd591;
+  background: var(--warning-bg, #fff2e8);
+  border-bottom: 1px solid var(--warning-border, #ffd591);
 }
 
 .disclaimer-text {
   font-size: 0.875rem;
   line-height: 1.6;
-  color: #ad6800;
+  color: var(--warning-text, #ad6800);
   margin: 0;
   font-style: italic;
 }
@@ -228,7 +228,7 @@
 .print-footer {
   margin-top: 2rem;
   padding-top: 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-color);
 }
 
 .footer-content {
@@ -236,13 +236,14 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.875rem;
-  color: #8c8c8c;
+  color: var(--text-secondary);
 }
 
 /* Print-specific Styles */
 @media print {
   .printable-report {
     padding: 1rem;
+    background: white; /* 打印使用纯白背景，确保清晰 */
     font-size: 12pt;
     line-height: 1.4;
   }

@@ -1,19 +1,18 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, Typography } from 'antd';
+import { Card, Row, Col, Statistic } from 'antd';
 import { 
   BarChartOutlined, 
   TrophyOutlined, 
   ClockCircleOutlined,
   UserOutlined 
 } from '@ant-design/icons';
+import PageHeader from '@/components/Common/PageHeader';
 import '@/styles/themes.css';
-
-const { Title } = Typography;
 
 const Dashboard: React.FC = () => {
   return (
     <div className="dashboard">
-      <Title level={2}>仪表板</Title>
+      <PageHeader title="仪表板" />
       
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
@@ -22,7 +21,7 @@ const Dashboard: React.FC = () => {
               title="总分析次数"
               value={156}
               prefix={<BarChartOutlined />}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: 'var(--success-color)' }}
             />
           </Card>
         </Col>
@@ -33,7 +32,7 @@ const Dashboard: React.FC = () => {
               title="成功分析"
               value={142}
               prefix={<TrophyOutlined />}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: 'var(--info-color)' }}
             />
           </Card>
         </Col>
@@ -44,7 +43,7 @@ const Dashboard: React.FC = () => {
               title="进行中"
               value={3}
               prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: 'var(--warning-color)' }}
             />
           </Card>
         </Col>
@@ -55,7 +54,7 @@ const Dashboard: React.FC = () => {
               title="活跃用户"
               value={28}
               prefix={<UserOutlined />}
-              valueStyle={{ color: '#722ed1' }}
+              valueStyle={{ color: 'var(--purple-color)' }}
             />
           </Card>
         </Col>

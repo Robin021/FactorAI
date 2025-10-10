@@ -19,7 +19,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useNotificationCenter } from '@/components/Common/NotificationCenter';
 import { useTheme } from '@/components/Common/ThemeProvider';
 import './MainLayout.css';
-import '@/styles/themes.css';
+import { BRAND_NAME, BRAND_SHORT } from '@/constants/brand';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -86,15 +86,21 @@ const MainLayout: React.FC = () => {
         collapsible 
         collapsed={collapsed}
         className="main-sider"
+        width={240}
+        collapsedWidth={64}
+        breakpoint="lg"
+        onBreakpoint={(broken) => {
+          if (broken) setCollapsed(true);
+        }}
       >
         <div className="logo">
-          <Text strong style={{ color: 'white', fontSize: collapsed ? '14px' : '16px' }}>
-            {collapsed ? 'TA' : 'TradingAgents'}
+          <Text strong style={{ fontSize: collapsed ? '14px' : '16px' }}>
+            {collapsed ? BRAND_SHORT : BRAND_NAME}
           </Text>
         </div>
         
         <Menu
-          theme="dark"
+          theme={themeMode}
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
@@ -126,7 +132,7 @@ const MainLayout: React.FC = () => {
               type="text"
               icon={
                 <Badge count={unreadCount} size="small">
-                  <BellOutlined style={{ color: 'white', fontSize: '16px' }} />
+                  <BellOutlined style={{ color: 'var(--text-primary)', fontSize: '16px' }} />
                 </Badge>
               }
               onClick={showNotificationCenter}
@@ -139,7 +145,7 @@ const MainLayout: React.FC = () => {
             >
               <div className="user-info">
                 <Avatar size="small" icon={<UserOutlined />} />
-                <Text style={{ marginLeft: 8, color: 'white' }}>
+                <Text style={{ marginLeft: 8 }}>
                   {user?.username || '用户'}
                 </Text>
               </div>

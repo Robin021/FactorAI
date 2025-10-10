@@ -77,7 +77,7 @@ const PrintableReport: React.FC<PrintableReportProps> = ({
       </div>
       <div className="header-logo">
         {/* Company logo or branding can go here */}
-        <Text type="secondary">TradingAgents 分析系统</Text>
+        <Text type="secondary">因子智投（Factor AI）分析系统</Text>
       </div>
     </div>
   );
@@ -218,11 +218,11 @@ const PrintableReport: React.FC<PrintableReportProps> = ({
               {data.keyPoints && (
                 <div className="key-points">
                   <Title level={5}>关键要点</Title>
-                  <Timeline size="small">
-                    {data.keyPoints.map((point: string, index: number) => (
-                      <Timeline.Item key={index}>{point}</Timeline.Item>
-                    ))}
-                  </Timeline>
+                  <Timeline
+                    items={data.keyPoints.map((point: string) => ({
+                      children: point,
+                    }))}
+                  />
                 </div>
               )}
 
@@ -260,7 +260,7 @@ const PrintableReport: React.FC<PrintableReportProps> = ({
           报告生成时间: {new Date().toLocaleString()}
         </Text>
         <Text type="secondary">
-          TradingAgents 智能分析系统
+          因子智投（Factor AI）智能分析系统
         </Text>
       </div>
     </div>

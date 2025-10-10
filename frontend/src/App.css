@@ -118,28 +118,7 @@ body {
   }
 }
 
-/* 青瓷雅韵主题变量 */
-:root {
-  --primary-bg: linear-gradient(135deg, #e8f4f8 0%, #f8fdff 100%);
-  --card-bg: rgba(255, 255, 255, 0.8);
-  --text-primary: #2d5016;
-  --text-secondary: rgba(45, 80, 22, 0.7);
-  --border-color: rgba(127, 176, 105, 0.2);
-  --accent-color: #7fb069;
-  --accent-hover: #6fa055;
-}
-
-:root[data-theme='light'] {
-  --bg-color: #f4f1de;
-  --text-color: #2c1810;
-  --border-color: rgba(44, 24, 16, 0.15);
-}
-
-:root[data-theme='dark'] {
-  --bg-color: #2c1810;
-  --text-color: #f4f1de;
-  --border-color: rgba(244, 241, 222, 0.15);
-}
+/* 移除与主题系统冲突的 Root 变量，统一以 themes.css / theme-override.css 为准 */
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {

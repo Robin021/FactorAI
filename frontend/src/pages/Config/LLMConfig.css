@@ -119,7 +119,7 @@
 
 .llm-config .ant-typography-caption {
   font-size: 11px;
-  color: #8c8c8c;
+  color: var(--text-secondary);
 }
 
 /* Advanced parameters section */
@@ -129,7 +129,7 @@
 
 .llm-config .ant-divider-inner-text {
   font-weight: 500;
-  color: #595959;
+  color: var(--text-primary);
 }
 
 /* Tooltip styling */
@@ -139,7 +139,7 @@
 }
 
 .llm-config .anticon-info-circle:hover {
-  color: #1890ff;
+  color: var(--accent-color);
 }
 
 /* Button group styling */
@@ -148,13 +148,13 @@
 }
 
 .llm-config .ant-btn-primary {
-  background: #1890ff;
-  border-color: #1890ff;
+  background: var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 .llm-config .ant-btn-primary:hover {
-  background: #40a9ff;
-  border-color: #40a9ff;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 /* Modal styling */

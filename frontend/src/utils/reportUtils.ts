@@ -203,18 +203,18 @@ export class ReportUtils {
           body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: var(--text-primary, #333);
             margin: 0;
             padding: 20px;
           }
           .header {
             text-align: center;
-            border-bottom: 2px solid #1890ff;
+            border-bottom: 2px solid var(--accent-color, #0f766e);
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
           .header h1 {
-            color: #1890ff;
+            color: var(--accent-color, #0f766e);
             margin: 0;
             font-size: 28px;
           }
@@ -224,7 +224,7 @@ export class ReportUtils {
             margin: 10px 0;
           }
           .header .date {
-            color: #666;
+            color: var(--text-secondary, #666);
             font-size: 14px;
           }
           .section {
@@ -232,8 +232,8 @@ export class ReportUtils {
             page-break-inside: avoid;
           }
           .section h2 {
-            color: #1890ff;
-            border-bottom: 1px solid #e8e8e8;
+            color: var(--accent-color, #0f766e);
+            border-bottom: 1px solid var(--border-color, #e8e8e8);
             padding-bottom: 10px;
             margin-bottom: 20px;
           }
@@ -245,17 +245,17 @@ export class ReportUtils {
           .stat-item {
             text-align: center;
             padding: 15px;
-            background: #f5f5f5;
+            background: var(--card-bg, #f5f5f5);
             border-radius: 8px;
             min-width: 120px;
           }
           .stat-value {
             font-size: 24px;
             font-weight: bold;
-            color: #1890ff;
+            color: var(--accent-color, #0f766e);
           }
           .stat-label {
-            color: #666;
+            color: var(--text-secondary, #666);
             font-size: 14px;
           }
           .info-table {
@@ -265,36 +265,36 @@ export class ReportUtils {
           }
           .info-table th,
           .info-table td {
-            border: 1px solid #e8e8e8;
+            border: 1px solid var(--border-color, #e8e8e8);
             padding: 12px;
             text-align: left;
           }
           .info-table th {
-            background: #f5f5f5;
+            background: var(--card-bg, #f5f5f5);
             font-weight: bold;
           }
           .disclaimer {
-            background: #fff7e6;
-            border: 1px solid #ffd591;
+            background: var(--warning-bg, #fff7e6);
+            border: 1px solid var(--warning-border, #ffd591);
             padding: 15px;
             border-radius: 6px;
             margin-top: 30px;
           }
           .disclaimer h3 {
-            color: #ad6800;
+            color: var(--warning-text, #ad6800);
             margin-top: 0;
           }
           .disclaimer p {
-            color: #ad6800;
+            color: var(--warning-text, #ad6800);
             font-style: italic;
             margin-bottom: 0;
           }
           .footer {
             text-align: center;
-            color: #666;
+            color: var(--text-secondary, #666);
             font-size: 12px;
             margin-top: 40px;
-            border-top: 1px solid #e8e8e8;
+            border-top: 1px solid var(--border-color, #e8e8e8);
             padding-top: 20px;
           }
           @media print {
@@ -350,7 +350,7 @@ export class ReportUtils {
 
         <div class="footer">
           <p>报告生成时间: ${new Date().toLocaleString()}</p>
-          <p>TradingAgents 智能分析系统</p>
+          <p>因子智投（Factor AI）智能分析系统</p>
         </div>
       </body>
       </html>

@@ -4,7 +4,7 @@ import type { ChartExportOptions, ChartTheme, StockPriceData, TechnicalData } fr
 // Chart theme configurations
 export const chartThemes: Record<string, ChartTheme> = {
   light: {
-    primaryColor: '#1890ff',
+    primaryColor: '#0f766e',
     backgroundColor: '#ffffff',
     textColor: '#333333',
     gridColor: '#f0f0f0',
@@ -12,7 +12,7 @@ export const chartThemes: Record<string, ChartTheme> = {
     downColor: '#ff4d4f',
   },
   dark: {
-    primaryColor: '#177ddc',
+    primaryColor: '#0f766e',
     backgroundColor: '#141414',
     textColor: '#ffffff',
     gridColor: '#434343',
@@ -20,7 +20,7 @@ export const chartThemes: Record<string, ChartTheme> = {
     downColor: '#ff7875',
   },
   colorful: {
-    primaryColor: '#722ed1',
+    primaryColor: '#0f766e',
     backgroundColor: '#f6ffed',
     textColor: '#262626',
     gridColor: '#d9f7be',

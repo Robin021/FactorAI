@@ -1,8 +1,9 @@
 /* Analysis Report Styles */
 .analysis-report {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--primary-bg);
   padding: 0;
+  color: var(--text-primary);
 }
 
 .analysis-report-loading,
@@ -18,16 +19,17 @@
 
 /* Header Styles */
 .report-header {
-  background: white;
+  background: var(--card-bg);
   padding: 1rem 2rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  color: var(--text-primary);
 }
 
 .header-left {
@@ -63,12 +65,14 @@
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  color: var(--text-primary);
 }
 
 .report-tabs {
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  color: var(--text-primary);
 }
 
 .report-tabs .ant-tabs-content-holder {
@@ -94,7 +98,7 @@
 .stat-card {
   text-align: center;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadow-color);
   transition: all 0.3s ease;
 }
 
@@ -119,7 +123,7 @@
 
 .summary-card {
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .summary-text {
@@ -140,6 +144,62 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+/* Markdown Rendering */
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: 1.2em 0 0.6em;
+  font-weight: 600;
+}
+
+.markdown-body p {
+  margin: 0.6em 0;
+}
+
+.markdown-body code {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.markdown-body pre {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.4em;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid var(--border-color);
+  margin: 0.8em 0;
+  padding: 0.4em 0.8em;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+}
+
 /* History Comparison Styles */
 .history-comparison {
   display: flex;
@@ -149,13 +209,13 @@
 
 .history-controls {
   padding: 1rem;
-  background: #fafafa;
+  background: var(--card-bg);
   border-radius: 6px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
 }
 
 .history-table {
-  background: white;
+  background: var(--card-bg);
   border-radius: 6px;
 }
 
@@ -181,42 +241,27 @@
 
 /* Print Styles */
 @media print {
-  .no-print {
-    display: none !important;
-  }
-  
-  .analysis-report {
-    background: white !important;
-    padding: 0 !important;
-  }
-  
-  .report-content {
-    padding: 1rem !important;
-    max-width: none !important;
-  }
-  
-  .report-tabs {
-    box-shadow: none !important;
-    border: 1px solid #ddd !important;
-  }
-  
-  .stat-card {
-    box-shadow: none !important;
-    border: 1px solid #ddd !important;
-  }
-  
-  .ant-tabs-tab {
-    display: none !important;
-  }
-  
-  .ant-tabs-content-holder {
-    padding: 1rem !important;
-  }
-  
-  /* Print only overview tab */
-  .ant-tabs-tabpane:not(.ant-tabs-tabpane-active) {
-    display: none !important;
-  }
+  /* 纸张尺寸与页边距 */
+  @page { size: A4; margin: 10mm 10mm 12mm 10mm; }
+
+  /* 颜色与背景按屏幕表现输出 */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  /* 隐藏仅屏幕可见元素与浮层 */
+  .no-print { display: none !important; }
+  .ant-dropdown, .ant-select-dropdown, .ant-picker-dropdown { display: none !important; }
+
+  .analysis-report { background: white !important; padding: 0 !important; }
+  .report-content { padding: 12mm !important; max-width: none !important; }
+  .report-tabs { box-shadow: none !important; border: 1px solid #ddd !important; }
+  .stat-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  .ant-card, .report-tabs { background: #ffffff !important; color: #000 !important; }
+
+  /* 打印时隐藏 Tabs 导航，但打印所有面板内容 */
+  .ant-tabs-tab { display: none !important; }
+  .ant-tabs-content-holder { padding: 0 !important; overflow: visible !important; }
+  .ant-tabs-content, .ant-tabs-tabpane { display: block !important; break-inside: avoid; page-break-inside: avoid; }
+  .ant-card, .summary-card, .recommendation-stat { break-inside: avoid; page-break-inside: avoid; }
 }
 
 /* Responsive Styles */

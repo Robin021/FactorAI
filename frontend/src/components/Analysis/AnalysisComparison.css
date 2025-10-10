@@ -4,7 +4,7 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 1rem;
-  background: #f5f5f5;
+  background: var(--primary-bg);
   min-height: 100vh;
 }
 
@@ -23,7 +23,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--card-bg);
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -55,11 +55,11 @@
 }
 
 .comparison-table {
-  background: white;
+  background: var(--card-bg);
 }
 
 .comparison-table .ant-table-thead > tr > th {
-  background: #fafafa;
+  background: var(--card-bg);
   font-weight: 600;
   text-align: center;
 }
@@ -99,12 +99,12 @@
   text-align: center;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .card-header h5 {
   margin: 0;
-  color: #1890ff;
+  color: var(--accent-color);
 }
 
 .card-metrics {
@@ -118,20 +118,20 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem;
-  background: #fafafa;
+  background: var(--card-bg);
   border-radius: 6px;
 }
 
 .metric-icon {
   font-size: 1.25rem;
-  color: #1890ff;
+  color: var(--accent-color);
   min-width: 20px;
 }
 
 .metric-value {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #262626;
+  color: var(--text-primary);
 }
 
 .recommendation-tag {
@@ -147,11 +147,11 @@
 }
 
 .detailed-comparison-table {
-  background: white;
+  background: var(--card-bg);
 }
 
 .detailed-comparison-table .ant-table-thead > tr > th {
-  background: #fafafa;
+  background: var(--card-bg);
   font-weight: 600;
 }
 
@@ -162,7 +162,7 @@
 
 .chart-preview {
   height: 200px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -181,13 +181,13 @@
 .comparison-text {
   font-size: 0.875rem;
   line-height: 1.5;
-  color: #595959;
+  color: var(--text-secondary);
   word-break: break-word;
 }
 
 /* Summary Styles */
 .comparison-summary {
-  background: white;
+  background: var(--card-bg);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }

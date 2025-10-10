@@ -88,9 +88,9 @@ const PerformanceMonitor: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return '#52c41a';
+        return 'var(--success-color)';
       case 'warning':
-        return '#faad14';
+        return 'var(--warning-color)';
       case 'critical':
         return '#ff4d4f';
       case 'error':
@@ -197,7 +197,7 @@ const PerformanceMonitor: React.FC = () => {
                 value={healthStatus.system.cpu_usage}
                 suffix="%"
                 valueStyle={{ 
-                  color: healthStatus.system.cpu_usage > 80 ? '#ff4d4f' : '#52c41a' 
+                  color: healthStatus.system.cpu_usage > 80 ? '#ff4d4f' : 'var(--success-color)'
                 }}
               />
               <Progress 
@@ -212,7 +212,7 @@ const PerformanceMonitor: React.FC = () => {
                 value={healthStatus.system.memory_usage}
                 suffix="%"
                 valueStyle={{ 
-                  color: healthStatus.system.memory_usage > 80 ? '#ff4d4f' : '#52c41a' 
+                  color: healthStatus.system.memory_usage > 80 ? '#ff4d4f' : 'var(--success-color)'
                 }}
               />
               <Progress 
@@ -228,7 +228,7 @@ const PerformanceMonitor: React.FC = () => {
                 suffix="%"
                 precision={1}
                 valueStyle={{ 
-                  color: healthStatus.system.disk_usage > 80 ? '#ff4d4f' : '#52c41a' 
+                  color: healthStatus.system.disk_usage > 80 ? '#ff4d4f' : 'var(--success-color)'
                 }}
               />
               <Progress 
@@ -268,7 +268,7 @@ const PerformanceMonitor: React.FC = () => {
               suffix="ms"
               precision={0}
               valueStyle={{ 
-                color: (metrics.loadTime || 0) > 3000 ? '#ff4d4f' : '#52c41a' 
+                color: (metrics.loadTime || 0) > 3000 ? '#ff4d4f' : 'var(--success-color)'
               }}
             />
           </Col>
@@ -279,7 +279,7 @@ const PerformanceMonitor: React.FC = () => {
               suffix="ms"
               precision={0}
               valueStyle={{ 
-                color: (metrics.firstContentfulPaint || 0) > 2000 ? '#ff4d4f' : '#52c41a' 
+                color: (metrics.firstContentfulPaint || 0) > 2000 ? '#ff4d4f' : 'var(--success-color)'
               }}
             />
           </Col>
@@ -290,7 +290,7 @@ const PerformanceMonitor: React.FC = () => {
               suffix="ms"
               precision={0}
               valueStyle={{ 
-                color: (metrics.largestContentfulPaint || 0) > 4000 ? '#ff4d4f' : '#52c41a' 
+                color: (metrics.largestContentfulPaint || 0) > 4000 ? '#ff4d4f' : 'var(--success-color)'
               }}
             />
           </Col>
@@ -301,7 +301,7 @@ const PerformanceMonitor: React.FC = () => {
               suffix="MB"
               precision={1}
               valueStyle={{ 
-                color: (metrics.memoryUsage || 0) > 100 ? '#ff4d4f' : '#52c41a' 
+                color: (metrics.memoryUsage || 0) > 100 ? '#ff4d4f' : 'var(--success-color)'
               }}
             />
           </Col>
@@ -315,7 +315,7 @@ const PerformanceMonitor: React.FC = () => {
               suffix="ms"
               precision={1}
               valueStyle={{ 
-                color: (metrics.firstInputDelay || 0) > 100 ? '#ff4d4f' : '#52c41a' 
+                color: (metrics.firstInputDelay || 0) > 100 ? '#ff4d4f' : 'var(--success-color)'
               }}
             />
           </Col>
@@ -325,7 +325,7 @@ const PerformanceMonitor: React.FC = () => {
               value={metrics.cumulativeLayoutShift || 0}
               precision={3}
               valueStyle={{ 
-                color: (metrics.cumulativeLayoutShift || 0) > 0.25 ? '#ff4d4f' : '#52c41a' 
+                color: (metrics.cumulativeLayoutShift || 0) > 0.25 ? '#ff4d4f' : 'var(--success-color)'
               }}
             />
           </Col>

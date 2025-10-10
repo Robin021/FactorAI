@@ -138,10 +138,11 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         console.log('ℹ️ [Store] 没有运行中的任务');
       }
       
+      const prevCurrent = get().currentAnalysis;
       set({
         analysisHistory: result.analyses,
-        // ✅ 自动设置currentAnalysis：优先运行中的任务，否则最新一条
-        currentAnalysis: selectedAnalysis || get().currentAnalysis,
+        // ✅ 仅在当前没有选择时设置，避免切换“历史记录”时强行覆盖，导致无法回到分析界面
+        currentAnalysis: prevCurrent || selectedAnalysis || null,
         pagination: {
           page: result.page,
           limit: result.limit,
@@ -195,7 +196,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
         set({
           currentAnalysis: {
             ...currentAnalysis,
-            status: 'failed',
+            status: 'cancelled',
           },
         });
       }
@@ -203,7 +204,7 @@ export const useAnalysisStore = create<AnalysisState>((set, get) => ({
       // Update in history
       set((state) => ({
         analysisHistory: state.analysisHistory.map((item) =>
-          item.id === id ? { ...item, status: 'failed' as const } : item
+          item.id === id ? { ...item, status: 'cancelled' as const } : item
         ),
       }));
     } catch (error: any) {

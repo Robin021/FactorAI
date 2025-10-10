@@ -2,8 +2,6 @@ import React, { useEffect } from 'react';
 import { Spin, Result, Button } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import '@/styles/themes.css';
-import '@/styles/theme-override.css';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();

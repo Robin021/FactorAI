@@ -9,15 +9,15 @@ interface ThemeSwitchProps {
 }
 
 const themes = [
-  { value: 'moonlight', label: '月白清雅', color: '#4a6cf7' },
-  { value: 'celadon', label: '青瓷雅韵', color: '#7fb069' },
+  { value: 'moonlight', label: '月白清雅', color: '#0f766e' },
+  { value: 'celadon', label: '青瓷雅韵', color: '#0f766e' },
   { value: 'warmjade', label: '暖玉温润', color: '#8fbc8f' },
   { value: 'sakura', label: '樱花粉韵', color: '#ec4899' },
   { value: 'begonia', label: '海棠红韵', color: '#fb923c' },
   { value: 'emerald', label: '翡翠青山', color: '#10b981' },
   { value: 'forbidden', label: '紫禁城', color: '#f59e0b' },
   { value: 'starnight', label: '星空夜幕', color: '#3b82f6' },
-  { value: 'obsidian', label: '极夜黑曜', color: '#00d4aa' },
+  { value: 'obsidian', label: '极夜黑曜', color: '#0f766e' },
   { value: 'deepblue', label: '深海蓝黑', color: '#60a5fa' },
   { value: 'inkdark', label: '墨韵深沉', color: '#d4a574' },
 ];

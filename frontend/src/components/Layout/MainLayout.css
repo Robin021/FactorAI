@@ -30,8 +30,8 @@
 }
 
 [data-theme] .main-sider .ant-menu-item-selected {
-  background: var(--accent-color) !important;
-  color: white !important;
+  /* 使用全局主题规则（themes.css / theme-override.css）来控制选中态 */
+  color: inherit !important;
 }
 
 [data-theme] .main-sider .ant-menu-item .anticon {
@@ -65,7 +65,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  left: 200px;
+  left: 240px;
   z-index: 99;
   transition: left 0.2s;
 }
@@ -83,7 +83,7 @@
 }
 
 .main-layout .ant-layout-sider-collapsed + .ant-layout .main-header {
-  left: 80px;
+  left: 64px;
 }
 
 .header-left {
@@ -124,7 +124,7 @@
 }
 
 [data-theme] .main-content {
-  margin-left: 200px;
+  margin-left: 240px;
   margin-top: 64px;
   transition: margin-left 0.2s;
   min-height: calc(100vh - 64px);
@@ -132,12 +132,14 @@
 }
 
 .main-layout .ant-layout-sider-collapsed + .ant-layout .main-content {
-  margin-left: 80px;
+  margin-left: 64px;
 }
 
 .content-wrapper {
   padding: 24px;
   min-height: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 /* Responsive design */
