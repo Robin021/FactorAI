@@ -20,8 +20,16 @@ const AuthCallback: React.FC = () => {
           throw new Error('授权码缺失');
         }
 
-        // 调用后端处理 Authing 回调
-        const response = await fetch(`/api/v1/auth/authing/callback?code=${code}&state=${state || ''}`);
+        // 调用后端交换 code 为应用访问令牌
+        const storedRedirect = localStorage.getItem('authing_redirect_uri');
+        const redirectUri = storedRedirect || `${window.location.origin}/auth/callback`;
+        const response = await fetch(`/api/v1/auth/authing/exchange`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ code, state, redirect_uri: redirectUri }),
+        });
         const data = await response.json();
         
         if (response.ok) {

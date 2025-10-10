@@ -13,12 +13,12 @@
 AUTHING_APP_ID=68d3879e03d9b1907f220731
 AUTHING_APP_SECRET=your_app_secret_here
 AUTHING_APP_HOST=https://sxkc6t59wbj9-demo.authing.cn
-AUTHING_REDIRECT_URI=http://localhost:3000/api/v1/auth/authing/callback
+AUTHING_REDIRECT_URI=http://localhost:3000/auth/callback
 
 # 前端环境变量
 VITE_AUTHING_APP_ID=68d3879e03d9b1907f220731
 VITE_AUTHING_APP_HOST=https://sxkc6t59wbj9-demo.authing.cn
-VITE_AUTHING_REDIRECT_URI=http://localhost:3000/api/v1/auth/authing/callback
+VITE_AUTHING_REDIRECT_URI=http://localhost:3000/auth/callback
 ```
 
 ### 2. 获取 Authing 应用密钥
@@ -30,7 +30,7 @@ VITE_AUTHING_REDIRECT_URI=http://localhost:3000/api/v1/auth/authing/callback
 ### 3. 配置回调地址
 在 Authing 控制台中确保回调地址配置为：
 ```
-http://localhost:3000/api/v1/auth/authing/callback
+http://localhost:3000/auth/callback
 ```
 
 ### 4. 启动服务
@@ -63,7 +63,7 @@ https://sxkc6t59wbj9-demo.authing.cn/.well-known/openid_configuration
 ### 3. 测试回调地址
 确保回调地址可以正常访问：
 ```
-http://localhost:3000/api/v1/auth/authing/callback
+http://localhost:3000/auth/callback
 ```
 
 ## 常见问题

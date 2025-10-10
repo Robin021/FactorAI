@@ -33,12 +33,12 @@
    AUTHING_APP_HOST=https://你的域名.authing.cn
    
    # 回调地址
-   AUTHING_REDIRECT_URI=http://localhost:3000/api/v1/auth/authing/callback
+   AUTHING_REDIRECT_URI=http://localhost:3000/auth/callback
    ```
 
 4. **配置回调地址**
    - 在 Authing 控制台中添加回调地址：
-   - `http://localhost:3000/api/v1/auth/authing/callback`
+   - `http://localhost:3000/auth/callback`
 
 ### 方案二：使用模拟 SSO（用于测试）
 
@@ -71,7 +71,7 @@ if MOCK_AUTHING:
 export AUTHING_APP_ID="68d3879e03d9b1907f220731"
 export AUTHING_APP_SECRET="请填写正确的密钥"
 export AUTHING_APP_HOST="https://sxkc6t59wbj9-demo.authing.cn"
-export AUTHING_REDIRECT_URI="http://localhost:3000/api/v1/auth/authing/callback"
+export AUTHING_REDIRECT_URI="http://localhost:3000/auth/callback"
 ```
 
 ## 测试步骤
@@ -90,7 +90,7 @@ curl "https://sxkc6t59wbj9-demo.authing.cn/.well-known/openid_configuration"
 python tradingagents_server.py
 
 # 在另一个终端测试回调地址
-curl "http://localhost:3000/api/v1/auth/authing/callback?code=test&state=test"
+curl "http://localhost:3000/auth/callback?code=test&state=test"
 ```
 
 ### 3. 检查日志

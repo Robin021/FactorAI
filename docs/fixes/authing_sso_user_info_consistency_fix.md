@@ -82,7 +82,7 @@ const scope = 'openid profile email phone username roles unionid external_id ext
 AUTHING_APP_ID=your_app_id
 AUTHING_APP_SECRET=your_app_secret
 AUTHING_APP_HOST=https://your-domain.authing.cn
-AUTHING_REDIRECT_URI=http://localhost:3000/api/v1/auth/authing/callback
+AUTHING_REDIRECT_URI=http://localhost:3000/auth/callback
 ```
 
 ## 测试建议

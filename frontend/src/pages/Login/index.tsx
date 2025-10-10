@@ -132,12 +132,12 @@ const Login: React.FC = () => {
   // Authing SSO 登录
   const handleAuthingLogin = () => {
     // Authing 配置 - 从环境变量读取
+    const origin = window.location.origin;
     const authingConfig = {
       appId: import.meta.env.VITE_AUTHING_APP_ID || '68d3879e03d9b1907f220731',
       appHost: import.meta.env.VITE_AUTHING_APP_HOST || 'https://sxkc6t59wbj9-demo.authing.cn',
-      redirectUri:
-        import.meta.env.VITE_AUTHING_REDIRECT_URI ||
-        'http://localhost:3000/api/v1/auth/authing/callback',
+      // 确保与后续 exchange 请求中的 redirect_uri 完全一致
+      redirectUri: import.meta.env.VITE_AUTHING_REDIRECT_URI || `${origin}/auth/callback`,
     };
 
     // 构建 Authing 登录 URL
@@ -153,6 +153,11 @@ const Login: React.FC = () => {
         redirect_uri: authingConfig.redirectUri,
         state: Math.random().toString(36).substring(7),
       });
+
+    // 记录本次使用的 redirect_uri，确保与 token 交换阶段完全一致
+    try {
+      localStorage.setItem('authing_redirect_uri', authingConfig.redirectUri);
+    } catch {}
 
     message.info('正在跳转到 Authing SSO 登录...');
     window.location.href = authUrl;

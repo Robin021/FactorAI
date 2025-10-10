@@ -67,43 +67,83 @@ export class AnalysisService {
     }
   }
 
-  // Get analysis result
+  // Get analysis result（带宽限/最终一致性容忍，自动重试）
   async getAnalysisResult(id: string): Promise<Analysis> {
-    try {
-      const response = await apiClient.get(`/analysis/${id}/results`);
-      
-      // 适配后端返回格式
-      const results = response.results || response.result_data;
-      return {
-        id: response.id || response.analysis_id || response._id,
-        userId: response.user_id || 'current_user',
-        stockCode: response.stock_code || response.symbol,
-        status: response.status,
-        progress: response.progress || 100,
-        resultData: results ? {
-          // 从state字段中提取分析结果
-          trader_investment_plan: results.state?.trader_investment_plan || '',
-          market_report: results.state?.market_report || '',
-          sentiment_report: results.state?.sentiment_report || '',
-          fundamentals_report: results.state?.fundamentals_report || '',
-          risk_assessment: results.state?.risk_assessment || '',
-          investment_plan: results.state?.investment_plan || '',
-          final_trade_decision: results.state?.final_trade_decision || '',
-          // 新增：研究团队辩论与风险管理辩论状态（用于详细报告展示）
-          investment_debate_state: results.state?.investment_debate_state || null,
-          risk_debate_state: results.state?.risk_debate_state || null,
-          decision: results.decision || {},
-          // 保留原始数据
-          ...results
-        } : undefined,
-        createdAt: response.created_at,
-        completedAt: response.completed_at,
-      } as Analysis;
-    } catch (error: any) {
-      if (error.response?.data?.detail) {
-        throw new Error(error.response.data.detail);
+    const maxRetries = 6; // 最多重试6次（约10秒）
+    const baseDelayMs = 800; // 首次延迟
+
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await apiClient.get(`/analysis/${id}/results`);
+
+        // 适配后端返回格式
+        const results = response.results || response.result_data;
+        const hasContent = results && (Array.isArray(results) ? results.length > 0 : Object.keys(results).length > 0);
+        return {
+          id: response.id || response.analysis_id || response._id,
+          userId: response.user_id || 'current_user',
+          stockCode: response.stock_code || response.symbol,
+          status: response.status,
+          progress: response.progress || 100,
+          resultData: hasContent
+            ? {
+                // 从state字段中提取分析结果
+                trader_investment_plan: results.state?.trader_investment_plan || '',
+                market_report: results.state?.market_report || '',
+                sentiment_report: results.state?.sentiment_report || '',
+                fundamentals_report: results.state?.fundamentals_report || '',
+                risk_assessment: results.state?.risk_assessment || '',
+                investment_plan: results.state?.investment_plan || '',
+                final_trade_decision: results.state?.final_trade_decision || '',
+                // 研究团队辩论与风险管理辩论状态（用于详细报告展示）
+                investment_debate_state: results.state?.investment_debate_state || null,
+                risk_debate_state: results.state?.risk_debate_state || null,
+                decision: results.decision || {},
+                // 保留原始数据
+                ...results,
+              }
+            : undefined,
+          createdAt: response.created_at,
+          completedAt: response.completed_at,
+        } as Analysis;
+      } catch (error: any) {
+        // 可容忍错误：结果尚未可读（404 未找到 / 400 未完成）→ 自动重试
+        const status = error?.response?.status;
+        const detail: string | undefined = error?.response?.data?.detail || error?.message;
+        const isTransient404 = status === 404 && (/(分析结果未找到|分析未找到)/.test(detail || ''));
+        const isNotReady400 = status === 400 && /(未完成|尚未完成)/.test(detail || '');
+
+        if ((isTransient404 || isNotReady400) && attempt < maxRetries) {
+          const delay = Math.round(baseDelayMs * Math.pow(1.4, attempt));
+          console.log(`⏳ [getAnalysisResult] 结果暂不可用，${delay}ms后重试 (${attempt + 1}/${maxRetries})`);
+          await sleep(delay);
+          continue;
+        }
+
+        // 其他错误或已达最大重试次数
+        if (detail) throw new Error(detail);
+        throw new Error(error.message || 'Failed to get analysis result');
       }
-      throw new Error(error.message || 'Failed to get analysis result');
+    }
+
+    // 兜底：尝试读取状态并返回占位对象，避免让UI显示硬错误
+    try {
+      const statusResp = await apiClient.get(`/analysis/${id}/status`);
+      return {
+        id: statusResp.id || id,
+        userId: statusResp.user || 'current_user',
+        stockCode: statusResp.symbol || statusResp.stock_code || 'UNKNOWN',
+        status: statusResp.status || 'running',
+        progress: statusResp.progress || Math.round((statusResp.progress_percentage || 0) * 100) || 0,
+        resultData: undefined,
+        createdAt: statusResp.created_at || new Date().toISOString(),
+        completedAt: statusResp.completed_at,
+      } as Analysis;
+    } catch {
+      // 最终失败才抛错
+      throw new Error('分析结果暂不可用，请稍后重试');
     }
   }
 
