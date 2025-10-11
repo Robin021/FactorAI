@@ -259,7 +259,13 @@ class TradingAgentsGraph:
         self.progress_callback = None
         
         # Initialize components
-        self.conditional_logic = ConditionalLogic()
+        # 使用配置驱动的辩论轮次与风险讨论轮次
+        try:
+            _max_debate = int(self.config.get("max_debate_rounds", 1))
+            _max_risk = int(self.config.get("max_risk_discuss_rounds", 1))
+        except Exception:
+            _max_debate, _max_risk = 1, 1
+        self.conditional_logic = ConditionalLogic(max_debate_rounds=_max_debate, max_risk_discuss_rounds=_max_risk)
         self.graph_setup = GraphSetup(
             self.quick_thinking_llm,
             self.deep_thinking_llm,

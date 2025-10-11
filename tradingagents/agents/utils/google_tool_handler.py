@@ -477,6 +477,55 @@ class GoogleToolCallHandler:
                         fixed_tool_call['args'] = {}
                 except:
                     fixed_tool_call['args'] = {}
+
+            # 统一工具名称与参数（别名纠正 + period转换为日期范围）
+            try:
+                name = fixed_tool_call.get('name', '').strip()
+                args = fixed_tool_call.get('args', {})
+
+                # 将误用的 A股专用名称映射到统一市场工具
+                alias_map = {
+                    'get_china_stock_data_unified': 'get_stock_market_data_unified',
+                    'get_china_stock_data': 'get_stock_market_data_unified',
+                    'get_market_data_unified': 'get_stock_market_data_unified',
+                }
+                if name in alias_map:
+                    logger.info(f"[{analyst_name}] 🔧 将工具名从 {name} 重写为 {alias_map[name]}")
+                    fixed_tool_call['name'] = alias_map[name]
+                    name = fixed_tool_call['name']
+
+                # 规范参数键：symbol -> ticker
+                if 'ticker' not in args and 'symbol' in args:
+                    args['ticker'] = args.pop('symbol')
+
+                # 将 period 转换为 (start_date, end_date)
+                if 'period' in args and ('start_date' not in args or 'end_date' not in args):
+                    from datetime import datetime, timedelta
+                    period = str(args.get('period')).lower()
+                    today = datetime.now().date()
+                    delta_map = {
+                        '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365,
+                        'ytd': (today - datetime(today.year, 1, 1).date()).days,
+                    }
+                    days = delta_map.get(period, 90)
+                    start_date = (today - timedelta(days=days)).strftime('%Y-%m-%d')
+                    end_date = today.strftime('%Y-%m-%d')
+                    args['start_date'] = start_date
+                    args['end_date'] = end_date
+                    # 移除period，避免工具校验报错
+                    try:
+                        args.pop('period', None)
+                    except Exception:
+                        pass
+                    fixed_tool_call['args'] = args
+
+                # 最终校验关键参数是否齐全
+                if fixed_tool_call['name'] == 'get_stock_market_data_unified':
+                    missing = [k for k in ['ticker', 'start_date', 'end_date'] if k not in args]
+                    if missing:
+                        logger.warning(f"[{analyst_name}] ⚠️ 工具参数缺失，补全失败: {missing}")
+            except Exception as alias_e:
+                logger.debug(f"[{analyst_name}] 参数与名称标准化时发生异常: {alias_e}")
             
             # 修复ID
             if 'id' not in fixed_tool_call or not isinstance(fixed_tool_call['id'], str):

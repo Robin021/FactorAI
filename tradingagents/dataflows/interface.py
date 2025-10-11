@@ -709,6 +709,17 @@ def get_YFin_data_online(
     start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
     end_date: Annotated[str, "End date in yyyy-mm-dd format"],
 ):
+    # A股不使用Yahoo Finance，直接提示改用统一接口，避免错误路径与幻觉
+    try:
+        sym = str(symbol).upper().strip()
+        is_a_share = ((len(sym) == 6 and sym.isdigit()) or sym.endswith('.SZ') or sym.endswith('.SH') or sym.endswith('.BJ'))
+        if is_a_share:
+            return (
+                f"❌ 不支持: A股({symbol}) 不使用Yahoo Finance在线数据源。\n"
+                f"✅ 请改用统一接口: get_stock_market_data_unified 或 get_china_stock_data_unified。"
+            )
+    except Exception:
+        pass
     # 检查yfinance是否可用
     if not YF_AVAILABLE or yf is None:
         return "yfinance库不可用，无法获取美股数据"
@@ -754,6 +765,17 @@ def get_YFin_data(
     start_date: Annotated[str, "Start date in yyyy-mm-dd format"],
     end_date: Annotated[str, "End date in yyyy-mm-dd format"],
 ) -> str:
+    # A股不使用Yahoo Finance离线数据
+    try:
+        sym = str(symbol).upper().strip()
+        is_a_share = ((len(sym) == 6 and sym.isdigit()) or sym.endswith('.SZ') or sym.endswith('.SH') or sym.endswith('.BJ'))
+        if is_a_share:
+            return (
+                f"❌ 不支持: A股({symbol}) 不使用Yahoo Finance离线数据源。\n"
+                f"✅ 请改用统一接口: get_stock_market_data_unified 或 get_china_stock_data_unified。"
+            )
+    except Exception:
+        pass
     # read in data
     data = pd.read_csv(
         os.path.join(

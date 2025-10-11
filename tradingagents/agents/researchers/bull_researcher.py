@@ -10,6 +10,13 @@ logger = get_logger("default")
 def create_bull_researcher(llm, memory):
     def bull_node(state) -> dict:
         logger.debug(f"🐂 [DEBUG] ===== 看涨研究员节点开始 =====")
+        # 进度回调：进入投资辩论阶段（多头）
+        try:
+            callback = state.get("progress_callback")
+            if callable(callback):
+                callback("⚖️ 投资辩论：Bull Researcher 发言", 5)
+        except Exception:
+            pass
 
         investment_debate_state = state["investment_debate_state"]
         history = investment_debate_state.get("history", "")

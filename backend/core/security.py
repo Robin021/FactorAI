@@ -40,6 +40,18 @@ async def get_current_user(
     # Check if user is active
     if not user.is_active:
         raise AuthenticationException("User account is disabled")
+
+    # Merge role-based default permissions to avoid missing permissions on refresh/login
+    try:
+        role_name = user.role.value if hasattr(user.role, 'value') else str(user.role)
+        role_defaults = DEFAULT_ROLE_PERMISSIONS.get(role_name, [])
+        # Union explicit permissions with defaults (keeps '*' for admins)
+        merged = list({*role_defaults, *(user.permissions or [])})
+        # Assign merged permissions back to the user model in-memory
+        user.permissions = merged
+    except Exception:
+        # Fallback silently if anything unexpected happens
+        pass
     
     # Store user in request state for logging
     request.state.current_user = user

@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
@@ -97,6 +98,205 @@ async def start_analysis(
         "message": "Analysis queued successfully",
         "priority": priority
     }
+
+
+@router.get("/{analysis_id}/download/pdf")
+async def download_analysis_pdf(
+    analysis_id: str,
+    current_user: UserInDB = Depends(require_permissions([Permissions.ANALYSIS_READ])),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """
+    Download a simple PDF report generated from the analysis result.
+    - Requires the analysis to belong to the current user (or admin) and be completed.
+    - Generates a minimal one-page PDF on the fly with basic info.
+    """
+    # Validate analysis id
+    try:
+        analysis_object_id = ObjectId(analysis_id)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid analysis ID format"
+        )
+
+    # Load analysis
+    analysis_doc = await db.analyses.find_one({"_id": analysis_object_id})
+    if not analysis_doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis not found")
+
+    analysis = AnalysisInDB(**analysis_doc)
+
+    # Ownership check
+    if str(analysis.user_id) != str(current_user.id) and "admin" not in current_user.role.value:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    # Must be completed to export
+    if analysis.status != AnalysisStatus.COMPLETED:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Analysis is not completed")
+
+    # Prepare minimal text content from result (fallbacks provided)
+    stock = analysis.stock_code or "UNKNOWN"
+    title = f"Analysis Report for {stock}"
+    created = analysis.created_at.strftime("%Y-%m-%d %H:%M:%S") if analysis.created_at else ""
+    completed = analysis.completed_at.strftime("%Y-%m-%d %H:%M:%S") if analysis.completed_at else ""
+    summary_lines = []
+    try:
+        rd = analysis.result_data or {}
+        # Try a few common fields for a short summary
+        for key in [
+            "summary", "final_trade_decision", "investment_plan", "market_report",
+            "fundamentals_report", "sentiment_report", "risk_assessment"
+        ]:
+            val = rd.get(key)
+            if isinstance(val, str) and val.strip():
+                summary_lines.append(f"- {key}: {val.strip()[:300]}")
+                if len(summary_lines) >= 5:
+                    break
+            elif isinstance(val, dict):
+                # take first few key: value pairs
+                inner = [f"{k}: {str(v)[:120]}" for k, v in list(val.items())[:3]]
+                if inner:
+                    summary_lines.append(f"- {key}: " + "; ".join(inner))
+                    if len(summary_lines) >= 5:
+                        break
+    except Exception:
+        pass
+
+    # 进一步增强：如果没有找到常用字段，从 state 中提取兼容字段
+    if not summary_lines and analysis.result_data:
+        try:
+            rd = analysis.result_data if isinstance(analysis.result_data, dict) else analysis.result_data.dict()
+            state = rd.get('state') or {}
+            ordered_keys = [
+                'final_trade_decision', 'trader_investment_plan', 'investment_plan',
+                'fundamentals_report', 'market_report', 'sentiment_report', 'risk_assessment'
+            ]
+            for key in ordered_keys:
+                val = state.get(key) or rd.get(key)
+                if isinstance(val, str) and val.strip():
+                    summary_lines.append(f"【{key}】 {val.strip()[:800]}")
+            decision = rd.get('decision')
+            if isinstance(decision, dict):
+                parts = []
+                if decision.get('action'): parts.append(f"操作: {decision.get('action')}")
+                if decision.get('target_price') not in (None, 'N/A', 'None', ''):
+                    parts.append(f"目标价: {decision.get('target_price')}")
+                if decision.get('reasoning'):
+                    parts.append(f"理由: {str(decision.get('reasoning'))[:400]}")
+                if parts:
+                    summary_lines.insert(0, "【决策】 " + '; '.join(parts))
+        except Exception:
+            pass
+
+    body_text = "\n".join(summary_lines) if summary_lines else "No detailed summary available."
+
+    # Generate a minimal valid PDF in-memory
+    import io
+
+    def _utf16be_hex(s: str) -> str:
+        """Encode a string as UTF-16BE hex for PDF Type0 font."""
+        try:
+            data = s.encode("utf-16-be", errors="replace")
+        except Exception:
+            data = str(s).encode("utf-16-be", errors="replace")
+        return "<" + (b"\xfe\xff" + data).hex().upper() + ">"
+
+    def generate_pdf_bytes(title_text: str, meta_text: str, body: str) -> bytes:
+        buf = io.BytesIO()
+        objects = []  # (pos, bytes)
+
+        def w(b: bytes):
+            buf.write(b)
+
+        w(b"%PDF-1.4\n%\xE2\xE3\xCF\xD3\n")
+
+        # 1: Catalog
+        pos1 = buf.tell(); w(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
+        # 2: Pages
+        pos2 = buf.tell(); w(b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n")
+        # 4: CJK-capable font (Type0 + UniGB-UCS2-H)
+        pos4 = buf.tell(); w(
+            b"4 0 obj\n"+
+            b"<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Name /F1 "
+            b"/Encoding /UniGB-UCS2-H /DescendantFonts [5 0 R] >>\nendobj\n"
+        )
+        # 5: Descendant CIDFont + descriptor (minimal)
+        pos5 = buf.tell(); w(
+            b"5 0 obj\n"+
+            b"<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light "
+            b"/CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> "
+            b"/FontDescriptor 6 0 R /DW 1000 >>\nendobj\n"
+        )
+        pos6 = buf.tell(); w(
+            b"6 0 obj\n"+
+            b"<< /Type /FontDescriptor /FontName /STSong-Light /Flags 4 "
+            b"/FontBBox [-250 -250 1000 1000] /ItalicAngle 0 /Ascent 1000 /Descent -250 /CapHeight 800 /StemV 80 >>\nendobj\n"
+        )
+
+        # 5: Contents stream
+        # Build page content stream (simple texts, line by line)
+        lines = []
+        lines.append("BT")
+        lines.append("/F1 18 Tf")
+        lines.append("72 740 Td")
+        lines.append(f"{_utf16be_hex(title_text)} Tj")
+        lines.append("/F1 11 Tf")
+        lines.append("0 -24 Td")
+        if meta_text:
+            for meta_line in meta_text.split("\n"):
+                lines.append(f"{_utf16be_hex(meta_line)} Tj")
+                lines.append("0 -14 Td")
+        if body:
+            for body_line in body.split("\n"):
+                safe = body_line[:1000]
+                lines.append(f"{_utf16be_hex(safe)} Tj")
+                lines.append("0 -14 Td")
+        lines.append("ET")
+        content_stream = "\n".join(lines).encode("ascii")
+        pos7 = buf.tell()
+        w(f"7 0 obj\n<< /Length {len(content_stream)} >>\nstream\n".encode("ascii"))
+        w(content_stream)
+        w(b"\nendstream\nendobj\n")
+
+        # 3: Page (after contents so we know refs exist)
+        pos3 = buf.tell(); w(b"3 0 obj\n" +
+                             b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] " +
+                             b"/Contents 7 0 R /Resources << /Font << /F1 4 0 R >> >> >>\nendobj\n")
+
+        # xref
+        xref_pos = buf.tell()
+        xref_entries = [0, pos1, pos2, pos3, pos4, pos5, pos6, pos7]
+        w(b"xref\n0 8\n")
+        w(b"0000000000 65535 f \n")
+        for p in xref_entries[1:]:
+            w(f"{p:010d} 00000 n \n".encode("ascii"))
+
+        # trailer
+        w(b"trailer\n")
+        w(b"<< /Size 8 /Root 1 0 R >>\n")
+        w(b"startxref\n")
+        w(f"{xref_pos}\n".encode("ascii"))
+        w(b"%%EOF\n")
+
+        return buf.getvalue()
+
+    meta_info = []
+    if created:
+        meta_info.append(f"Created: {created}")
+    if completed:
+        meta_info.append(f"Completed: {completed}")
+    meta = "\n".join(meta_info)
+
+    pdf_bytes = generate_pdf_bytes(title, meta, body_text)
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename=analysis_{stock}_report.pdf"
+        }
+    )
 
 
 @router.get("/{analysis_id}/progress")

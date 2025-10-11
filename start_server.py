@@ -51,7 +51,7 @@ def check_environment():
     
     return True
 
-def start_server(host="0.0.0.0", port=8000, reload=True, workers=1):
+def start_server(host="0.0.0.0", port=8000, reload=True, workers=1, modern=False):
     """启动服务器"""
     print("\n🚀 启动 TradingAgents-CN 服务器...")
     print("=" * 60)
@@ -66,13 +66,16 @@ def start_server(host="0.0.0.0", port=8000, reload=True, workers=1):
     # 构建启动命令 - 确保使用当前激活的Python环境
     python_executable = sys.executable
     print(f"🐍 使用Python: {python_executable}")
+    server_target = "backend.app.main:app" if modern else "backend.tradingagents_server:app"
+    print(f"🧩 启动后端: {server_target} ({'现代架构' if modern else '兼容架构'})")
     
+    log_level = os.getenv("TRADINGAGENTS_LOG_LEVEL", "info").lower()
     cmd = [
         python_executable, "-m", "uvicorn",
-        "backend.tradingagents_server:app",
+        server_target,
         "--host", host,
         "--port", str(port),
-        "--log-level", "info"
+        "--log-level", log_level
     ]
     
     if reload:
@@ -107,6 +110,7 @@ def main():
     parser.add_argument("--workers", type=int, default=1, help="工作进程数 (默认: 1)")
     parser.add_argument("--prod", action="store_true", help="生产模式 (禁用热重载)")
     parser.add_argument("--no-check", action="store_true", help="跳过环境检查")
+    parser.add_argument("--modern", action="store_true", help="使用现代化后端(包含WebSocket等)")
     
     args = parser.parse_args()
     
@@ -121,7 +125,8 @@ def main():
         host=args.host,
         port=args.port,
         reload=not args.prod,
-        workers=args.workers
+        workers=args.workers,
+        modern=args.modern
     )
 
 if __name__ == "__main__":

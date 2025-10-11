@@ -8,6 +8,13 @@ logger = get_logger("default")
 
 def create_risky_debator(llm):
     def risky_node(state) -> dict:
+        # 进度回调：风险评估阶段（激进）
+        try:
+            callback = state.get("progress_callback")
+            if callable(callback):
+                callback("🛡️ 风险评估：Risky Analyst 发言", 6)
+        except Exception:
+            pass
         risk_debate_state = state["risk_debate_state"]
         history = risk_debate_state.get("history", "")
         risky_history = risk_debate_state.get("risky_history", "")

@@ -219,8 +219,18 @@ def create_social_media_analyst(llm, toolkit, progress_callback=None):
             preview = report[:500] + "..." if len(report) > 500 else report
             callback(f"✅ 社交媒体分析师完成分析: {ticker}", 4, 7, preview, "社交媒体分析师")
         
+        # 返回包含最终消息序列（如果Google工具处理返回了messages则使用之），避免再次进入工具节点
+        final_messages = None
+        try:
+            if 'messages' in locals() and messages:
+                final_messages = messages
+        except Exception:
+            final_messages = None
+        if not final_messages:
+            final_messages = [result]
+
         return {
-            "messages": [result],
+            "messages": final_messages,
             "sentiment_report": report,
         }
 

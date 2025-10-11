@@ -84,3 +84,7 @@ temp/
 # Data directories (development)
 data/mongodb/
 data/redis/
+
+# Evaluation results
+../eval_results/
+eval_results/

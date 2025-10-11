@@ -17,6 +17,10 @@ DEFAULT_CONFIG = {
     "max_debate_rounds": 1,
     "max_risk_discuss_rounds": 1,
     "max_recur_limit": 100,
+    # Graph behavior
+    # True: 每个分析师只执行一次（tools 执行后直接进入清理/下一个节点）
+    # False: 允许 analyst -> tools -> analyst 循环（可能导致多次进入分析师节点）
+    "single_pass_analysts": True,
     # Tool settings - 从环境变量读取，提供默认值
     "online_tools": os.getenv("ONLINE_TOOLS_ENABLED", "false").lower() == "true",
     "online_news": os.getenv("ONLINE_NEWS_ENABLED", "true").lower() == "true", 

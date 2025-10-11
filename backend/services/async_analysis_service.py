@@ -323,6 +323,9 @@ class AsyncAnalysisService:
                 elapsed_time = 0
                 estimated_remaining = 0
                 
+                redis_key = f"analysis_progress:{analysis_id}"
+                
+                # 计算已用时间
                 try:
                     # 从数据库获取分析开始时间
                     analysis_doc = await self.db.analyses.find_one({"_id": ObjectId(analysis_id)})
@@ -331,25 +334,49 @@ class AsyncAnalysisService:
                         elapsed_time = (datetime.utcnow() - started_at).total_seconds()
                         
                         # 根据当前进度估算剩余时间
-                        if progress > 0:
+                        if progress is not None and progress > 0:
                             total_estimated_time = elapsed_time * (100.0 / progress)
                             estimated_remaining = max(0, total_estimated_time - elapsed_time)
                 except Exception as e:
                     logger.warning(f"Failed to calculate elapsed time in progress callback: {e}")
                 
+                # 读取已有进度，避免覆盖
+                existing_progress = {}
+                try:
+                    cached_progress = await self.redis.get(redis_key)
+                    if cached_progress:
+                        existing_progress = json.loads(cached_progress)
+                except Exception as e:
+                    logger.warning(f"Failed to load existing progress in async callback: {e}")
+                
                 # 同时更新analysis_progress键，供前端API使用
-                progress_data = {
+                progress_data = dict(existing_progress or {})
+                progress_data.update({
                     "status": "running",
-                    "progress": progress,
-                    "progress_percentage": progress / 100.0,  # 添加0-1格式的进度
-                    "message": message,
-                    "current_step": current_step,
                     "elapsed_time": elapsed_time,
                     "estimated_remaining": estimated_remaining,
                     "updated_at": datetime.utcnow().isoformat()
-                }
+                })
+                
+                if message is not None:
+                    progress_data["message"] = message
+                
+                # 仅当是数值时才写入 current_step；字符串应写入 current_step_name，避免覆盖数值步骤
+                if current_step is not None:
+                    try:
+                        # 支持传入可转为数字的字符串
+                        numeric_step = int(current_step)
+                        progress_data["current_step"] = numeric_step
+                    except (TypeError, ValueError):
+                        # 非数值 -> 作为步骤名称存储
+                        progress_data["current_step_name"] = str(current_step)
+                
+                if progress is not None:
+                    progress_data["progress"] = progress
+                    progress_data["progress_percentage"] = progress / 100.0
+                
                 await self.redis.setex(
-                    f"analysis_progress:{analysis_id}",
+                    redis_key,
                     3600,  # 1 hour TTL
                     json.dumps(progress_data)
                 )

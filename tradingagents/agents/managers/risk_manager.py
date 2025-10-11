@@ -8,6 +8,13 @@ logger = get_logger("default")
 
 def create_risk_manager(llm, memory):
     def risk_manager_node(state) -> dict:
+        # 进度回调：风险评估汇总阶段开始
+        try:
+            callback = state.get("progress_callback")
+            if callable(callback):
+                callback("🛡️ 风险评估：Risk Judge 开始综合评估", 6)
+        except Exception:
+            pass
 
         company_name = state["company_of_interest"]
 
@@ -117,6 +124,12 @@ def create_risk_manager(llm, memory):
         }
 
         logger.info(f"📋 [Risk Manager] 最终决策生成完成，内容长度: {len(response_content)} 字符")
+        # 进度回调：风险评估完成
+        try:
+            if callable(callback):
+                callback("🛡️ 风险评估：Risk Judge 决策完成", 6)
+        except Exception:
+            pass
         
         return {
             "risk_debate_state": new_risk_debate_state,

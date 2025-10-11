@@ -55,6 +55,9 @@ class AgentState(MessagesState):
     company_of_interest: Annotated[str, "Company that we are interested in trading"]
     trade_date: Annotated[str, "What date we are trading at"]
 
+    # 允许透传进度回调，确保在状态流转中不会丢失
+    progress_callback: Optional[object]
+
     sender: Annotated[str, "Agent that sent this message"]
 
     # research step

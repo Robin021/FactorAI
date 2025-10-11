@@ -2,6 +2,8 @@
 Result formatter for analysis results
 """
 from typing import Dict, Any
+import logging
+logger = logging.getLogger('backend.result_formatter')
 
 
 def format_analysis_results(results: Dict[str, Any]) -> Dict[str, Any]:
@@ -100,8 +102,14 @@ def format_analysis_results(results: Dict[str, Any]) -> Dict[str, Any]:
     for key in analysis_keys:
         if key in state:
             formatted_state[key] = state[key]
+            try:
+                val = state[key]
+                length = len(val) if isinstance(val, str) else (len(str(val)) if val is not None else 0)
+                logger.debug(f"[ResultFormatter] 包含字段: {key}, 长度: {length}")
+            except Exception:
+                pass
     
-    return {
+    result_payload = {
         'stock_symbol': results.get('stock_symbol'),
         'decision': formatted_decision,
         'state': formatted_state,
@@ -119,3 +127,9 @@ def format_analysis_results(results: Dict[str, Any]) -> Dict[str, Any]:
             'llm_model': results.get('llm_model')
         }
     }
+    try:
+        fr_len = len(formatted_state.get('fundamentals_report', '') or '')
+        logger.info(f"[ResultFormatter] 基本面报告长度: {fr_len}")
+    except Exception:
+        pass
+    return result_payload

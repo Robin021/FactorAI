@@ -8,6 +8,13 @@ logger = get_logger("default")
 
 def create_research_manager(llm, memory):
     def research_manager_node(state) -> dict:
+        # 进度回调：投资辩论经理阶段
+        try:
+            callback = state.get("progress_callback")
+            if callable(callback):
+                callback("⚖️ 投资辩论：Research Manager 开始裁决", 5)
+        except Exception:
+            pass
         history = state["investment_debate_state"].get("history", "")
         market_research_report = state["market_report"]
         sentiment_report = state["sentiment_report"]
@@ -76,6 +83,14 @@ def create_research_manager(llm, memory):
             "current_response": response.content,
             "count": investment_debate_state["count"],
         }
+
+        # 回传进度：裁决完成（附简要预览）
+        try:
+            if callable(callback):
+                preview = response.content[:200] + "..." if hasattr(response, 'content') and len(response.content) > 200 else getattr(response, 'content', '')
+                callback("⚖️ 投资辩论：Research Manager 裁决完成", 5)
+        except Exception:
+            pass
 
         return {
             "investment_debate_state": new_investment_debate_state,

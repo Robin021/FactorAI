@@ -88,6 +88,14 @@ def create_market_analyst_react(llm, toolkit):
 
         current_date = state["trade_date"]
         ticker = state["company_of_interest"]
+        # 动态计算起始日期（默认回看120天）
+        try:
+            from datetime import datetime, timedelta
+            _end_dt = datetime.strptime(str(current_date), "%Y-%m-%d")
+            _start_date = (_end_dt - timedelta(days=120)).strftime("%Y-%m-%d")
+        except Exception:
+            from datetime import datetime, timedelta
+            _start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
         logger.debug(f"📈 [DEBUG] 输入参数: ticker={ticker}, date={current_date}")
 
@@ -118,7 +126,7 @@ def create_market_analyst_react(llm, toolkit):
                             from tradingagents.dataflows.optimized_china_data import get_china_stock_data_cached
                             return get_china_stock_data_cached(
                                 symbol=ticker,
-                                start_date='2025-05-28',
+                                start_date=_start_date,
                                 end_date=current_date,
                                 force_refresh=False
                             )
@@ -128,7 +136,7 @@ def create_market_analyst_react(llm, toolkit):
                             try:
                                 return toolkit.get_china_stock_data.invoke({
                                     'stock_code': ticker,
-                                    'start_date': '2025-05-28',
+                                    'start_date': _start_date,
                                     'end_date': current_date
                                 })
                             except Exception as e2:
@@ -172,7 +180,7 @@ def create_market_analyst_react(llm, toolkit):
                             from tradingagents.dataflows.optimized_us_data import get_us_stock_data_cached
                             return get_us_stock_data_cached(
                                 symbol=ticker,
-                                start_date='2025-05-28',
+                                start_date=_start_date,
                                 end_date=current_date,
                                 force_refresh=False
                             )
@@ -182,7 +190,7 @@ def create_market_analyst_react(llm, toolkit):
                             try:
                                 return toolkit.get_YFin_data_online.invoke({
                                     'symbol': ticker,
-                                    'start_date': '2025-05-28',
+                                    'start_date': _start_date,
                                     'end_date': current_date
                                 })
                             except Exception as e2:
@@ -197,7 +205,7 @@ def create_market_analyst_react(llm, toolkit):
                             logger.debug(f"📈 [DEBUG] FinnhubNewsTool调用，股票代码: {ticker}")
                             return toolkit.get_finnhub_news.invoke({
                                 'ticker': ticker,
-                                'start_date': '2025-05-28',
+                                'start_date': _start_date,
                                 'end_date': current_date
                             })
                         except Exception as e:

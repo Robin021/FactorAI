@@ -8,6 +8,13 @@ logger = get_logger("default")
 
 def create_neutral_debator(llm):
     def neutral_node(state) -> dict:
+        # 进度回调：风险评估阶段（中性）
+        try:
+            callback = state.get("progress_callback")
+            if callable(callback):
+                callback("🛡️ 风险评估：Neutral Analyst 发言", 6)
+        except Exception:
+            pass
         risk_debate_state = state["risk_debate_state"]
         history = risk_debate_state.get("history", "")
         neutral_history = risk_debate_state.get("neutral_history", "")

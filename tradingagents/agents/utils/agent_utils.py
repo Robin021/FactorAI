@@ -257,8 +257,23 @@ class Toolkit:
             str: A formatted dataframe containing the stock price data for the specified ticker symbol in the specified date range.
         """
 
-        result_data = interface.get_YFin_data(symbol, start_date, end_date)
+        # 防误用：A股优先改道统一接口，避免离线CSV缺失导致的错误或幻觉
+        try:
+            sym = str(symbol).upper().strip()
+            is_a_share = (
+                (len(sym) == 6 and sym.isdigit()) or
+                sym.endswith('.SZ') or sym.endswith('.SH') or sym.endswith('.BJ')
+            )
+            if is_a_share:
+                try:
+                    from tradingagents.dataflows.interface import get_china_stock_data_unified
+                    return get_china_stock_data_unified(symbol, start_date, end_date)
+                except Exception as e:
+                    return f"❌ A股改道统一接口失败: {e}"
+        except Exception:
+            pass
 
+        result_data = interface.get_YFin_data(symbol, start_date, end_date)
         return result_data
 
     @staticmethod
@@ -278,8 +293,23 @@ class Toolkit:
             str: A formatted dataframe containing the stock price data for the specified ticker symbol in the specified date range.
         """
 
-        result_data = interface.get_YFin_data_online(symbol, start_date, end_date)
+        # 防误用：A股优先改道统一接口
+        try:
+            sym = str(symbol).upper().strip()
+            is_a_share = (
+                (len(sym) == 6 and sym.isdigit()) or
+                sym.endswith('.SZ') or sym.endswith('.SH') or sym.endswith('.BJ')
+            )
+            if is_a_share:
+                try:
+                    from tradingagents.dataflows.interface import get_china_stock_data_unified
+                    return get_china_stock_data_unified(symbol, start_date, end_date)
+                except Exception as e:
+                    return f"❌ A股改道统一接口失败: {e}"
+        except Exception:
+            pass
 
+        result_data = interface.get_YFin_data_online(symbol, start_date, end_date)
         return result_data
 
     @staticmethod

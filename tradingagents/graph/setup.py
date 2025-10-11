@@ -49,6 +49,8 @@ class GraphSetup:
         self.config = config or {}
         self.react_llm = react_llm
         self.progress_callback = progress_callback
+        # 控制分析师是否单次执行（禁用 analyst -> tools -> analyst 循环）
+        self.single_pass_analysts = bool(self.config.get("single_pass_analysts", True))
 
     def setup_graph(
         self, selected_analysts=["market", "social", "news", "fundamentals"]
@@ -214,13 +216,24 @@ class GraphSetup:
             current_tools = f"tools_{analyst_type}"
             current_clear = f"Msg Clear {analyst_type.capitalize()}"
 
-            # Add conditional edges for current analyst
+            # Add conditional edges for current analyst（显式名称映射，避免歧义）
+            condition_fn = getattr(self.conditional_logic, f"should_continue_{analyst_type}")
             workflow.add_conditional_edges(
                 current_analyst,
-                getattr(self.conditional_logic, f"should_continue_{analyst_type}"),
-                [current_tools, current_clear],
+                condition_fn,
+                {
+                    current_tools: current_tools,
+                    current_clear: current_clear,
+                },
             )
-            workflow.add_edge(current_tools, current_analyst)
+
+            # 工具节点后的去向：
+            # - 传统模式：回到分析师，可能导致多次进入分析师节点
+            # - 单次模式：直接进入清理节点，保证每个分析师只执行一次
+            if self.single_pass_analysts:
+                workflow.add_edge(current_tools, current_clear)
+            else:
+                workflow.add_edge(current_tools, current_analyst)
 
             # Connect to next analyst or to Bull Researcher if this is the last analyst
             if i < len(selected_analysts) - 1:

@@ -9,6 +9,13 @@ logger = get_logger("default")
 
 def create_trader(llm, memory):
     def trader_node(state, name):
+        # 进度回调：交易员制定执行计划
+        try:
+            callback = state.get("progress_callback")
+            if callable(callback):
+                callback("🛡️ 风险评估：Trader 制定执行计划", 6)
+        except Exception:
+            pass
         company_name = state["company_of_interest"]
         investment_plan = state["investment_plan"]
         market_research_report = state["market_report"]

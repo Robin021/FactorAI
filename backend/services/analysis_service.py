@@ -433,13 +433,25 @@ class AnalysisService:
         except Exception as e:
             logger.warning(f"Failed to calculate elapsed time: {e}")
         
-        # 构建进度数据
-        progress_data = {
+        redis_key = f"analysis_progress:{analysis_id}"
+
+        # 读取现有进度，避免覆盖已有的progress字段
+        existing_progress_data = {}
+        try:
+            cached_progress = await self.redis.get(redis_key)
+            if cached_progress:
+                existing_progress_data = json.loads(cached_progress)
+        except Exception as e:
+            logger.warning(f"Failed to load existing progress from Redis: {e}")
+
+        # 构建进度数据，默认继承已有字段
+        progress_data = dict(existing_progress_data or {})
+        progress_data.update({
             "status": "running",  # 添加状态信息
             "elapsed_time": elapsed_time,
             "estimated_remaining": estimated_remaining,
             "updated_at": datetime.utcnow().isoformat()
-        }
+        })
         
         # 只在有进度值时更新进度相关字段
         if progress is not None:
@@ -464,8 +476,6 @@ class AnalysisService:
             progress_data["llm_result"] = llm_result
         if analyst_type:
             progress_data["analyst_type"] = analyst_type
-        
-        redis_key = f"analysis_progress:{analysis_id}"
         await self.redis.setex(
             redis_key,
             3600,  # 1 hour TTL

@@ -420,27 +420,68 @@ class DataSourceManager:
 
                 # 计算最新价格和涨跌幅
                 latest_data = data.iloc[-1]
-                latest_price = latest_data.get('close', 0)
-                prev_close = data.iloc[-2].get('close', latest_price) if len(data) > 1 else latest_price
+                # 优先使用原始收盘价，避免复权/解析差异导致的偏差
+                latest_price = latest_data.get('close_raw', latest_data.get('close', 0))
+                if len(data) > 1:
+                    prev_row = data.iloc[-2]
+                    prev_close = prev_row.get('close_raw', prev_row.get('close', latest_price))
+                else:
+                    prev_close = latest_price
                 change = latest_price - prev_close
                 change_pct = (change / prev_close * 100) if prev_close != 0 else 0
 
-                # 格式化数据报告
-                result = f"📊 {stock_name}({symbol}) - Tushare数据\n"
+                # 统一输出格式（与AKShare/历史实现一致），便于下游解析
+                result = f"股票代码: {symbol}\n"
+                result += f"股票名称: {stock_name}\n"
                 result += f"数据期间: {start_date} 至 {end_date}\n"
                 result += f"数据条数: {len(data)}条\n\n"
 
-                result += f"💰 最新价格: ¥{latest_price:.2f}\n"
-                result += f"📈 涨跌额: {change:+.2f} ({change_pct:+.2f}%)\n\n"
-
-                # 添加统计信息
-                result += f"📊 价格统计:\n"
-                result += f"   最高价: ¥{data['high'].max():.2f}\n"
-                result += f"   最低价: ¥{data['low'].min():.2f}\n"
-                result += f"   平均价: ¥{data['close'].mean():.2f}\n"
-                # 防御性获取成交量数据
+                result += f"当前价格: ¥{latest_price:.2f}\n"
+                result += f"涨跌幅: {change_pct:+.2f}%\n"
+                # 防御性获取成交量数据（Tushare vol单位为“手” -> 换算为“股”）
                 volume_value = self._get_volume_safely(data)
-                result += f"   成交量: {volume_value:,.0f}股\n"
+                try:
+                    # 如果数据来源为Tushare适配器，按“手→股”换算
+                    # 通过列存在性做近似判断：Tushare标准化后通常包含 'price_type' 或 'pct_change'
+                    if 'pct_change' in data.columns or 'price_type' in data.columns:
+                        volume_value = float(volume_value) * 100.0
+                except Exception:
+                    pass
+                result += f"成交量: {volume_value:,.0f}股\n\n"
+
+                # 调试信息：输出最新数据日期与价格
+                try:
+                    last_date = None
+                    if 'trade_date' in data.columns:
+                        last_date = str(data['trade_date'].iloc[-1])
+                    elif '日期' in data.columns:
+                        last_date = str(data['日期'].iloc[-1])
+                    logger.debug(f"[Tushare] 最新数据日期: {last_date}, 最新价格: {latest_price:.2f}, 前收: {prev_close:.2f}, 涨跌幅: {change_pct:+.2f}%")
+                except Exception:
+                    pass
+
+                # 附加近期数据与统计，保持信息完整
+                display_rows = min(3, len(data))
+                result += f"最新{display_rows}天数据:\n"
+                with pd.option_context('display.max_rows', None,
+                                       'display.max_columns', None,
+                                       'display.width', None,
+                                       'display.max_colwidth', None):
+                    try:
+                        result += data.tail(display_rows).to_string(index=False)
+                    except Exception:
+                        # 回退：不影响主体信息
+                        pass
+
+                # 价格统计
+                try:
+                    result += "\n\n📊 价格统计:\n"
+                    result += f"最高价: ¥{data['high'].max():.2f}\n"
+                    result += f"最低价: ¥{data['low'].min():.2f}\n"
+                    result += f"平均价: ¥{data['close'].mean():.2f}"
+                except Exception:
+                    # 列名不一致时跳过统计
+                    pass
 
                 return result
             else:
@@ -481,6 +522,53 @@ class DataSourceManager:
                 result = f"股票代码: {symbol}\n"
                 result += f"数据期间: {start_date} 至 {end_date}\n"
                 result += f"数据条数: {len(data)}条\n\n"
+
+                # 统一抬头：当前价格/涨跌幅/成交量
+                try:
+                    latest_row = data.iloc[-1]
+                    # 价格列优先中文'收盘'，否则'close'
+                    latest_price = None
+                    prev_close = None
+                    if '收盘' in data.columns:
+                        latest_price = float(latest_row['收盘'])
+                        prev_close = float(data.iloc[-2]['收盘']) if len(data) > 1 else latest_price
+                    else:
+                        latest_price = float(latest_row.get('close', 0))
+                        prev_close = float(data.iloc[-2].get('close', latest_price)) if len(data) > 1 else latest_price
+
+                    change = latest_price - prev_close
+                    change_pct = (change / prev_close * 100.0) if prev_close else 0.0
+
+                    result += f"当前价格: ¥{latest_price:.2f}\n"
+                    result += f"涨跌幅: {change_pct:+.2f}%\n"
+
+                    # 成交量（按“股”展示）—AKShare常为“手”，做换算
+                    volume_sum = 0.0
+                    if '成交量' in data.columns:
+                        try:
+                            volume_sum = float(data['成交量'].sum()) * 100.0
+                        except Exception:
+                            volume_sum = 0.0
+                    elif 'volume' in data.columns:
+                        try:
+                            volume_sum = float(data['volume'].sum())
+                        except Exception:
+                            volume_sum = 0.0
+                    result += f"成交量: {volume_sum:,.0f}股\n\n"
+
+                    # 调试信息：输出最新数据日期与价格
+                    try:
+                        last_date = None
+                        if 'trade_date' in data.columns:
+                            last_date = str(data['trade_date'].iloc[-1])
+                        elif '日期' in data.columns:
+                            last_date = str(data['日期'].iloc[-1])
+                        logger.debug(f"[AKShare] 最新数据日期: {last_date}, 最新价格: {latest_price:.2f}, 前收: {prev_close:.2f}, 涨跌幅: {change_pct:+.2f}%")
+                    except Exception:
+                        pass
+                except Exception:
+                    # 抬头信息失败不影响主体
+                    pass
 
                 # 显示最新3天数据，确保在各种显示环境下都能完整显示
                 display_rows = min(3, len(data))

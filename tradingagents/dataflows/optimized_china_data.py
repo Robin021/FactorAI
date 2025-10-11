@@ -218,39 +218,71 @@ class OptimizedChinaDataProvider:
         except Exception as e:
             logger.warning(f"⚠️ 获取股票基本信息失败: {e}")
 
-        # 然后从股票数据中提取价格信息
-        if "股票名称:" in stock_data:
+        # 然后从股票数据中提取价格信息（不依赖是否包含“股票名称”字段）
+        if stock_data:
             lines = stock_data.split('\n')
             for line in lines:
                 if "股票名称:" in line and company_name == "未知公司":
-                    company_name = line.split(':')[1].strip()
-                elif "当前价格:" in line:
-                    current_price = line.split(':')[1].strip()
-                elif "涨跌幅:" in line:
-                    change_pct = line.split(':')[1].strip()
-                elif "成交量:" in line:
-                    volume = line.split(':')[1].strip()
+                    try:
+                        company_name = line.split(':', 1)[1].strip()
+                    except Exception:
+                        pass
+                if "当前价格:" in line and current_price == "N/A":
+                    try:
+                        current_price = line.split(':', 1)[1].strip()
+                    except Exception:
+                        pass
+                if "涨跌幅:" in line and change_pct == "N/A":
+                    try:
+                        change_pct = line.split(':', 1)[1].strip()
+                    except Exception:
+                        pass
+                if "成交量:" in line and volume == "N/A":
+                    try:
+                        volume = line.split(':', 1)[1].strip()
+                    except Exception:
+                        pass
 
         # 尝试从股票数据表格中提取最新价格信息
         if current_price == "N/A" and stock_data:
             try:
                 lines = stock_data.split('\n')
                 for i, line in enumerate(lines):
-                    if "最新数据:" in line and i + 1 < len(lines):
-                        # 查找数据行
-                        for j in range(i + 1, min(i + 5, len(lines))):
+                    if "最新" in line and "天数据" in line and i + 1 < len(lines):
+                        # 读取表头（下一行通常为列名）
+                        header_cols = None
+                        header_idx = i + 1
+                        if header_idx < len(lines):
+                            header_line = lines[header_idx].strip()
+                            # DataFrame.to_string 会输出列名作为第一行表头
+                            header_cols = [h.strip().lower() for h in header_line.split()]
+                        # 收集数据行（跳过表头/分隔线），取最后一条作为“最新”
+                        data_rows = []
+                        for j in range(i + 1, min(i + 10, len(lines))):
                             data_line = lines[j].strip()
-                            if data_line and not data_line.startswith('日期') and not data_line.startswith('-'):
-                                # 尝试解析数据行
-                                parts = data_line.split()
-                                if len(parts) >= 4:
-                                    try:
-                                        # 假设格式: 日期 股票代码 开盘 收盘 最高 最低 成交量 成交额...
-                                        current_price = parts[3]  # 收盘价
-                                        logger.debug(f"🔍 [股票代码追踪] 从数据表格提取到收盘价: {current_price}")
-                                        break
-                                    except (IndexError, ValueError):
-                                        continue
+                            # 跳过表头或分隔线
+                            if (not data_line) or data_line.startswith('日期') or data_line.lower().startswith('date') or data_line.startswith('-'):
+                                continue
+                            parts = data_line.split()
+                            if len(parts) >= 3:
+                                data_rows.append(parts)
+                        if data_rows:
+                            # 取最后一行（最新一天）
+                            parts = data_rows[-1]
+                            # 优先根据表头定位“收盘/close”列；若无表头则按常见顺序回退
+                            price_idx = None
+                            if header_cols:
+                                if '收盘' in header_cols:
+                                    price_idx = header_cols.index('收盘')
+                                elif 'close' in header_cols:
+                                    price_idx = header_cols.index('close')
+                            if price_idx is None:
+                                price_idx = 2 if len(parts) > 2 else len(parts) - 1
+                            try:
+                                current_price = parts[price_idx]
+                                logger.debug(f"🔍 [股票代码追踪] 从数据表格提取到最新收盘价: {current_price}")
+                            except Exception:
+                                pass
                         break
             except Exception as e:
                 logger.debug(f"🔍 [股票代码追踪] 解析股票数据表格失败: {e}")

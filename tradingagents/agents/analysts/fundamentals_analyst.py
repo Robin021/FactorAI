@@ -88,7 +88,15 @@ def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
 
         current_date = state["trade_date"]
         ticker = state["company_of_interest"]
-        start_date = '2025-05-28'
+        # 动态计算起始日期（默认回看120天）
+        try:
+            from datetime import datetime, timedelta
+            _end_dt = datetime.strptime(str(current_date), "%Y-%m-%d")
+            start_date = (_end_dt - timedelta(days=120)).strftime("%Y-%m-%d")
+        except Exception:
+            # 兜底：若日期解析失败，使用最近30天
+            from datetime import datetime, timedelta
+            start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
         logger.debug(f"📊 [DEBUG] 输入参数: ticker={ticker}, date={current_date}")
         logger.debug(f"📊 [DEBUG] 当前状态中的消息数量: {len(state.get('messages', []))}")
@@ -138,23 +146,9 @@ def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
             logger.debug(f"📊 [DEBUG] 选择的工具: {tool_names_debug}")
             logger.debug(f"📊 [DEBUG] 🔧 统一工具将自动处理: {market_info['market_name']}")
         else:
-            # 离线模式：优先使用FinnHub数据，SimFin作为补充
-            if market_info['is_china']:
-                # A股使用本地缓存数据
-                tools = [
-                    toolkit.get_china_stock_data,
-                    toolkit.get_china_fundamentals
-                ]
-            else:
-                # 美股/港股：优先FinnHub，SimFin作为补充
-                tools = [
-                    toolkit.get_fundamentals_openai,  # 使用现有的OpenAI基本面数据工具
-                    toolkit.get_finnhub_company_insider_sentiment,
-                    toolkit.get_finnhub_company_insider_transactions,
-                    toolkit.get_simfin_balance_sheet,
-                    toolkit.get_simfin_cashflow,
-                    toolkit.get_simfin_income_stmt,
-                ]
+            # 离线模式：仍统一通过 get_stock_fundamentals_unified 汇总（避免工具名称不一致导致执行失败）
+            logger.info(f"📊 [基本面分析师] 离线模式下仍使用统一基本面工具，避免工具名称不一致")
+            tools = [toolkit.get_stock_fundamentals_unified]
 
         # 统一的系统提示，适用于所有股票类型
         system_message = (
@@ -306,7 +300,19 @@ def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
             else:
                 logger.warning(f"⚠️ [DEBUG] 基本面分析师没有找到进度回调函数(Google路径)")
             
-            return {"fundamentals_report": report}
+            # 返回包含最终LLM消息，确保最后一条消息不再携带tool_calls，避免进入工具节点
+            try:
+                final_messages = messages if 'messages' in locals() and messages else []
+            except Exception:
+                final_messages = []
+            if not final_messages:
+                # 兜底：用AIMessage封装报告
+                try:
+                    from langchain_core.messages import AIMessage as _AIMsg
+                    final_messages = [_AIMsg(content=report)]
+                except Exception:
+                    final_messages = []
+            return {"messages": final_messages, "fundamentals_report": report}
         else:
             # 非Google模型的处理逻辑
             logger.debug(f"📊 [DEBUG] 非Google模型 ({fresh_llm.__class__.__name__})，使用标准处理逻辑")
@@ -315,68 +321,39 @@ def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
             tool_call_count = len(result.tool_calls) if hasattr(result, 'tool_calls') else 0
             logger.debug(f"📊 [DEBUG] 工具调用数量: {tool_call_count}")
             
-            if tool_call_count > 0:
-                # 有工具调用，返回状态让工具执行
-                tool_calls_info = []
-                for tc in result.tool_calls:
-                    tool_calls_info.append(tc['name'])
-                    logger.debug(f"📊 [DEBUG] 工具调用 {len(tool_calls_info)}: {tc}")
-                
-                logger.info(f"📊 [基本面分析师] 工具调用: {tool_calls_info}")
-                
-                # 🔧 添加进度回调 - 工具调用完成
-                callback = state.get("progress_callback") or progress_callback
-                if callback:
-                    report = result.content if hasattr(result, 'content') else str(result)
-                    preview = report[:500] + "..." if len(report) > 500 else report
-                    logger.info(f"🔧 [DEBUG] 基本面分析师调用进度回调(工具调用路径): ✅ 基本面分析师完成分析: {ticker}")
-                    callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
+            # 统一：无论模型是否给出tool_calls，都直接执行一次统一工具并生成报告，确保fundamentals_report落地
+            logger.debug(f"📊 [DEBUG] 统一基本面路径：直接调用 get_stock_fundamentals_unified")
+            try:
+                # 查找统一基本面工具
+                unified_tool = None
+                for tool in tools:
+                    tool_name = None
+                    if hasattr(tool, 'name'):
+                        tool_name = tool.name
+                    elif hasattr(tool, '__name__'):
+                        tool_name = tool.__name__
+                    if tool_name == 'get_stock_fundamentals_unified':
+                        unified_tool = tool
+                        break
+                if unified_tool:
+                    logger.info(f"🔍 [股票代码追踪] 直接调用统一工具，传入ticker: '{ticker}'")
+                    combined_data = unified_tool.invoke({
+                        'ticker': ticker,
+                        'start_date': start_date,
+                        'end_date': current_date,
+                        'curr_date': current_date
+                    })
+                    logger.debug(f"📊 [DEBUG] 统一工具数据获取成功，长度: {len(combined_data)}字符")
                 else:
-                    logger.warning(f"⚠️ [DEBUG] 基本面分析师没有找到进度回调函数(工具调用路径)")
-                
-                return {
-                    "messages": [result],
-                    "fundamentals_report": result.content if hasattr(result, 'content') else str(result)
-                }
-            else:
-                # 没有工具调用，使用强制工具调用修复
-                logger.debug(f"📊 [DEBUG] 检测到模型未调用工具，启用强制工具调用模式")
-                
-                # 强制调用统一基本面分析工具
-                try:
-                    logger.debug(f"📊 [DEBUG] 强制调用 get_stock_fundamentals_unified...")
-                    # 安全地查找统一基本面分析工具
-                    unified_tool = None
-                    for tool in tools:
-                        tool_name = None
-                        if hasattr(tool, 'name'):
-                            tool_name = tool.name
-                        elif hasattr(tool, '__name__'):
-                            tool_name = tool.__name__
-
-                        if tool_name == 'get_stock_fundamentals_unified':
-                            unified_tool = tool
-                            break
-                    if unified_tool:
-                        logger.info(f"🔍 [股票代码追踪] 强制调用统一工具，传入ticker: '{ticker}'")
-                        combined_data = unified_tool.invoke({
-                            'ticker': ticker,
-                            'start_date': start_date,
-                            'end_date': current_date,
-                            'curr_date': current_date
-                        })
-                        logger.debug(f"📊 [DEBUG] 统一工具数据获取成功，长度: {len(combined_data)}字符")
-                    else:
-                        combined_data = "统一基本面分析工具不可用"
-                        logger.debug(f"📊 [DEBUG] 统一工具未找到")
-                except Exception as e:
-                    combined_data = f"统一基本面分析工具调用失败: {e}"
-                    logger.debug(f"📊 [DEBUG] 统一工具调用异常: {e}")
-                
-                currency_info = f"{market_info['currency_name']}（{market_info['currency_symbol']}）"
-                
-                # 生成基于真实数据的分析报告
-                analysis_prompt = f"""基于以下真实数据，对{company_name}（股票代码：{ticker}）进行详细的基本面分析：
+                    combined_data = "统一基本面分析工具不可用"
+                    logger.debug(f"📊 [DEBUG] 统一工具未找到")
+            except Exception as e:
+                combined_data = f"统一基本面分析工具调用失败: {e}"
+                logger.debug(f"📊 [DEBUG] 统一工具调用异常: {e}")
+            
+            # 基于combined_data生成最终基本面报告（无论上一步是否异常，都进行生成）
+            currency_info = f"{market_info['currency_name']}（{market_info['currency_symbol']}）"
+            analysis_prompt = f"""基于以下真实数据，对{company_name}（股票代码：{ticker}）进行详细的基本面分析：
 
 {combined_data}
 
@@ -394,26 +371,41 @@ def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
 - 投资建议使用中文
 - 分析要详细且专业"""
 
-                try:
-                    # 创建简单的分析链
-                    analysis_prompt_template = ChatPromptTemplate.from_messages([
-                        ("system", "你是专业的股票基本面分析师，基于提供的真实数据进行分析。"),
-                        ("human", "{analysis_request}")
-                    ])
-                    
-                    analysis_chain = analysis_prompt_template | fresh_llm
-                    analysis_result = analysis_chain.invoke({"analysis_request": analysis_prompt})
-                    
-                    if hasattr(analysis_result, 'content'):
-                        report = analysis_result.content
-                    else:
-                        report = str(analysis_result)
+            try:
+                # 创建简单的分析链
+                analysis_prompt_template = ChatPromptTemplate.from_messages([
+                    ("system", "你是专业的股票基本面分析师，基于提供的真实数据进行分析。"),
+                    ("human", "{analysis_request}")
+                ])
 
-                    logger.info(f"📊 [基本面分析师] 强制工具调用完成，报告长度: {len(report)}")
-                    
-                except Exception as e:
-                    logger.error(f"❌ [DEBUG] 强制工具调用分析失败: {e}")
-                    report = f"基本面分析失败：{str(e)}"
+                analysis_chain = analysis_prompt_template | fresh_llm
+                analysis_result = analysis_chain.invoke({"analysis_request": analysis_prompt})
+
+                if hasattr(analysis_result, 'content'):
+                    report = analysis_result.content
+                else:
+                    report = str(analysis_result)
+
+                logger.info(f"📊 [基本面分析师] 强制工具调用完成，报告长度: {len(report)}")
+
+                # 成功路径下也需要通过进度回调回传预览，且把生成的报告写入状态
+                callback = state.get("progress_callback") or progress_callback
+                if callback:
+                    preview = report[:500] + "..." if len(report) > 500 else report
+                    logger.info(f"🔧 [DEBUG] 基本面分析师调用进度回调: ✅ 基本面分析师完成分析: {ticker}")
+                    callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
+
+                # 返回最终消息与基本面报告（使用刚刚生成的report，而不是最初的result）
+                try:
+                    from langchain_core.messages import AIMessage as _AIMsg
+                    final_messages = [_AIMsg(content=report)]
+                except Exception:
+                    final_messages = []
+                return {"messages": final_messages, "fundamentals_report": report}
+
+            except Exception as e:
+                logger.error(f"❌ [DEBUG] 强制工具调用分析失败: {e}")
+                report = f"基本面分析失败：{str(e)}"
                 
                 # 🔧 无论成功还是失败，都调用进度回调
                 callback = state.get("progress_callback") or progress_callback
@@ -424,8 +416,15 @@ def create_fundamentals_analyst(llm, toolkit, progress_callback=None):
                     callback(f"✅ 基本面分析师完成分析: {ticker}", 2, 7, preview, "基本面分析师")
                 else:
                     logger.warning(f"⚠️ [DEBUG] 基本面分析师没有找到进度回调函数")
-                
-                return {"fundamentals_report": report}
+
+                # 返回最终消息与基本面报告
+                try:
+                    from langchain_core.messages import AIMessage as _AIMsg
+                    final_msg = analysis_result if 'analysis_result' in locals() and hasattr(analysis_result, 'content') else _AIMsg(content=report)
+                    final_messages = [final_msg]
+                except Exception:
+                    final_messages = []
+                return {"messages": final_messages, "fundamentals_report": report}
 
         # 这里不应该到达，但作为备用
         logger.debug(f"📊 [DEBUG] 返回状态: fundamentals_report长度={len(result.content) if hasattr(result, 'content') else 0}")
