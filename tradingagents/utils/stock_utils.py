@@ -39,13 +39,18 @@ class StockUtils:
             
         ticker = str(ticker).strip().upper()
         
+        # 港股：支持多种格式
+        # 1. 带后缀：0981.HK, 00981.HK (4-5位数字 + .HK)
+        # 2. 纯数字：00981 (5位数字，以0开头)
+        # 3. 纯数字：0981 (4位数字，以0开头)
+        if re.match(r'^\d{4,5}\.HK$', ticker):
+            return StockMarket.HONG_KONG
+        if re.match(r'^0\d{3,4}$', ticker):  # 4-5位数字且以0开头
+            return StockMarket.HONG_KONG
+        
         # 中国A股：6位数字
         if re.match(r'^\d{6}$', ticker):
             return StockMarket.CHINA_A
-
-        # 港股：4-5位数字.HK（支持0700.HK和09988.HK格式）
-        if re.match(r'^\d{4,5}\.HK$', ticker):
-            return StockMarket.HONG_KONG
 
         # 美股：1-5位字母
         if re.match(r'^[A-Z]{1,5}$', ticker):

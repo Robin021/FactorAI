@@ -1,6 +1,6 @@
 {
   "default_provider": "dashscope",
-  "default_model": "qwen-turbo",
+  "default_model": "qwen3-max",
   "enable_cost_tracking": true,
   "cost_alert_threshold": 100.0,
   "currency_preference": "CNY",
@@ -15,5 +15,5 @@
   "reddit_client_id": "rG6a6tLPosAhMVpqrrT-YQ",
   "reddit_client_secret": "3oI66MFhjXalaik_8W4f0i0KUP7M1Q",
   "reddit_user_agent": "TradingAgents-CN/1.0",
-  "log_level": "DEBUG"
+  "log_level": "INFO"
 }

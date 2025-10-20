@@ -126,7 +126,8 @@ const AnalysisForm: React.FC = () => {
       case '美股':
         return /^[A-Z]{1,5}$/.test(code.toUpperCase());
       case '港股':
-        return /^[0-9]{4}\.HK$/i.test(code);
+        // 支持多种港股格式：00981, 0981, 0981.HK, 00981.HK
+        return /^[0-9]{4,5}(\.HK)?$/i.test(code);
       default:
         return false;
     }

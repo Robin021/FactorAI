@@ -60,27 +60,28 @@ except ImportError:
             
             def close(self):
                 self._sync_client.close()
-        
-        # 定义统一的MongoDB操作函数
-        def safe_mongodb_operation(operation_func, *args, **kwargs):
-            """安全执行MongoDB操作，自动处理同步/异步"""
-            try:
-                if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
-                    # 同步操作
-                    return operation_func(*args, **kwargs)
-                else:
-                    # 异步操作
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    result = loop.run_until_complete(operation_func(*args, **kwargs))
-                    loop.close()
-                    return result
-            except Exception as e:
-                logger.error(f"MongoDB操作失败: {e}")
-                raise e
     except ImportError:
         MONGODB_AVAILABLE = False
         logger.warning("⚠️ MongoDB driver not available, analysis history will not be saved")
+
+# 定义统一的MongoDB操作函数（放在外面，两种驱动都能用）
+def safe_mongodb_operation(operation_func, *args, **kwargs):
+    """安全执行MongoDB操作，自动处理同步/异步"""
+    import asyncio
+    try:
+        if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
+            # 同步操作
+            return operation_func(*args, **kwargs)
+        else:
+            # 异步操作
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(operation_func(*args, **kwargs))
+            loop.close()
+            return result
+    except Exception as e:
+        logger.error(f"MongoDB操作失败: {e}")
+        raise e
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent
@@ -514,6 +515,79 @@ async def check_config():
         "config": config_status,
         "message": "配置检查完成"
     }
+
+# 获取默认模型配置
+@app.get("/api/v1/config/default-model")
+async def get_default_model():
+    """获取当前默认模型配置"""
+    try:
+        from tradingagents.config.config_manager import config_manager
+        settings = config_manager.load_settings()
+        models = config_manager.get_enabled_models()
+        
+        return {
+            "status": "success",
+            "data": {
+                "default_provider": settings.get("default_provider", "deepseek"),
+                "default_model": settings.get("default_model", "deepseek-chat"),
+                "available_models": [
+                    {
+                        "provider": model.provider,
+                        "model_name": model.model_name,
+                        "enabled": model.enabled,
+                        "max_tokens": model.max_tokens,
+                        "temperature": model.temperature
+                    }
+                    for model in models
+                ]
+            }
+        }
+    except Exception as e:
+        logger.error(f"获取默认模型配置失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 设置默认模型
+@app.put("/api/v1/config/default-model")
+async def set_default_model(request: Dict[str, Any]):
+    """设置默认模型配置"""
+    try:
+        from tradingagents.config.config_manager import config_manager
+        
+        provider = request.get("provider")
+        model_name = request.get("model_name")
+        
+        if not provider or not model_name:
+            raise HTTPException(status_code=400, detail="provider 和 model_name 是必需的")
+        
+        # 验证模型是否存在且已启用
+        model_config = config_manager.get_model_by_name(provider, model_name)
+        if not model_config:
+            raise HTTPException(status_code=404, detail=f"模型 {provider}/{model_name} 不存在")
+        
+        if not model_config.enabled or not model_config.api_key:
+            raise HTTPException(status_code=400, detail=f"模型 {provider}/{model_name} 未启用或缺少API密钥")
+        
+        # 更新设置
+        settings = config_manager.load_settings()
+        settings["default_provider"] = provider
+        settings["default_model"] = model_name
+        config_manager.save_settings(settings)
+        
+        logger.info(f"✅ 默认模型已更新: {provider}/{model_name}")
+        
+        return {
+            "status": "success",
+            "message": f"默认模型已设置为 {provider}/{model_name}",
+            "data": {
+                "default_provider": provider,
+                "default_model": model_name
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"设置默认模型失败: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # 股票分析接口 (需要认证)
 @app.post("/api/v1/analysis/start", response_model=AnalysisResponse)
@@ -2035,8 +2109,9 @@ def start_real_analysis(
                     logger.info(f"Analysis {analysis_id} was cancelled, stopping execution")
                     raise Exception("Analysis was cancelled by user")
                 
-                # 🔧 添加调试日志
-                logger.info(f"🔧 [PROGRESS DEBUG] 收到进度回调: message='{message}', step={step}, total_steps={total_steps}")
+                # 记录进度回调（仅在进度变化时）
+                if step is not None or "完成" in message or "开始" in message:
+                    logger.info(f"🔧 [PROGRESS] 收到回调: step={step}, message='{message}'")
                     
                 current_time = time.time()
                 start_time = analysis_progress_store[analysis_id].get("start_time", current_time)
@@ -2253,8 +2328,19 @@ def start_real_analysis(
             # 使用前端传入的分析师列表，默认仅包含已选择的；若为空则退回到基础三人组
             analysts_list = analysts if analysts else ["market", "fundamentals"]
             depth = int(research_depth) if research_depth else 2
-            llm_provider = "deepseek"  # 使用DeepSeek
-            llm_model = "deepseek-chat"
+            
+            # 从配置文件读取默认模型设置
+            try:
+                from tradingagents.config.config_manager import config_manager
+                settings = config_manager.load_settings()
+                llm_provider = settings.get("default_provider", "deepseek")
+                llm_model = settings.get("default_model", "deepseek-chat")
+                logger.info(f"📋 使用配置的模型: {llm_provider}/{llm_model}")
+            except Exception as e:
+                # 如果读取配置失败，使用默认值
+                logger.warning(f"⚠️ 读取配置失败，使用默认模型: {e}")
+                llm_provider = "deepseek"
+                llm_model = "deepseek-chat"
             
             # 根据market_type设置
             if market_type.upper() == "CN":
@@ -2453,10 +2539,14 @@ if __name__ == "__main__":
     print("📊 支持市场: A股 + 美股 + 港股")
     print("=" * 50)
     
+    # 根据环境变量决定是否启用热重载（生产环境应禁用）
+    is_production = os.getenv("ENVIRONMENT", "development").lower() == "production"
+    enable_reload = not is_production and os.getenv("UVICORN_RELOAD", "false").lower() == "true"
+    
     uvicorn.run(
         "tradingagents_server:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=enable_reload,
         log_level=os.getenv("TRADINGAGENTS_LOG_LEVEL", "info").lower()
     )

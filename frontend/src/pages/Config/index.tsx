@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, Tabs } from 'antd';
-import { SettingOutlined, ApiOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { SettingOutlined, ApiOutlined, DatabaseOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import PageHeader from '@/components/Common/PageHeader';
+import ModelSelector from './ModelSelector';
 import '@/styles/themes.css';
 
 const Config: React.FC = () => {
@@ -11,9 +12,18 @@ const Config: React.FC = () => {
       
       <Card>
         <Tabs
-          defaultActiveKey="llm"
+          defaultActiveKey="model"
           type="card"
           items={[
+            {
+              key: 'model',
+              label: (
+                <span>
+                  <ThunderboltOutlined /> 模型选择
+                </span>
+              ),
+              children: <ModelSelector />,
+            },
             {
               key: 'llm',
               label: (
