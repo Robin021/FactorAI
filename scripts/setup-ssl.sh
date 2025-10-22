@@ -12,22 +12,38 @@ echo "=== SSL 证书设置向导 ==="
 echo "域名: $DOMAIN"
 echo ""
 
+# 停止所有服务
+echo "1. 停止现有服务..."
+docker-compose down 2>/dev/null || true
+
 # 创建必要的目录
-echo "1. 创建必要的目录..."
+echo "2. 创建必要的目录..."
 mkdir -p certbot/conf
 mkdir -p certbot/www
 mkdir -p certbot/logs
 
-# 启动 nginx (仅 HTTP，用于验证域名)
-echo "2. 启动临时 HTTP 服务器..."
-docker-compose -f docker-compose.yml up -d frontend
+# 重新构建前端镜像（包含 Let's Encrypt 验证路径配置）
+echo "3. 重新构建前端镜像..."
+docker-compose build frontend
 
-# 等待 nginx 启动
-echo "3. 等待服务启动..."
-sleep 5
+# 启动服务
+echo "4. 启动服务..."
+docker-compose up -d
+
+# 等待服务启动
+echo "5. 等待服务启动..."
+sleep 10
+
+# 测试验证路径
+echo "6. 测试验证路径..."
+echo "test" > certbot/www/test.txt
+sleep 2
+echo "访问测试: http://$DOMAIN/.well-known/acme-challenge/test.txt"
+curl -s "http://$DOMAIN/.well-known/acme-challenge/test.txt" && echo " ✓ 验证路径正常" || echo " ✗ 验证路径异常"
 
 # 获取证书
-echo "4. 获取 SSL 证书..."
+echo ""
+echo "7. 获取 SSL 证书..."
 docker run --rm \
   -v $(pwd)/certbot/conf:/etc/letsencrypt \
   -v $(pwd)/certbot/www:/var/www/certbot \
@@ -45,12 +61,12 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "✅ SSL 证书获取成功！"
     echo ""
-    echo "5. 重启服务以启用 HTTPS..."
+    echo "8. 切换到生产环境配置（启用 HTTPS）..."
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
     
     echo ""
-    echo "6. 启动证书自动续期服务..."
+    echo "9. 启动证书自动续期服务..."
     docker-compose -f docker-compose.certbot.yml up -d
     
     echo ""
@@ -61,11 +77,11 @@ if [ $? -eq 0 ]; then
     echo "证书将自动续期，无需手动操作。"
 else
     echo ""
-    echo "❌ 证书获取失败，请检查："
-    echo "   1. 域名 DNS 是否正确指向服务器"
-    echo "   2. 服务器防火墙是否开放 80 端口"
-    echo "   3. 邮箱地址是否正确"
+    echo "❌ 证书获取失败"
     echo ""
     echo "查看详细日志："
     echo "   cat certbot/logs/letsencrypt.log"
+    echo ""
+    echo "查看 Nginx 日志："
+    echo "   docker logs tradingagents-frontend"
 fi

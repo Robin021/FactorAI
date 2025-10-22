@@ -10,6 +10,8 @@ services:
     container_name: tradingagents-frontend
     ports:
       - "80:80"
+    volumes:
+      - ./certbot/www:/var/www/certbot:ro
     environment:
       - NODE_ENV=production
     depends_on:
