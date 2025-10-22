@@ -61,9 +61,9 @@ if [ $? -eq 0 ]; then
     echo ""
     echo "✅ SSL 证书获取成功！"
     echo ""
-    echo "8. 切换到生产环境配置（启用 HTTPS）..."
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
-    docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+    echo "8. 重启服务以启用 HTTPS..."
+    docker-compose down
+    docker-compose up -d
     
     echo ""
     echo "9. 启动证书自动续期服务..."

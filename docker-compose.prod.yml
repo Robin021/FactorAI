@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Frontend service with advanced Nginx
+  # Frontend service with HTTPS support
   frontend:
     build:
       context: ./frontend
@@ -12,9 +12,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
+      - ./frontend/nginx-https.conf:/etc/nginx/nginx.conf:ro
       - nginx_logs:/var/log/nginx
     environment:
       - NODE_ENV=production
