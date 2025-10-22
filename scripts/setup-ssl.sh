@@ -6,7 +6,7 @@
 set -e
 
 DOMAIN="www.021d.com"
-EMAIL="your-email@example.com"  # 请修改为你的邮箱
+EMAIL="westman021@qq.com"  # 请修改为你的邮箱
 
 echo "=== SSL 证书设置向导 ==="
 echo "域名: $DOMAIN"
