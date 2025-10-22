@@ -68,20 +68,34 @@ except ImportError:
 def safe_mongodb_operation(operation_func, *args, **kwargs):
     """安全执行MongoDB操作，自动处理同步/异步"""
     import asyncio
+    import concurrent.futures
+    
     try:
         if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
             # 同步操作
             return operation_func(*args, **kwargs)
         else:
-            # 异步操作
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(operation_func(*args, **kwargs))
-            loop.close()
-            return result
+            # 异步操作 - 在新线程中运行以避免事件循环冲突
+            def run_async_in_thread():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(operation_func(*args, **kwargs))
+                    return result
+                finally:
+                    loop.close()
+            
+            # 使用线程池执行器在独立线程中运行
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(run_async_in_thread)
+                return future.result(timeout=10)  # 10秒超时
+                
+    except concurrent.futures.TimeoutError:
+        logger.error("MongoDB操作超时")
+        return None
     except Exception as e:
         logger.error(f"MongoDB操作失败: {e}")
-        raise e
+        return None
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent
@@ -2439,15 +2453,18 @@ def start_real_analysis(
                         update_data["error_message"] = result.get('error', '未知错误')
                     
                     # 使用统一的MongoDB操作函数
-                    safe_mongodb_operation(
+                    result_update = safe_mongodb_operation(
                         mongodb_db.analyses.update_one,
                         {"_id": ObjectId(analysis_id)},
                         {"$set": update_data}
                     )
                     
-                    logger.info(f"✅ 分析完成状态已更新到数据库: {analysis_id}")
+                    if result_update is not None:
+                        logger.info(f"✅ 分析完成状态已更新到数据库: {analysis_id}")
+                    else:
+                        logger.warning(f"⚠️ MongoDB更新返回None，可能更新失败")
                 except Exception as db_error:
-                    logger.warning(f"⚠️ 更新数据库状态失败: {db_error}")
+                    logger.warning(f"⚠️ 更新数据库状态失败: {db_error}", exc_info=False)
             
             logger.info(f"分析 {analysis_id} 完成，成功: {result.get('success', False)}")
             
@@ -2482,7 +2499,7 @@ def start_real_analysis(
                     from bson import ObjectId
                     
                     # 使用统一的MongoDB操作函数
-                    safe_mongodb_operation(
+                    result_update = safe_mongodb_operation(
                         mongodb_db.analyses.update_one,
                         {"_id": ObjectId(analysis_id)},
                         {"$set": {
@@ -2492,9 +2509,12 @@ def start_real_analysis(
                         }}
                     )
                     
-                    logger.info(f"✅ 分析失败状态已更新到数据库: {analysis_id}")
+                    if result_update is not None:
+                        logger.info(f"✅ 分析失败状态已更新到数据库: {analysis_id}")
+                    else:
+                        logger.warning(f"⚠️ MongoDB更新返回None，可能更新失败")
                 except Exception as db_error:
-                    logger.warning(f"⚠️ 更新数据库状态失败: {db_error}")
+                    logger.warning(f"⚠️ 更新数据库状态失败: {db_error}", exc_info=False)
     
     # 启动后台线程
     thread = threading.Thread(target=analysis_worker, daemon=True)
