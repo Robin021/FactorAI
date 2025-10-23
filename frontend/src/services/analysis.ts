@@ -24,10 +24,11 @@ export class AnalysisService {
       const analysis: Analysis = {
         id: response.analysis_id,
         userId: 'current_user', // 从认证状态获取
-        stockCode: response.symbol,
+        stockCode: response.symbol || request.stock_code,
         status: response.status === 'started' ? 'running' : response.status,
         progress: 0,
-        createdAt: new Date().toISOString(),
+        createdAt: response.created_at || new Date().toISOString(), // 优先使用后端返回的时间
+        completedAt: response.completed_at, // 添加完成时间
         marketType: request.market_type,
         analysisType: request.analysis_type,
         resultData: undefined
@@ -52,11 +53,11 @@ export class AnalysisService {
       // 适配后端返回格式
       return {
         id: response.id || response.analysis_id || response._id,
-        userId: response.user || 'current_user',
-        stockCode: 'UNKNOWN', // 后端没有返回，使用默认值
+        userId: response.user || response.user_id || 'current_user',
+        stockCode: response.stock_code || response.symbol || 'UNKNOWN',
         status: response.status === 'completed' ? 'completed' : 'running',
         progress: response.progress || 100,
-        createdAt: response.created_at || new Date().toISOString(),
+        createdAt: response.created_at, // 使用后端返回的时间
         completedAt: response.completed_at,
       } as Analysis;
     } catch (error: any) {

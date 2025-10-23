@@ -48,9 +48,12 @@ const ModelSelector: React.FC = () => {
     setError('');
     try {
       const response = await apiClient.get('/config/default-model');
-      if (response.success && response.data) {
-        const configData = response.data as DefaultModelConfig;
-        setConfig(configData);
+      // 兼容两种响应格式: { success: true, data: {...} } 或 { status: "success", data: {...} }
+      const isSuccess = response.success || response.status === 'success';
+      const configData = response.data;
+      
+      if (isSuccess && configData) {
+        setConfig(configData as DefaultModelConfig);
         setSelectedProvider(configData.default_provider);
         setSelectedModel(configData.default_model);
       }
@@ -79,7 +82,9 @@ const ModelSelector: React.FC = () => {
         model_name: selectedModel,
       });
       
-      if (response.success) {
+      // 兼容两种响应格式
+      const isSuccess = response.success || response.status === 'success';
+      if (isSuccess) {
         message.success('默认模型已更新');
         loadConfig();
       }

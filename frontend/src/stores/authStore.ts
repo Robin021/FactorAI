@@ -87,12 +87,15 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error: any) {
+          // Clear auth state on error silently
+          authService.clearSavedCredentials();
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false,
-            error: error.message || 'Failed to get user info',
+            error: null, // Don't set error to avoid UI spam
           });
+          // The API interceptor will handle the redirect
         }
       },
 

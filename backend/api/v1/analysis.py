@@ -92,11 +92,30 @@ async def start_analysis(
         analysis_request, current_user, task_priority
     )
     
+    # Get the created analysis record to return complete information
+    try:
+        analysis_doc = await db.analyses.find_one({"_id": ObjectId(analysis_id)})
+        if analysis_doc:
+            return {
+                "analysis_id": analysis_id,
+                "status": "queued",
+                "message": "Analysis queued successfully",
+                "priority": priority,
+                "stock_code": analysis_doc.get("stock_code"),
+                "created_at": analysis_doc.get("created_at").isoformat() if analysis_doc.get("created_at") else None,
+                "symbol": analysis_doc.get("stock_code")  # 为了兼容前端
+            }
+    except Exception as e:
+        logger.warning(f"Failed to fetch analysis record details: {e}")
+    
+    # Fallback response if we can't get the record
     return {
         "analysis_id": analysis_id,
         "status": "queued",
         "message": "Analysis queued successfully",
-        "priority": priority
+        "priority": priority,
+        "stock_code": analysis_request.stock_code,
+        "symbol": analysis_request.stock_code
     }
 
 

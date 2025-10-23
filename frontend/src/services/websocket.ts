@@ -173,13 +173,19 @@ class WebSocketService {
   }
 
   private handleAnalysisProgress(data: AnalysisProgressMessage): void {
-    const { updateAnalysisProgress } = useAnalysisStore.getState();
+    const { updateAnalysisProgress, getAnalysisResult } = useAnalysisStore.getState();
     updateAnalysisProgress(data.analysisId, data.progress, data.status);
     
     // Show notification for completed analysis
     if (data.status === 'completed') {
       const { success } = useNotificationStore.getState();
       success('分析完成', `股票分析已完成，进度: ${data.progress}%`);
+      
+      // 自动获取分析结果
+      console.log('🎉 分析完成，自动获取结果数据:', data.analysisId);
+      getAnalysisResult(data.analysisId).catch(err => {
+        console.error('❌ 自动获取分析结果失败:', err);
+      });
     } else if (data.status === 'failed') {
       const { error } = useNotificationStore.getState();
       error('分析失败', data.message || '分析过程中发生错误');

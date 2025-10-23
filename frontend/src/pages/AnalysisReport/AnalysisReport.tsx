@@ -120,13 +120,40 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
   useEffect(() => {
     if (id) {
+      console.log('📊 加载分析报告:', id);
+      // 强制重新获取最新数据
       getAnalysisResult(id);
     }
-  }, [id, getAnalysisResult]);
+  }, [id]); // 移除 getAnalysisResult 依赖，避免重复调用
 
   useEffect(() => {
     loadAnalysisHistory();
   }, [loadAnalysisHistory]);
+
+  // 自动刷新：如果分析状态是 running，每5秒刷新一次
+  useEffect(() => {
+    if (!currentAnalysis || !id) return;
+
+    const status = currentAnalysis.status;
+    
+    // 如果分析正在进行中，设置定时刷新
+    if (status === 'running' || status === 'pending') {
+      console.log('⏳ 分析进行中，启动自动刷新...');
+      const intervalId = setInterval(() => {
+        console.log('🔄 自动刷新分析数据...');
+        getAnalysisResult(id);
+      }, 5000); // 每5秒刷新一次
+
+      return () => {
+        console.log('⏹️ 停止自动刷新');
+        clearInterval(intervalId);
+      };
+    } else if (status === 'completed' && !currentAnalysis.resultData) {
+      // 如果状态是完成但没有结果数据，立即重新获取
+      console.log('✅ 分析已完成但缺少结果数据，重新获取...');
+      getAnalysisResult(id);
+    }
+  }, [currentAnalysis?.status, currentAnalysis?.resultData, id]);
 
   if (isLoading) {
     return (
@@ -170,6 +197,26 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
   const analysis = currentAnalysis;
   const resultData = analysis?.resultData || {};
+
+  // 调试：打印分析数据
+  console.log('=== 分析报告数据 ===');
+  console.log('analysis:', {
+    id: analysis?.id,
+    stockCode: analysis?.stockCode,
+    status: analysis?.status,
+    createdAt: analysis?.createdAt,
+    completedAt: analysis?.completedAt,
+    createdAtTime: analysis?.createdAt ? new Date(analysis.createdAt).getTime() : null,
+    completedAtTime: analysis?.completedAt ? new Date(analysis.completedAt).getTime() : null,
+    timeDiff: (analysis?.createdAt && analysis?.completedAt) 
+      ? new Date(analysis.completedAt).getTime() - new Date(analysis.createdAt).getTime() 
+      : null
+  });
+  console.log('resultData keys:', Object.keys(resultData));
+  console.log('stock_name:', resultData.stock_name);
+  console.log('company_name:', resultData.company_name);
+  console.log('symbol_name:', resultData.symbol_name);
+  console.log('==================');
 
   // 基于股票代码推断货币符号（简单判断：A股=¥，港股=HK$，美股=$）
   // 注意：不要在早期 return 之后再使用 hook，使用普通求值避免 hooks 次数不一致
@@ -221,6 +268,53 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
     ].filter(Boolean).join('\n\n');
   };
 
+  // 计算分析时长
+  const calculateDuration = () => {
+    if (!analysis?.createdAt || !analysis?.completedAt) return '未知';
+    
+    try {
+      const start = new Date(analysis.createdAt).getTime();
+      const end = new Date(analysis.completedAt).getTime();
+      
+      // 检查时间是否有效
+      if (isNaN(start) || isNaN(end) || end < start) {
+        return '未知';
+      }
+      
+      const durationMs = end - start;
+      
+      // 如果时间差小于1秒，可能是数据异常（创建时就设置了完成时间）
+      if (durationMs < 1000) {
+        return '未知';
+      }
+      
+      const seconds = Math.floor(durationMs / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      
+      if (hours > 0) {
+        return `${hours}小时${minutes % 60}分钟`;
+      } else if (minutes > 0) {
+        return `${minutes}分钟${seconds % 60}秒`;
+      } else {
+        return `${seconds}秒`;
+      }
+    } catch (error) {
+      console.error('计算时长失败:', error);
+      return '未知';
+    }
+  };
+
+  // 获取股票名称（从多个可能的字段中获取）
+  const getStockName = () => {
+    // 尝试从多个可能的字段获取股票名称
+    return resultData.stock_name || 
+           resultData.company_name || 
+           resultData.symbol_name ||
+           analysis?.stockCode || 
+           '未知';
+  };
+
   // 报告分类和组织
   const reportSections = {
     overview: {
@@ -231,55 +325,51 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
         targetPrice: decision.target_price || 0,
         recommendation: decision.action || '暂无建议',
         summary: decision.reasoning || '暂无分析摘要',
-        riskScore: (decision.risk_score || 0) * 10
+        riskScore: (decision.risk_score || 0) * 10,
+        stockName: getStockName(),
+        duration: calculateDuration()
       }
     },
     fundamental: {
       title: '基本面分析',
       icon: <LineChartOutlined />,
       data: {
-        report: reports.fundamental,
-        summary: '基本面分析报告'
+        report: reports.fundamental
       }
     },
     research: {
       title: '研究团队决策',
       icon: <FileTextOutlined />,
       data: {
-        report: buildResearchTeamDecision(),
-        summary: '多空辩论与研究经理综合结论'
+        report: buildResearchTeamDecision()
       }
     },
     risk_management: {
       title: '风险管理团队决策',
       icon: <ExclamationCircleOutlined />,
       data: {
-        report: buildRiskManagementDecision(),
-        summary: '风险评估多角度观点与最终决策'
+        report: buildRiskManagementDecision()
       }
     },
     technical: {
       title: '技术分析',
       icon: <RiseOutlined />,
       data: {
-        report: reports.technical,
-        summary: '技术分析报告'
+        report: reports.technical
       }
     },
     market: {
       title: '市场分析',
       icon: <PieChartOutlined />,
       data: {
-        report: reports.market,
-        summary: '市场分析报告'
+        report: reports.market
       }
     },
     sentiment: {
       title: '情绪分析',
       icon: <FileTextOutlined />,
       data: {
-        report: reports.sentiment,
-        summary: '市场情绪分析报告'
+        report: reports.sentiment
       }
     }
   };
@@ -354,6 +444,8 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
         <Card title="基本信息">
           <Descriptions bordered column={{ xs: 1, sm: 2, md: 3 }}>
             <Descriptions.Item label="股票代码">{analysis?.stockCode}</Descriptions.Item>
+            <Descriptions.Item label="股票名称">{overviewData.stockName}</Descriptions.Item>
+            <Descriptions.Item label="分析时长">{overviewData.duration}</Descriptions.Item>
             <Descriptions.Item label="分析时间">
               {analysis?.createdAt ? new Date(analysis.createdAt).toLocaleString() : 'N/A'}
             </Descriptions.Item>
@@ -383,12 +475,6 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
     return (
       <div className="detailed-analysis">
-        {data.summary && (
-          <Card title="分析摘要" className="analysis-summary">
-            <Paragraph>{data.summary}</Paragraph>
-          </Card>
-        )}
-
         {data.report && (
           <Card title="详细报告">
             <div className="markdown-body">

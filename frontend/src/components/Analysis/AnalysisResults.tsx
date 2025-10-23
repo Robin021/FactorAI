@@ -43,10 +43,12 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
   // 自动获取分析结果
   React.useEffect(() => {
     if (analysis && analysis.status === 'completed' && !analysis.resultData) {
-      console.log('Analysis completed, fetching results for:', analysis.id);
-      getAnalysisResult(analysis.id);
+      console.log('✅ 分析已完成，正在获取结果数据:', analysis.id);
+      getAnalysisResult(analysis.id).catch(err => {
+        console.error('❌ 获取分析结果失败:', err);
+      });
     }
-  }, [analysis?.id, analysis?.status, analysis?.resultData, getAnalysisResult]);
+  }, [analysis?.id, analysis?.status, analysis?.resultData]);
 
   const handleExport = async () => {
     if (!analysis?.resultData) {

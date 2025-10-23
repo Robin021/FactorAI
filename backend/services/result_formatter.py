@@ -111,6 +111,7 @@ def format_analysis_results(results: Dict[str, Any]) -> Dict[str, Any]:
     
     result_payload = {
         'stock_symbol': results.get('stock_symbol'),
+        'stock_name': results.get('stock_name'),  # 添加股票名称
         'decision': formatted_decision,
         'state': formatted_state,
         'success': True,

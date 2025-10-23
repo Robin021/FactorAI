@@ -2047,6 +2047,17 @@ def start_real_analysis(
                 def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
                     """真正的TradingAgents股票分析函数"""
                     
+                    # 获取股票名称
+                    stock_name = stock_symbol  # 默认使用代码
+                    try:
+                        from tradingagents.api.stock_api import get_stock_info
+                        stock_info = get_stock_info(stock_symbol)
+                        if stock_info and 'name' in stock_info:
+                            stock_name = stock_info['name']
+                            logger.info(f"📊 获取股票名称: {stock_name}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ 无法获取股票名称: {e}")
+                    
                     # 创建TradingAgents图实例
                     config = DEFAULT_CONFIG.copy()
                     config['llm_provider'] = llm_provider
@@ -2083,6 +2094,7 @@ def start_real_analysis(
                         analysis_result = {
                             'success': True,
                             'stock_symbol': stock_symbol,
+                            'stock_name': stock_name,  # 添加股票名称
                             'analysis_date': analysis_date,
                             'analysts': analysts,
                             'research_depth': research_depth,

@@ -21,7 +21,10 @@ export const useAuth = () => {
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (!isAuthenticated && token) {
-      getCurrentUser();
+      // Silently check auth, don't spam on failure
+      getCurrentUser().catch(() => {
+        // Ignore error, interceptor will handle redirect
+      });
     }
   }, []); // Remove dependencies to prevent repeated calls
 

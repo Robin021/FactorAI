@@ -111,6 +111,127 @@ async def get_llm_providers(
     return providers
 
 
+@router.get("/default-model")
+async def get_default_model_config():
+    """
+    Get default model configuration with available models
+    (Public endpoint - no authentication required)
+    """
+    import os
+    from tradingagents.default_config import DEFAULT_CONFIG
+    
+    # Get available models based on configured API keys
+    available_models = []
+    
+    # Check DashScope (阿里百炼)
+    if os.getenv("DASHSCOPE_API_KEY"):
+        for model in ["qwen-turbo", "qwen-plus", "qwen-max"]:
+            available_models.append({
+                "provider": "dashscope",
+                "model_name": model,
+                "enabled": True,
+                "max_tokens": 2000,
+                "temperature": 0.7
+            })
+    
+    # Check DeepSeek
+    if os.getenv("DEEPSEEK_API_KEY") and os.getenv("DEEPSEEK_ENABLED", "false").lower() == "true":
+        for model in ["deepseek-chat", "deepseek-coder"]:
+            available_models.append({
+                "provider": "deepseek",
+                "model_name": model,
+                "enabled": True,
+                "max_tokens": 4000,
+                "temperature": 0.7
+            })
+    
+    # Check OpenAI
+    if os.getenv("OPENAI_API_KEY"):
+        for model in ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "gpt-4o-mini"]:
+            available_models.append({
+                "provider": "openai",
+                "model_name": model,
+                "enabled": True,
+                "max_tokens": 4000,
+                "temperature": 0.7
+            })
+    
+    # Check OpenRouter
+    if os.getenv("OPENROUTER_API_KEY"):
+        for model in ["anthropic/claude-3.5-sonnet", "google/gemini-2.0-flash-exp:free"]:
+            available_models.append({
+                "provider": "openai",  # OpenRouter uses OpenAI-compatible API
+                "model_name": model,
+                "enabled": True,
+                "max_tokens": 4000,
+                "temperature": 0.7
+            })
+    
+    # Check Google Gemini
+    if os.getenv("GOOGLE_API_KEY"):
+        for model in ["gemini-pro", "gemini-2.0-flash"]:
+            available_models.append({
+                "provider": "google",
+                "model_name": model,
+                "enabled": True,
+                "max_tokens": 2048,
+                "temperature": 0.7
+            })
+    
+    # Check Qianfan (百度千帆)
+    if os.getenv("QIANFAN_API_KEY"):
+        for model in ["ernie-bot", "ernie-bot-turbo"]:
+            available_models.append({
+                "provider": "qianfan",
+                "model_name": model,
+                "enabled": True,
+                "max_tokens": 2000,
+                "temperature": 0.7
+            })
+    
+    # Get current default from DEFAULT_CONFIG
+    default_provider = DEFAULT_CONFIG.get("llm_provider", "openai")
+    default_model = DEFAULT_CONFIG.get("deep_think_llm", "gpt-4o-mini")
+    
+    return {
+        "default_provider": default_provider,
+        "default_model": default_model,
+        "available_models": available_models
+    }
+
+
+@router.put("/default-model")
+async def update_default_model_config(
+    request_data: Dict[str, Any],
+    current_user: UserInDB = Depends(require_permissions([Permissions.CONFIG_UPDATE])),
+    config_service: ConfigService = Depends(get_config_service)
+):
+    """
+    Update default model configuration
+    """
+    provider = request_data.get("provider")
+    model_name = request_data.get("model_name")
+    
+    if not provider or not model_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provider and model_name are required"
+        )
+    
+    # Update DEFAULT_CONFIG
+    from tradingagents.default_config import DEFAULT_CONFIG
+    DEFAULT_CONFIG["llm_provider"] = provider
+    DEFAULT_CONFIG["deep_think_llm"] = model_name
+    DEFAULT_CONFIG["quick_think_llm"] = model_name
+    
+    return {
+        "success": True,
+        "message": "Default model updated successfully",
+        "provider": provider,
+        "model_name": model_name
+    }
+
+
 @router.post("/llm/test")
 async def test_llm_config(
     llm_config: LLMConfig,

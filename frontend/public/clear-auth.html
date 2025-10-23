@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清除认证状态</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .success {
+            color: #52c41a;
+            margin-top: 20px;
+            display: none;
+        }
+        .info {
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 清除认证状态</h1>
+        <p class="info">如果遇到登录问题或无限重试，点击下面的按钮清除认证状态</p>
+        <button onclick="clearAuth()">清除认证状态</button>
+        <button onclick="goToLogin()">返回登录页</button>
+        <p class="success" id="success">✅ 认证状态已清除！</p>
+    </div>
+
+    <script>
+        function clearAuth() {
+            // Clear all auth-related items
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('remember_me');
+            localStorage.removeItem('saved_credentials');
+            
+            // Clear auth store
+            const authStoreKey = Object.keys(localStorage).find(key => key.includes('auth-store'));
+            if (authStoreKey) {
+                localStorage.removeItem(authStoreKey);
+            }
+            
+            // Clear all cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            // Show success message
+            document.getElementById('success').style.display = 'block';
+            
+            // Auto redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        }
+        
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+    </script>
+</body>
+</html>

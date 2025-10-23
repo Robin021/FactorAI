@@ -54,7 +54,7 @@ async def create_default_admin_user(db: AsyncIOMotorDatabase):
         email="admin@tradingagents.com",
         role=UserRole.ADMIN,
         permissions=DEFAULT_ROLE_PERMISSIONS["admin"],
-        password_hash=pwd_context.hash("admin123"),  # Default password
+        password_hash=pwd_context.hash("your_new_password"),  # Default password - CHANGE THIS!
         is_active=True,
         created_at=datetime.utcnow()
     )

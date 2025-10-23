@@ -7,6 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 class ApiClient {
   private instance: AxiosInstance;
+  private isRedirecting: boolean = false;
 
   constructor() {
     this.instance = axios.create({
@@ -57,11 +58,15 @@ class ApiClient {
           
           switch (status) {
             case 401:
-              // Unauthorized - redirect to login
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('refresh_token');
-              window.location.href = '/login';
-              message.error('登录已过期，请重新登录');
+              // Unauthorized - redirect to login immediately without spam
+              if (!this.isRedirecting && !window.location.pathname.includes('/login')) {
+                this.isRedirecting = true;
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('refresh_token');
+                message.destroy(); // Clear all existing messages
+                console.log('认证失败，跳转到登录页...');
+                window.location.href = '/login';
+              }
               break;
               
             case 403:
@@ -69,7 +74,10 @@ class ApiClient {
               break;
               
             case 404:
-              message.error('请求的资源不存在');
+              // Don't show error for auth endpoints
+              if (!error.config?.url?.includes('/auth/')) {
+                message.error('请求的资源不存在');
+              }
               break;
               
             case 422:
@@ -87,14 +95,22 @@ class ApiClient {
               break;
               
             default:
-              message.error(data.error || data.message || '请求失败');
+              // Don't show generic error for auth endpoints
+              if (!error.config?.url?.includes('/auth/')) {
+                message.error(data.error || data.message || '请求失败');
+              }
           }
         } else if (error.request) {
-          // Network error
-          message.error('网络连接失败，请检查网络设置');
+          // Network error - only show once if not already redirecting
+          if (!this.isRedirecting) {
+            message.destroy();
+            message.error('网络连接失败，请检查网络设置');
+          }
         } else {
           // Other errors
-          message.error('请求发生未知错误');
+          if (!this.isRedirecting) {
+            message.error('请求发生未知错误');
+          }
         }
 
         return Promise.reject(error);
