@@ -188,6 +188,36 @@ async def download_analysis_pdf(
                     summary_lines.insert(0, "【决策】 " + '; '.join(parts))
         except Exception:
             pass
+    
+    # 添加研究团队决策和风险管理团队决策
+    if analysis.result_data:
+        try:
+            rd = analysis.result_data if isinstance(analysis.result_data, dict) else analysis.result_data.dict()
+            
+            # 研究团队决策
+            investment_debate = rd.get('investment_debate_state') or {}
+            if investment_debate.get('bull_history'):
+                summary_lines.append(f"【多头研究员】 {investment_debate['bull_history'][:600]}")
+            if investment_debate.get('bear_history'):
+                summary_lines.append(f"【空头研究员】 {investment_debate['bear_history'][:600]}")
+            if investment_debate.get('judge_decision'):
+                summary_lines.append(f"【研究经理决策】 {investment_debate['judge_decision'][:600]}")
+            
+            # 风险管理团队决策
+            risk_debate = rd.get('risk_debate_state') or {}
+            if risk_debate.get('risky_history') or risk_debate.get('current_risky_response'):
+                risky_text = risk_debate.get('current_risky_response') or risk_debate.get('risky_history')
+                summary_lines.append(f"【激进分析师】 {risky_text[:600]}")
+            if risk_debate.get('safe_history') or risk_debate.get('current_safe_response'):
+                safe_text = risk_debate.get('current_safe_response') or risk_debate.get('safe_history')
+                summary_lines.append(f"【保守分析师】 {safe_text[:600]}")
+            if risk_debate.get('neutral_history') or risk_debate.get('current_neutral_response'):
+                neutral_text = risk_debate.get('current_neutral_response') or risk_debate.get('neutral_history')
+                summary_lines.append(f"【中性分析师】 {neutral_text[:600]}")
+            if risk_debate.get('judge_decision'):
+                summary_lines.append(f"【投资组合经理决策】 {risk_debate['judge_decision'][:600]}")
+        except Exception:
+            pass
 
     body_text = "\n".join(summary_lines) if summary_lines else "No detailed summary available."
 

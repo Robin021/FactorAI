@@ -534,6 +534,81 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
         // 与“分析与结果”页面导出保持一致：打开新窗口写入简化 HTML 再打印
         message.destroy();
         const rd: any = resultData || {};
+        // 构建研究团队决策内容
+        const investmentDebate = rd.investment_debate_state || {};
+        const researchTeamSection = (investmentDebate.bull_history || investmentDebate.bear_history || investmentDebate.judge_decision) ? `
+          <div class="section">
+            <h2>🔬 研究团队决策</h2>
+            ${investmentDebate.bull_history ? `
+              <div class="subsection">
+                <h3>📈 多头研究员分析</h3>
+                <pre>${investmentDebate.bull_history}</pre>
+              </div>
+            ` : ''}
+            ${investmentDebate.bear_history ? `
+              <div class="subsection">
+                <h3>📉 空头研究员分析</h3>
+                <pre>${investmentDebate.bear_history}</pre>
+              </div>
+            ` : ''}
+            ${investmentDebate.judge_decision ? `
+              <div class="subsection">
+                <h3>🎯 研究经理综合决策</h3>
+                <pre>${investmentDebate.judge_decision}</pre>
+              </div>
+            ` : ''}
+          </div>
+        ` : '';
+
+        // 构建风险管理团队决策内容
+        const riskDebate = rd.risk_debate_state || {};
+        const riskManagementSection = (riskDebate.risky_history || riskDebate.safe_history || riskDebate.neutral_history || riskDebate.judge_decision) ? `
+          <div class="section">
+            <h2>🛡️ 风险管理团队决策</h2>
+            ${riskDebate.risky_history || riskDebate.current_risky_response ? `
+              <div class="subsection">
+                <h3>🚀 激进分析师观点</h3>
+                <pre>${riskDebate.current_risky_response || riskDebate.risky_history}</pre>
+              </div>
+            ` : ''}
+            ${riskDebate.safe_history || riskDebate.current_safe_response ? `
+              <div class="subsection">
+                <h3>🛡️ 保守分析师观点</h3>
+                <pre>${riskDebate.current_safe_response || riskDebate.safe_history}</pre>
+              </div>
+            ` : ''}
+            ${riskDebate.neutral_history || riskDebate.current_neutral_response ? `
+              <div class="subsection">
+                <h3>⚖️ 中性分析师观点</h3>
+                <pre>${riskDebate.current_neutral_response || riskDebate.neutral_history}</pre>
+              </div>
+            ` : ''}
+            ${riskDebate.judge_decision ? `
+              <div class="subsection">
+                <h3>🎯 投资组合经理最终决策</h3>
+                <pre>${riskDebate.judge_decision}</pre>
+              </div>
+            ` : ''}
+          </div>
+        ` : '';
+
+        // 构建最终决策内容
+        const dec = decision || {};
+        const finalDecisionSection = (rd.final_trade_decision || dec.action) ? `
+          <div class="section">
+            <h2>🎯 最终交易决策</h2>
+            ${rd.final_trade_decision ? `<pre>${rd.final_trade_decision}</pre>` : ''}
+            ${dec.action ? `
+              <div class="decision-summary">
+                <p><strong>操作建议:</strong> ${dec.action}</p>
+                ${dec.target_price ? `<p><strong>目标价格:</strong> ${currencySymbol}${dec.target_price}</p>` : ''}
+                ${dec.confidence ? `<p><strong>置信度:</strong> ${(dec.confidence * 100).toFixed(1)}%</p>` : ''}
+                ${dec.reasoning ? `<p><strong>决策理由:</strong> ${dec.reasoning}</p>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        ` : '';
+
         const printContent = `
           <html>
             <head>
@@ -542,33 +617,54 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
               <style>
                 body { font-family: 'Microsoft YaHei', Arial, sans-serif; margin: 20px; line-height: 1.6; color: #333; }
                 .header { text-align: center; border-bottom: 2px solid #0f766e; padding-bottom: 20px; margin-bottom: 30px; }
-                .section { margin-bottom: 30px; }
-                .section h2 { color: #0f766e; border-left: 4px solid #0f766e; padding-left: 10px; }
-                pre { white-space: pre-wrap; background: #f5f5f5; padding: 10px; border-radius: 5px; }
+                .header h1 { color: #0f766e; margin-bottom: 10px; }
+                .section { margin-bottom: 30px; page-break-inside: avoid; }
+                .section h2 { color: #0f766e; border-left: 4px solid #0f766e; padding-left: 10px; margin-bottom: 15px; }
+                .subsection { margin: 20px 0; padding-left: 20px; }
+                .subsection h3 { color: #14b8a6; font-size: 16px; margin-bottom: 10px; }
+                pre { white-space: pre-wrap; background: #f5f5f5; padding: 15px; border-radius: 5px; border-left: 3px solid #14b8a6; }
+                .decision-summary { background: #f0fdfa; padding: 15px; border-radius: 5px; border: 1px solid #14b8a6; }
+                .decision-summary p { margin: 8px 0; }
+                @media print {
+                  body { margin: 15px; }
+                  .section { page-break-inside: avoid; }
+                }
               </style>
             </head>
             <body>
               <div class="header">
-                <h1>股票分析报告</h1>
+                <h1>📊 股票分析报告</h1>
                 <p><strong>股票代码:</strong> ${analysis?.stockCode || ''}</p>
                 <p><strong>分析日期:</strong> ${analysis?.createdAt ? new Date(analysis.createdAt).toLocaleDateString('zh-CN') : ''}</p>
+                <p><strong>完成时间:</strong> ${analysis?.completedAt ? new Date(analysis.completedAt).toLocaleDateString('zh-CN') : ''}</p>
               </div>
+              
+              ${finalDecisionSection}
+              
               <div class="section">
                 <h2>📊 投资建议</h2>
                 <pre>${rd.trader_investment_plan || rd.investment_plan || '暂无投资建议'}</pre>
               </div>
+              
+              ${researchTeamSection}
+              
+              ${riskManagementSection}
+              
               <div class="section">
                 <h2>📈 基本面分析</h2>
                 <pre>${rd.fundamentals_report || '暂无基本面分析'}</pre>
               </div>
+              
               <div class="section">
-                <h2>📉 技术面分析</h2>
-                <pre>${rd.market_report || '暂无技术面分析'}</pre>
+                <h2>📉 市场与技术分析</h2>
+                <pre>${rd.market_report || '暂无市场分析'}</pre>
               </div>
+              
               <div class="section">
                 <h2>💭 市场情绪分析</h2>
                 <pre>${rd.sentiment_report || '暂无情绪分析'}</pre>
               </div>
+              
               <div class="section">
                 <h2>⚠️ 风险评估</h2>
                 <pre>${rd.risk_assessment || '暂无风险评估'}</pre>
