@@ -2055,24 +2055,33 @@ def start_real_analysis(
                 def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
                     """真正的TradingAgents股票分析函数"""
                     
-                    # 获取股票名称 - 使用统一接口直接获取
+                    # 获取股票名称 - 使用AKShare直接获取（最可靠）
                     stock_name = stock_symbol  # 默认使用代码
                     try:
-                        # 直接使用 data_source_manager 获取股票信息
+                        # 直接使用 AKShare 获取股票信息（最可靠的方式）
                         from tradingagents.dataflows.data_source_manager import DataSourceManager
                         manager = DataSourceManager()
-                        stock_info_result = manager.get_stock_info(stock_symbol)
                         
-                        if stock_info_result and isinstance(stock_info_result, dict):
-                            # 从返回的字符串中解析股票名称
-                            if 'name' in stock_info_result:
-                                stock_name = stock_info_result['name']
-                                logger.info(f"📊 获取股票名称: {stock_name}")
-                            else:
-                                # 尝试从字符串结果中解析
-                                info_str = str(stock_info_result)
-                                if '股票名称:' in info_str:
-                                    for line in info_str.split('\n'):
+                        # 尝试使用 AKShare 获取股票信息
+                        try:
+                            import akshare as ak
+                            stock_info_df = ak.stock_individual_info_em(symbol=stock_symbol)
+                            if stock_info_df is not None and not stock_info_df.empty:
+                                name_row = stock_info_df[stock_info_df['item'] == '股票简称']
+                                if not name_row.empty:
+                                    stock_name = name_row['value'].iloc[0]
+                                    logger.info(f"📊 AKShare获取股票名称: {stock_name}")
+                        except Exception as ak_error:
+                            logger.debug(f"AKShare获取失败: {ak_error}")
+                            
+                            # 回退：尝试从 data_source_manager 获取
+                            stock_info_result = manager.get_stock_info(stock_symbol)
+                            if stock_info_result:
+                                if isinstance(stock_info_result, dict) and 'name' in stock_info_result:
+                                    stock_name = stock_info_result['name']
+                                    logger.info(f"📊 DataSourceManager获取股票名称: {stock_name}")
+                                elif isinstance(stock_info_result, str) and '股票名称:' in stock_info_result:
+                                    for line in stock_info_result.split('\n'):
                                         if '股票名称:' in line:
                                             stock_name = line.split(':', 1)[1].strip()
                                             logger.info(f"📊 解析股票名称: {stock_name}")
@@ -2490,11 +2499,26 @@ def start_real_analysis(
                         update_data["error_message"] = result.get('error', '未知错误')
                     
                     # 使用统一的MongoDB操作函数
-                    result_update = safe_mongodb_operation(
-                        mongodb_db.analyses.update_one,
-                        {"_id": ObjectId(analysis_id)},
-                        {"$set": update_data}
-                    )
+                    if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
+                        # 同步操作
+                        result_update = mongodb_db.analyses.update_one(
+                            {"_id": ObjectId(analysis_id)},
+                            {"$set": update_data}
+                        )
+                    else:
+                        # 异步操作 - 在新事件循环中执行
+                        import asyncio
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            result_update = loop.run_until_complete(
+                                mongodb_db.analyses.update_one(
+                                    {"_id": ObjectId(analysis_id)},
+                                    {"$set": update_data}
+                                )
+                            )
+                        finally:
+                            loop.close()
                     
                     if result_update is not None:
                         logger.info(f"✅ 分析完成状态已更新到数据库: {analysis_id}")
