@@ -307,12 +307,23 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
   // 获取股票名称（从多个可能的字段中获取）
   const getStockName = () => {
-    // 尝试从多个可能的字段获取股票名称
-    return resultData.stock_name || 
-           resultData.company_name || 
-           resultData.symbol_name ||
-           analysis?.stockCode || 
-           '未知';
+    // 优先使用 analysis 对象中的 stockName（从数据库获取）
+    if (analysis?.stockName && !analysis.stockName.startsWith('股票')) {
+      return analysis.stockName;
+    }
+    // 尝试从结果数据中获取
+    if (resultData.stock_name && !resultData.stock_name.startsWith('股票')) {
+      return resultData.stock_name;
+    }
+    // 其他可能的字段
+    if (resultData.company_name && !resultData.company_name.startsWith('股票')) {
+      return resultData.company_name;
+    }
+    if (resultData.symbol_name && !resultData.symbol_name.startsWith('股票')) {
+      return resultData.symbol_name;
+    }
+    // 最后使用股票代码
+    return analysis?.stockCode || '未指定';
   };
 
   // 报告分类和组织

@@ -630,6 +630,7 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
             analysis_doc = {
                 "user_id": current_user.get("sub", current_user["username"]),  # 用户唯一标识
                 "stock_code": request.symbol.upper(),
+                "stock_name": None,  # 将在分析完成后更新
                 "market_type": request.market_type,
                 "status": "pending",  # 初始状态
                 "progress": 0.0,
@@ -640,6 +641,7 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
                     "username": current_user["username"],
                 },
                 "created_at": datetime.utcnow(),
+                "completed_at": None,  # 明确设置为None
                 "result_data": None,
                 "error_message": None
             }
@@ -809,9 +811,13 @@ async def get_analysis_results(analysis_id: str, current_user: dict = Depends(ge
                         raise HTTPException(status_code=400, detail="分析尚未完成")
                     results = doc.get("result_data") or {}
                     if results:
+                        # 确保结果中包含股票名称
+                        if not results.get('stock_name') and doc.get('stock_name'):
+                            results['stock_name'] = doc.get('stock_name')
                         return {
                             "analysis_id": analysis_id,
                             "symbol": doc.get("stock_code") or doc.get("symbol"),
+                            "stock_name": doc.get("stock_name"),  # 添加股票名称
                             "status": status,
                             "user": current_user["username"],
                             "results": results,
@@ -976,6 +982,7 @@ async def get_analysis_history(
                         "id": str(doc.get("_id")),
                         "user_id": doc.get("user_id"),
                         "stock_code": doc.get("stock_code") or doc.get("symbol"),
+                        "stock_name": doc.get("stock_name"),  # 添加股票名称
                         "status": doc.get("status", "unknown"),
                         "progress": doc.get("progress", 0.0),
                         "created_at": doc.get("created_at"),
@@ -1001,6 +1008,7 @@ async def get_analysis_history(
                         "id": str(doc.get("_id")),
                         "user_id": doc.get("user_id"),
                         "stock_code": doc.get("stock_code") or doc.get("symbol"),
+                        "stock_name": doc.get("stock_name"),  # 添加股票名称
                         "status": doc.get("status", "unknown"),
                         "progress": doc.get("progress", 0.0),
                         "created_at": doc.get("created_at"),
@@ -2047,14 +2055,28 @@ def start_real_analysis(
                 def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
                     """真正的TradingAgents股票分析函数"""
                     
-                    # 获取股票名称
+                    # 获取股票名称 - 使用统一接口直接获取
                     stock_name = stock_symbol  # 默认使用代码
                     try:
-                        from tradingagents.api.stock_api import get_stock_info
-                        stock_info = get_stock_info(stock_symbol)
-                        if stock_info and 'name' in stock_info:
-                            stock_name = stock_info['name']
-                            logger.info(f"📊 获取股票名称: {stock_name}")
+                        # 直接使用 data_source_manager 获取股票信息
+                        from tradingagents.dataflows.data_source_manager import DataSourceManager
+                        manager = DataSourceManager()
+                        stock_info_result = manager.get_stock_info(stock_symbol)
+                        
+                        if stock_info_result and isinstance(stock_info_result, dict):
+                            # 从返回的字符串中解析股票名称
+                            if 'name' in stock_info_result:
+                                stock_name = stock_info_result['name']
+                                logger.info(f"📊 获取股票名称: {stock_name}")
+                            else:
+                                # 尝试从字符串结果中解析
+                                info_str = str(stock_info_result)
+                                if '股票名称:' in info_str:
+                                    for line in info_str.split('\n'):
+                                        if '股票名称:' in line:
+                                            stock_name = line.split(':', 1)[1].strip()
+                                            logger.info(f"📊 解析股票名称: {stock_name}")
+                                            break
                     except Exception as e:
                         logger.warning(f"⚠️ 无法获取股票名称: {e}")
                     
@@ -2458,9 +2480,12 @@ def start_real_analysis(
                         "completed_at": datetime.utcnow()
                     }
                     
-                    # 如果分析成功，保存结果
+                    # 如果分析成功，保存结果和股票名称
                     if result.get('success', False):
                         update_data["result_data"] = result
+                        # 从结果中提取股票名称
+                        if result.get('stock_name'):
+                            update_data["stock_name"] = result.get('stock_name')
                     else:
                         update_data["error_message"] = result.get('error', '未知错误')
                     

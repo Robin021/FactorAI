@@ -24,7 +24,7 @@ export class AnalysisService {
       const analysis: Analysis = {
         id: response.analysis_id,
         userId: 'current_user', // 从认证状态获取
-        stockCode: response.symbol || request.stock_code,
+        stockCode: response.symbol || request.symbol,
         status: response.status === 'started' ? 'running' : response.status,
         progress: 0,
         createdAt: response.created_at || new Date().toISOString(), // 优先使用后端返回的时间
@@ -86,6 +86,7 @@ export class AnalysisService {
           id: response.id || response.analysis_id || response._id,
           userId: response.user_id || 'current_user',
           stockCode: response.stock_code || response.symbol,
+          stockName: response.stock_name || results?.stock_name,  // 添加股票名称
           status: response.status,
           progress: response.progress || 100,
           resultData: hasContent
@@ -102,6 +103,8 @@ export class AnalysisService {
                 investment_debate_state: results.state?.investment_debate_state || null,
                 risk_debate_state: results.state?.risk_debate_state || null,
                 decision: results.decision || {},
+                // 保留股票名称
+                stock_name: results.stock_name,
                 // 保留原始数据
                 ...results,
               }
@@ -217,6 +220,7 @@ export class AnalysisService {
           id: item.id || item.analysis_id || item._id,  // 后端返回 id 字段
           userId: item.user_id || 'current_user',
           stockCode: item.stock_code || item.symbol,  // 后端返回 stock_code
+          stockName: item.stock_name || item.result_data?.stock_name,  // 添加股票名称
           status: item.status,
           progress: item.progress_percentage !== undefined 
             ? item.progress_percentage * 100  // 后端返回 0-1，转换为 0-100

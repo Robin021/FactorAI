@@ -39,6 +39,7 @@ export interface Analysis {
   id: string;
   userId: string;
   stockCode: string;
+  stockName?: string;  // 添加股票名称字段
   status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
   progress: number;
   resultData?: Record<string, any>;
