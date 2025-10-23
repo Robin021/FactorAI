@@ -107,26 +107,60 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .analysis-page {
-    padding: 16px;
+    padding: 12px 8px;
   }
   
   .analysis-header h2 {
-    font-size: 24px;
+    font-size: 22px;
   }
   
   .analysis-tabs {
-    padding: 12px;
+    padding: 8px;
+    border-radius: 8px;
   }
   
   .analysis-tabs .ant-tabs-tab {
-    font-size: 14px;
-    padding: 8px 12px;
+    font-size: 15px;
+    padding: 10px 12px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .analysis-tabs .ant-tabs-nav {
+    margin-bottom: 12px;
+  }
+  
+  /* 历史记录卡片优化 */
+  .history-list .ant-card {
+    margin-bottom: 12px;
+  }
+  
+  .history-list .ant-card-body {
+    padding: 12px;
+  }
+  
+  /* 批量操作工具栏 */
+  .batch-delete-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .batch-operations {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
 @media (max-width: 576px) {
   .analysis-page {
-    padding: 12px;
+    padding: 8px 4px;
+  }
+  
+  .analysis-header {
+    margin-bottom: 16px;
   }
   
   .analysis-header h2 {
@@ -134,18 +168,34 @@
   }
   
   .analysis-tabs {
-    padding: 8px;
-    margin: 0 -4px;
+    padding: 4px;
+    margin: 0;
   }
   
   .analysis-tabs .ant-tabs-tab {
-    font-size: 12px;
-    padding: 6px 8px;
+    font-size: 14px;
+    padding: 8px 8px;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .analysis-tabs .ant-tabs-tab .anticon {
+    margin-right: 4px;
   }
   
   .no-progress-message,
   .no-history-message {
-    padding: 40px 16px;
+    padding: 40px 12px;
+  }
+  
+  /* 历史记录操作按钮堆叠 */
+  .history-list .ant-space {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .history-list .ant-btn {
+    width: 100%;
   }
 }
 /*

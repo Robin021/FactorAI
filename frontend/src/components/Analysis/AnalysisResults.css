@@ -145,33 +145,120 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .results-card {
+    border-radius: 8px;
+    min-height: auto;
+  }
+  
+  .results-card .ant-card-body {
+    padding: 16px;
+  }
+  
   .results-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .results-header h4 {
+    font-size: 20px;
+  }
+  
+  .results-header .ant-space {
+    width: 100%;
+  }
+  
+  .results-header .ant-btn {
+    min-height: 44px;
+    font-size: 16px;
   }
   
   .summary-cards {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .summary-card {
+    border-radius: 8px;
   }
   
   .summary-item {
-    justify-content: center;
-    text-align: center;
+    padding: 12px;
+  }
+  
+  .summary-icon {
+    font-size: 28px;
+  }
+  
+  .analyst-report-card {
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .analyst-report-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .key-points li {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  
+  /* Tabs 优化 */
+  .results-tabs .ant-tabs-tab {
+    font-size: 15px;
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+  
+  /* 表格横向滚动 */
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .ant-table {
+    min-width: 600px;
   }
 }
 
 @media (max-width: 576px) {
   .results-card {
-    margin: 0 -8px;
+    margin: 0;
+  }
+  
+  .results-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  .results-header {
+    margin-bottom: 12px;
+  }
+  
+  .results-header h4 {
+    font-size: 18px;
   }
   
   .results-header .ant-space {
+    flex-direction: column;
     width: 100%;
-    justify-content: space-between;
   }
   
   .results-header .ant-btn {
-    flex: 1;
+    width: 100%;
+  }
+  
+  .summary-cards {
+    gap: 8px;
+  }
+  
+  .analyst-report-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  .key-points li {
+    font-size: 14px;
   }
 }

@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import PageHeader from '@/components/Common/PageHeader';
 import '@/styles/themes.css';
+import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
   return (
@@ -15,8 +16,8 @@ const Dashboard: React.FC = () => {
       <PageHeader title="仪表板" />
       
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="dashboard-card">
             <Statistic
               title="总分析次数"
               value={156}
@@ -26,8 +27,8 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="dashboard-card">
             <Statistic
               title="成功分析"
               value={142}
@@ -37,8 +38,8 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="dashboard-card">
             <Statistic
               title="进行中"
               value={3}
@@ -48,8 +49,8 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
         
-        <Col xs={24} sm={12} lg={6}>
-          <Card>
+        <Col xs={12} sm={12} lg={6}>
+          <Card className="dashboard-card">
             <Statistic
               title="活跃用户"
               value={28}
@@ -62,13 +63,13 @@ const Dashboard: React.FC = () => {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <Card title="最近分析" size="small">
+          <Card title="最近分析" size="small" className="dashboard-content-card">
             <p>这里将显示最近的分析记录...</p>
           </Card>
         </Col>
         
         <Col xs={24} lg={8}>
-          <Card title="系统状态" size="small">
+          <Card title="系统状态" size="small" className="dashboard-content-card">
             <p>这里将显示系统运行状态...</p>
           </Card>
         </Col>

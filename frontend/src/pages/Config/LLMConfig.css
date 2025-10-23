@@ -53,21 +53,70 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .llm-config {
+    padding: 12px 8px;
+  }
+  
+  .llm-config-header h2 {
+    font-size: 22px;
+  }
+  
+  .llm-config .ant-card {
+    border-radius: 8px;
+  }
+  
+  .llm-config .ant-card-body {
     padding: 16px;
   }
   
   .llm-config-actions {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: stretch;
+    margin-top: 12px;
   }
   
   .llm-config-actions > .ant-space {
     justify-content: center;
+    width: 100%;
+  }
+  
+  .llm-config-actions .ant-btn {
+    flex: 1;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  .llm-config .ant-form-item-label > label {
+    font-size: 16px;
+    height: auto;
+    line-height: 1.5;
+  }
+  
+  .llm-config .ant-input,
+  .llm-config .ant-select-selector,
+  .llm-config .ant-input-number {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  .llm-config .ant-divider {
+    margin: 20px 0 12px 0;
   }
 }
 
 @media (max-width: 576px) {
+  .llm-config {
+    padding: 8px 4px;
+  }
+  
+  .llm-config-header h2 {
+    font-size: 20px;
+  }
+  
+  .llm-config .ant-card-body {
+    padding: 12px;
+  }
+  
   .llm-config .ant-col {
     margin-bottom: 0;
   }
@@ -80,6 +129,10 @@
   .llm-config .ant-col {
     padding-left: 0;
     padding-right: 0;
+  }
+  
+  .llm-config .ant-space-item .ant-btn {
+    min-width: 80px;
   }
 }
 

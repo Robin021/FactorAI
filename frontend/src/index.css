@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
 }
 
 code {
@@ -19,4 +20,69 @@ code {
 #root {
   width: 100%;
   height: 100vh;
+}
+
+/* 移动端字体和间距优化 */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+  
+  h1 { font-size: 24px !important; }
+  h2 { font-size: 22px !important; }
+  h3 { font-size: 20px !important; }
+  h4 { font-size: 18px !important; }
+  h5 { font-size: 16px !important; }
+  
+  /* 增大按钮点击区域 */
+  .ant-btn {
+    min-height: 44px;
+    padding: 8px 20px;
+    font-size: 16px;
+  }
+  
+  .ant-btn-sm {
+    min-height: 36px;
+    padding: 4px 12px;
+    font-size: 14px;
+  }
+  
+  .ant-btn-lg {
+    min-height: 48px;
+    padding: 10px 24px;
+    font-size: 18px;
+  }
+  
+  /* 增大表单输入框 */
+  .ant-input,
+  .ant-input-number,
+  .ant-picker,
+  .ant-select-selector {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  /* 增大表单项间距 */
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+  
+  /* 增大复选框和单选框点击区域 */
+  .ant-checkbox-wrapper,
+  .ant-radio-wrapper {
+    padding: 8px 4px;
+    font-size: 16px;
+  }
+  
+  .ant-checkbox-inner,
+  .ant-radio-inner {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  body {
+    font-size: 15px;
+  }
 }

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Button, Avatar, Dropdown, Typography, Badge } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Button, Avatar, Dropdown, Typography, Badge, Drawer } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   MenuFoldOutlined,
@@ -26,12 +26,28 @@ const { Text } = Typography;
 
 const MainLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const { unreadCount } = useNotificationStore();
   const { showNotificationCenter, NotificationCenter } = useNotificationCenter();
   const { themeMode, toggleTheme } = useTheme();
+
+  // 检测是否为移动端
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setCollapsed(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const menuItems: MenuProps['items'] = [
     {
@@ -79,34 +95,64 @@ const MainLayout: React.FC = () => {
     }
   };
 
+  const handleMenuItemClick = ({ key }: { key: string }) => {
+    handleMenuClick({ key });
+    // 移动端点击菜单后自动关闭侧边栏
+    if (isMobile) {
+      setCollapsed(true);
+    }
+  };
+
+  const sidebarContent = (
+    <>
+      <div className="logo">
+        <Text strong style={{ fontSize: collapsed && !isMobile ? '14px' : '16px' }}>
+          {collapsed && !isMobile ? BRAND_SHORT : BRAND_NAME}
+        </Text>
+      </div>
+      
+      <Menu
+        theme={themeMode}
+        mode="inline"
+        selectedKeys={[location.pathname]}
+        items={menuItems}
+        onClick={handleMenuItemClick}
+      />
+    </>
+  );
+
   return (
     <Layout className="main-layout">
-      <Sider 
-        trigger={null} 
-        collapsible 
-        collapsed={collapsed}
-        className="main-sider"
-        width={240}
-        collapsedWidth={64}
-        breakpoint="lg"
-        onBreakpoint={(broken) => {
-          if (broken) setCollapsed(true);
-        }}
-      >
-        <div className="logo">
-          <Text strong style={{ fontSize: collapsed ? '14px' : '16px' }}>
-            {collapsed ? BRAND_SHORT : BRAND_NAME}
-          </Text>
-        </div>
-        
-        <Menu
-          theme={themeMode}
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          onClick={handleMenuClick}
-        />
-      </Sider>
+      {/* 桌面端侧边栏 */}
+      {!isMobile && (
+        <Sider 
+          trigger={null} 
+          collapsible 
+          collapsed={collapsed}
+          className="main-sider"
+          width={240}
+          collapsedWidth={64}
+        >
+          {sidebarContent}
+        </Sider>
+      )}
+
+      {/* 移动端抽屉式侧边栏 */}
+      {isMobile && (
+        <Drawer
+          placement="left"
+          onClose={() => setCollapsed(true)}
+          open={!collapsed}
+          closable={false}
+          width={240}
+          className="mobile-drawer"
+          styles={{
+            body: { padding: 0, background: 'var(--card-bg)' }
+          }}
+        >
+          {sidebarContent}
+        </Drawer>
+      )}
       
       <Layout>
         <Header className="main-header">

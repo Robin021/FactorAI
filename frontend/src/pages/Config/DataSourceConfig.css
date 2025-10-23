@@ -110,39 +110,83 @@
   }
   
   .data-source-config .ant-table {
-    font-size: 12px;
+    font-size: 13px;
   }
   
   .data-source-config .ant-btn {
-    font-size: 12px;
-    padding: 4px 8px;
+    font-size: 13px;
+    padding: 6px 12px;
   }
 }
 
 @media (max-width: 768px) {
+  .data-source-config {
+    padding: 12px 8px;
+  }
+  
+  .data-source-config-header h2 {
+    font-size: 22px;
+  }
+  
   .data-source-config-actions {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: stretch;
+    padding: 12px;
   }
   
   .data-source-config-actions > .ant-space {
     justify-content: center;
+    width: 100%;
+  }
+  
+  .data-source-config-actions .ant-btn {
+    flex: 1;
+    min-height: 44px;
+    font-size: 16px;
   }
   
   .data-source-config .ant-table-wrapper {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .data-source-config .ant-table {
+    min-width: 800px;
+    font-size: 14px;
   }
   
   .data-source-config .ant-modal {
-    margin: 0;
-    max-width: 100vw;
+    margin: 16px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  .data-source-config .ant-modal-body {
+    padding: 16px;
+  }
+  
+  .data-source-config .ant-form-item-label > label {
+    font-size: 16px;
+  }
+  
+  .data-source-config .ant-input,
+  .data-source-config .ant-select-selector {
+    min-height: 44px;
+    font-size: 16px;
   }
 }
 
 @media (max-width: 576px) {
   .data-source-config {
-    padding: 12px;
+    padding: 8px 4px;
+  }
+  
+  .data-source-config-header h2 {
+    font-size: 20px;
+  }
+  
+  .data-source-config-actions {
+    padding: 10px;
   }
   
   .data-source-config .ant-col {
@@ -157,6 +201,20 @@
   .data-source-config .ant-col {
     padding-left: 0;
     padding-right: 0;
+  }
+  
+  .data-source-config .ant-modal {
+    margin: 8px;
+    max-width: calc(100vw - 16px);
+  }
+  
+  .data-source-config .ant-modal-body {
+    padding: 12px;
+  }
+  
+  .data-source-config .ant-table {
+    min-width: 700px;
+    font-size: 13px;
   }
 }
 

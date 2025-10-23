@@ -290,14 +290,63 @@
 }
 
 /* 响应式设计 */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .login-container {
     padding: 16px;
+    min-height: 100vh;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  
+  .login-card {
+    max-width: 100%;
+    padding: 24px 20px;
+  }
+  
+  .brand-title {
+    font-size: 26px !important;
+  }
+  
+  .brand-subtitle {
+    font-size: 15px;
+  }
+  
+  .feature-tag {
+    font-size: 13px;
+    padding: 4px 12px;
+  }
+  
+  .login-card .ant-input-affix-wrapper,
+  .login-card .ant-input {
+    height: 48px !important;
+    font-size: 16px !important;
+  }
+  
+  .ant-btn-primary {
+    height: 50px !important;
+    font-size: 17px !important;
+  }
+  
+  .sso-button {
+    height: 48px !important;
+    font-size: 16px !important;
+  }
+  
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 12px;
+    padding-top: 30px;
   }
   
   .login-card {
     margin: 0;
-    border-radius: 20px;
+    border-radius: 16px;
+    padding: 20px 16px;
   }
   
   .brand-title {
@@ -308,13 +357,13 @@
     font-size: 14px;
   }
   
-  .feature-tags {
-    gap: 6px;
+  .feature-tag {
+    font-size: 12px;
+    padding: 3px 10px;
   }
   
-  .feature-tag {
+  .login-footer p {
     font-size: 11px;
-    padding: 3px 10px;
   }
 }
 

@@ -104,21 +104,66 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .analysis-form-card {
+    border-radius: 8px;
+  }
+  
+  .analysis-form-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .form-header {
+    margin-bottom: 20px;
+  }
+  
+  .form-header h4 {
+    font-size: 20px;
+  }
+  
   .analyst-checkbox-group .ant-col {
     span: 24 !important;
   }
   
   .analyst-checkbox {
-    margin-bottom: 8px;
+    margin-bottom: 12px;
+    padding: 14px;
+    font-size: 16px;
+  }
+  
+  .analysis-form .ant-form-item-label > label {
+    font-size: 16px;
+    height: auto;
+    line-height: 1.5;
+  }
+  
+  .analysis-form .ant-select-selector,
+  .analysis-form .ant-input,
+  .analysis-form .ant-picker {
+    min-height: 44px;
+    font-size: 16px;
+  }
+  
+  .ant-btn-primary {
+    height: 48px;
+    font-size: 17px;
   }
 }
 
 @media (max-width: 576px) {
   .analysis-form-card {
-    margin: 0 -8px;
+    margin: 0;
+    border-radius: 8px;
+  }
+  
+  .analysis-form-card .ant-card-body {
+    padding: 12px;
   }
   
   .form-header h4 {
     font-size: 18px;
+  }
+  
+  .analyst-checkbox {
+    padding: 12px;
   }
 }
