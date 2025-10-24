@@ -1,104 +1,87 @@
-# Scripts Directory
+# Scripts 目录说明
 
-这个目录包含TradingAgentsCN项目的各种脚本工具，按功能分类组织。
+## 📁 目录结构
 
-## 目录结构
-
-### 📦 setup/ - 安装和配置脚本
-- 环境设置
-- 依赖安装  
-- API配置
-- 数据库设置
-
-### 🔍 validation/ - 验证脚本
-- Git配置验证
-- 依赖检查
-- 配置验证
-- API连接测试
-
-### 🔧 maintenance/ - 维护脚本
-- 缓存清理
-- 数据备份
-- 依赖更新
-- 上游同步
-- 分支管理
-
-### 🛠️ development/ - 开发辅助脚本
-- 代码分析
-- 性能基准测试
-- 文档生成
-- 贡献准备
-- 数据下载
-
-### 🚀 deployment/ - 部署脚本
-- GitHub发布
-- 版本发布
-- 打包部署
-
-### 🐳 docker/ - Docker脚本
-- Docker服务管理
-- 容器启动停止
-- 数据库初始化
-
-### 📋 git/ - Git工具脚本
-- 上游同步
-- Fork环境设置
-- 贡献工作流
-
-## 使用原则
-
-### 脚本分类
-- **tests/** - 单元测试和集成测试（pytest运行）
-- **scripts/** - 工具脚本和验证脚本（独立运行）
-- **utils/** - 实用工具脚本
-
-### 运行方式
-```bash
-# 从项目根目录运行
-cd C:\code\TradingAgentsCN
-
-# Python脚本
-python scripts/validation/verify_gitignore.py
-
-# PowerShell脚本  
-powershell -ExecutionPolicy Bypass -File scripts/maintenance/cleanup.ps1
-
-# Bash脚本
-bash scripts/git/upstream_git_workflow.sh
+```
+scripts/
+├── archive/          # 归档的历史脚本
+├── backup/           # 数据库备份脚本
+├── docker/           # Docker相关脚本
+├── release/          # 发布工具
+├── setup/            # 初始化脚本
+├── validation/       # 系统验证脚本
+└── [根目录脚本]      # 常用快捷脚本
 ```
 
-## 目录说明
+## 🚀 常用脚本
 
-| 目录 | 用途 | 示例脚本 |
-|------|------|----------|
-| `setup/` | 环境配置和初始化 | setup_databases.py |
-| `validation/` | 验证和检查 | verify_gitignore.py |
-| `maintenance/` | 维护和管理 | sync_upstream.py |
-| `development/` | 开发辅助 | prepare_upstream_contribution.py |
-| `deployment/` | 部署发布 | create_github_release.py |
-| `docker/` | 容器管理 | start_docker_services.bat |
-| `git/` | Git工具 | upstream_git_workflow.sh |
+### 启动和管理
 
-## 注意事项
+```bash
+# Docker智能启动
+./scripts/smart_start.sh          # Linux/Mac
+powershell scripts/smart_start.ps1  # Windows
 
-- 所有脚本应该从项目根目录运行
-- 检查脚本的依赖要求
-- 某些脚本可能需要特殊权限
-- 保持脚本的独立性和可重用性
+# 用户管理
+python scripts/user_password_manager.py list
+python scripts/user_password_manager.py change-password admin
+```
 
-## 开发指南
+### 初始化
 
-### 添加新脚本
-1. 确定脚本类型和目标目录
-2. 创建脚本文件
-3. 添加适当的文档注释
-4. 更新相应目录的README
-5. 测试脚本功能
+```bash
+# 数据库初始化
+python scripts/setup/init_database.py
 
-### 脚本模板
-每个脚本应包含：
-- 文件头注释说明用途
-- 使用方法说明
-- 依赖要求
-- 错误处理
-- 日志输出
+# 系统状态检查
+python scripts/validation/check_system_status.py
+```
+
+### 备份和恢复
+
+```bash
+# MongoDB备份
+./scripts/backup/backup-mongodb.sh
+
+# Redis备份
+./scripts/backup/backup-redis.sh
+```
+
+## 📋 脚本分类
+
+### setup/ - 初始化脚本
+- `init_database.py` - 数据库初始化
+- `setup_databases.py` - 数据库配置
+
+### docker/ - Docker脚本
+- `mongo-init.js` - MongoDB初始化脚本
+- `health-check.sh` - 容器健康检查
+
+### backup/ - 备份脚本
+- `backup-mongodb.sh` - MongoDB备份
+- `backup-redis.sh` - Redis备份
+- `restore-mongodb.sh` - MongoDB恢复
+- `restore-redis.sh` - Redis恢复
+
+### validation/ - 验证脚本
+- `check_system_status.py` - 系统状态检查
+- `check_dependencies.py` - 依赖检查
+
+### release/ - 发布工具
+- `prepare_release.py` - 发布准备
+- `cleanup_directories.py` - 目录清理
+- `verify_cleanup.sh` - 清理验证
+
+### archive/ - 历史归档
+包含历史开发过程中的临时脚本和工具
+
+## 🔗 相关文档
+
+- [用户管理指南](../docs/guides/user-management.md)
+- [Docker部署指南](../docs/deployment/docker-guide.md)
+- [系统维护指南](../docs/maintenance/system-maintenance.md)
+
+---
+
+**最后更新**: 2025-10-24
+**版本**: cn-v1.0

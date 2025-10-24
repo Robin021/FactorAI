@@ -16,8 +16,9 @@ help:
 # Set up development environment
 setup:
 	@echo "Setting up development environment..."
-	@chmod +x scripts/dev-setup.sh
-	@./scripts/dev-setup.sh
+	@echo "Please install dependencies manually:"
+	@echo "  Backend: cd backend && pip install -r requirements.txt"
+	@echo "  Frontend: cd frontend && npm install"
 
 # Start all development services
 dev-up:

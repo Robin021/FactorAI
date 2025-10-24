@@ -88,3 +88,13 @@ data/redis/
 # Evaluation results
 ../eval_results/
 eval_results/
+
+# Analysis results
+results/
+
+# Runtime logs
+logs/
+*.log
+
+# Cache
+cache/
