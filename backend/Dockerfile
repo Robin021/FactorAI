@@ -37,19 +37,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件（从项目根目录）
-COPY requirements.txt pyproject.toml ./
+COPY backend/requirements.txt ./backend/requirements.txt
+COPY pyproject.toml ./
 
 # 多源轮询安装Python依赖
 RUN set -e; \
+    installed=false; \
     for src in \
         https://mirrors.aliyun.com/pypi/simple \
         https://pypi.tuna.tsinghua.edu.cn/simple \
         https://pypi.doubanio.com/simple \
         https://pypi.org/simple; do \
       echo "Try installing from $src"; \
-      uv pip install --system --no-cache -e . -i $src && break; \
+      if uv pip install --system --no-cache -r backend/requirements.txt -i $src; then \
+        echo "Backend requirements installed from $src"; \
+        if uv pip install --system --no-cache -e . -i $src; then \
+          echo "Project dependencies installed from $src"; \
+          installed=true; \
+          break; \
+        fi; \
+      fi; \
       echo "Failed at $src, try next"; \
-    done
+    done; \
+    if [ "$installed" = "false" ]; then \
+      echo "Failed to install dependencies from all sources"; \
+      exit 1; \
+    fi
 
 # 复制tradingagents模块（共享模块）
 COPY tradingagents/ ./tradingagents/
