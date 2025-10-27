@@ -1,10 +1,17 @@
-# TradingAgents 中文增强版
-
+<div align="center">
+  <img src="assets/logo-v3.svg" alt="Factor AI Logo" width="200"/>
+  
+  # Factor AI (因子智投)
+  
+  ### 基于多智能体的智能金融分析平台
+  
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Version](https://img.shields.io/badge/Version-cn--v1.0-green.svg)](./VERSION)
 [![Documentation](https://img.shields.io/badge/docs-中文文档-green.svg)](./docs/)
 [![Original](https://img.shields.io/badge/基于-TauricResearch/TradingAgents-orange.svg)](https://github.com/TauricResearch/TradingAgents)
+
+</div>
 
 > 🚀 **最新版本 cn-v1.0**: 正式版本发布！项目结构优化、代码清理、文档整理，提供更稳定的生产环境支持！
 >

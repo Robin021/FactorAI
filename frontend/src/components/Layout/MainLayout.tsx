@@ -106,9 +106,11 @@ const MainLayout: React.FC = () => {
   const sidebarContent = (
     <>
       <div className="logo">
-        <Text strong style={{ fontSize: collapsed && !isMobile ? '14px' : '16px' }}>
-          {collapsed && !isMobile ? BRAND_SHORT : BRAND_NAME}
-        </Text>
+        <img 
+          src="/logo.svg" 
+          alt={BRAND_NAME} 
+          className={collapsed && !isMobile ? "logo-icon-small" : "logo-icon"} 
+        />
       </div>
       
       <Menu

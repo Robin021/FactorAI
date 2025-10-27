@@ -168,7 +168,7 @@ const Login: React.FC = () => {
       <Card className="login-card">
         <div className="login-header">
           <div className="logo-container">
-            <div className="logo-icon">📈</div>
+            <img src="/logo.svg" alt="Factor AI Logo" className="logo-icon" />
           </div>
           <Title level={2} className="brand-title">
             {BRAND_NAME}

@@ -50,19 +50,47 @@
 }
 
 [data-theme] .logo {
-  height: 64px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--shadow-color);
-  margin: 16px;
-  border-radius: 8px;
+  background: transparent;
+  margin: 16px 16px 8px 16px;
+  border-radius: 12px;
   color: var(--text-primary) !important;
   font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+[data-theme] .logo:hover {
+  background: rgba(106, 90, 249, 0.05);
 }
 
 [data-theme] .logo .ant-typography {
   color: var(--text-primary) !important;
+}
+
+[data-theme] .logo .logo-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(106, 90, 249, 0.2));
+  transition: all 0.3s ease;
+}
+
+[data-theme] .logo .logo-icon-small {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(106, 90, 249, 0.2));
+  transition: all 0.3s ease;
+}
+
+[data-theme] .logo:hover .logo-icon,
+[data-theme] .logo:hover .logo-icon-small {
+  filter: drop-shadow(0 4px 12px rgba(106, 90, 249, 0.4));
+  transform: scale(1.08);
 }
 
 [data-theme] .main-header {
@@ -94,7 +122,7 @@
   color: var(--text-primary) !important;
 }
 
-.main-layout .ant-layout-sider-collapsed + .ant-layout .main-header {
+.main-layout .ant-layout-sider-collapsed+.ant-layout .main-header {
   left: 64px;
 }
 
@@ -143,7 +171,7 @@
   background: var(--primary-bg);
 }
 
-.main-layout .ant-layout-sider-collapsed + .ant-layout .main-content {
+.main-layout .ant-layout-sider-collapsed+.ant-layout .main-content {
   margin-left: 64px;
 }
 
@@ -156,33 +184,34 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+
   /* 移动端使用 Drawer，不需要固定侧边栏 */
   [data-theme] .main-header {
     left: 0 !important;
     padding: 0 12px;
   }
-  
+
   [data-theme] .main-content {
     margin-left: 0 !important;
     margin-top: 64px;
     padding: 16px 12px;
   }
-  
+
   .content-wrapper {
     padding: 16px 8px;
   }
-  
+
   /* 移动端用户信息简化显示 */
   .user-info .ant-typography {
     display: none;
   }
-  
+
   /* 移动端按钮增大点击区域 */
   [data-theme] .trigger {
     font-size: 20px;
     padding: 12px;
   }
-  
+
   .header-right .ant-btn {
     padding: 8px 12px;
   }
@@ -192,11 +221,11 @@
   [data-theme] .main-header {
     padding: 0 8px;
   }
-  
+
   [data-theme] .main-content {
     padding: 12px 8px;
   }
-  
+
   .content-wrapper {
     padding: 12px 4px;
   }

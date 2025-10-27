@@ -32,12 +32,22 @@
 }
 
 .logo-container {
-  margin-bottom: 4px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .logo-icon {
-  font-size: 40px;
-  margin-bottom: 12px;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(106, 90, 249, 0.3));
+  transition: transform 0.3s ease;
+}
+
+.logo-icon:hover {
+  transform: scale(1.05);
 }
 
 .brand-title {
