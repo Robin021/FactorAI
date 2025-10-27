@@ -10,8 +10,6 @@
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue.svg)](https://www.typescriptlang.org/)
   [![React](https://img.shields.io/badge/React-18.0%2B-blue.svg)](https://reactjs.org/)
   
-  [English](./README_EN.md) | 简体中文
-  
 </div>
 
 ---
@@ -33,36 +31,9 @@
 
 ---
 
-## 🏗️ 技术架构
-
-### 前端技术栈
-
-```
-React 18 + TypeScript + Vite
-├── UI框架: Ant Design 5.x
-├── 状态管理: Zustand
-├── 路由: React Router v6
-├── 图表: ECharts
-├── HTTP客户端: Axios
-└── 样式: CSS Modules + CSS Variables
-```
-
-### 后端技术栈
-
-```
-Python 3.10+ + FastAPI
-├── AI框架: LangChain + LangGraph
-├── 数据库: MongoDB + Redis
-├── 数据源: Tushare, AkShare, FinnHub, Yahoo Finance
-├── LLM集成: OpenAI, DeepSeek, DashScope, Google AI
-└── 任务队列: Celery (可选)
-```
-
----
-
 ## 🚀 快速开始
 
-### 方式一：Docker部署（推荐）
+### Docker部署（推荐）
 
 ```bash
 # 1. 克隆项目
@@ -81,7 +52,7 @@ docker-compose up -d
 # 后端API: http://localhost:8000
 ```
 
-### 方式二：本地开发
+### 本地开发
 
 #### 后端启动
 
@@ -93,10 +64,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 # 2. 安装依赖
 pip install -e .
 
-# 3. 配置环境变量
-cp .env.example .env
-
-# 4. 启动后端服务
+# 3. 启动后端
 cd backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
@@ -110,32 +78,7 @@ npm install
 
 # 2. 启动开发服务器
 npm run dev
-
-# 3. 访问 http://localhost:3000
 ```
-
----
-
-## 🎮 使用指南
-
-### 1. 登录系统
-
-- **本地账号**: 使用默认账号 `admin/admin123` 或 `user/user123`
-- **企业SSO**: 支持Authing等第三方认证平台
-
-### 2. 开始分析
-
-1. 在仪表板点击"新建分析"
-2. 输入股票代码（如：`AAPL`、`000001`、`0700.HK`）
-3. 选择分析深度（1-5级）
-4. 选择要启用的智能体
-5. 点击"开始分析"
-
-### 3. 查看结果
-
-- 实时查看分析进度
-- 查看详细的投资建议和风险评估
-- 导出专业格式报告
 
 ---
 
@@ -158,33 +101,15 @@ npm run dev
 | 🐻 **看跌研究员** | 寻找风险点 | 识别风险因素，构建看跌论据 |
 | 🎯 **交易决策员** | 最终决策 | 综合双方观点，给出投资建议 |
 
-### 管理层
-
-| 智能体 | 职责 |
-|--------|------|
-| 🛡️ **风险管理员** | 风险评估与控制 |
-| 👔 **研究主管** | 协调与质量把控 |
-
 ---
 
-## 📊 支持的市场与数据源
+## 📊 支持的市场
 
-### 市场覆盖
-
-| 市场 | 代码格式 | 示例 | 数据源 |
-|------|----------|------|--------|
-| 🇺🇸 **美股** | 股票代码 | `AAPL`, `TSLA`, `NVDA` | FinnHub, Yahoo Finance |
-| 🇨🇳 **A股** | 6位数字 | `000001`, `600519`, `300750` | Tushare, AkShare, 通达信 |
-| 🇭🇰 **港股** | 代码.HK | `0700.HK`, `9988.HK`, `3690.HK` | AkShare, Yahoo Finance |
-
-### 数据类型
-
-- ✅ 实时行情数据
-- ✅ 历史价格数据
-- ✅ 财务报表数据
-- ✅ 技术指标数据
-- ✅ 新闻资讯数据
-- ✅ 社交媒体数据
+| 市场 | 代码格式 | 示例 |
+|------|----------|------|
+| 🇺🇸 **美股** | 股票代码 | `AAPL`, `TSLA`, `NVDA` |
+| 🇨🇳 **A股** | 6位数字 | `000001`, `600519`, `300750` |
+| 🇭🇰 **港股** | 代码.HK | `0700.HK`, `9988.HK`, `3690.HK` |
 
 ---
 
@@ -192,11 +117,11 @@ npm run dev
 
 ### 国产模型（推荐）
 
-| 提供商 | 模型 | 特点 | 成本 |
-|--------|------|------|------|
-| 🇨🇳 **DeepSeek** | deepseek-chat | 性价比极高，工具调用强 | ⭐⭐⭐⭐⭐ |
-| 🇨🇳 **阿里百炼** | qwen-turbo/plus/max | 中文优化，响应快速 | ⭐⭐⭐⭐ |
-| 🇨🇳 **百度千帆** | ERNIE系列 | 企业级支持 | ⭐⭐⭐ |
+| 提供商 | 模型 | 特点 |
+|--------|------|------|
+| 🇨🇳 **DeepSeek** | deepseek-chat | 性价比极高，工具调用强 |
+| 🇨🇳 **阿里百炼** | qwen-turbo/plus/max | 中文优化，响应快速 |
+| 🇨🇳 **百度千帆** | ERNIE系列 | 企业级支持 |
 
 ### 国际模型
 
@@ -228,12 +153,7 @@ TUSHARE_TOKEN=your_tushare_token  # 推荐配置
 ```bash
 # 数据库配置
 MONGODB_ENABLED=true
-MONGODB_HOST=localhost
-MONGODB_PORT=27017
-
 REDIS_ENABLED=true
-REDIS_HOST=localhost
-REDIS_PORT=6379
 
 # SSO认证配置
 AUTHING_APP_ID=your_authing_app_id
@@ -242,98 +162,18 @@ AUTHING_APP_HOST=your_authing_host
 
 ---
 
-## 📁 项目结构
+## � 项目结构管
 
 ```
 FactorAI/
-├── frontend/                 # 前端应用
-│   ├── src/
-│   │   ├── components/      # React组件
-│   │   ├── pages/          # 页面组件
-│   │   ├── stores/         # 状态管理
-│   │   ├── services/       # API服务
-│   │   └── utils/          # 工具函数
-│   └── public/             # 静态资源
-│
-├── backend/                 # 后端应用
-│   ├── app/
-│   │   ├── api/           # API路由
-│   │   ├── services/      # 业务逻辑
-│   │   ├── models/        # 数据模型
-│   │   └── core/          # 核心配置
-│   └── tests/             # 测试文件
-│
-├── tradingagents/          # AI智能体核心
-│   ├── agents/            # 智能体定义
-│   ├── graph/             # LangGraph工作流
-│   ├── dataflows/         # 数据处理
-│   └── tools/             # 工具函数
-│
-├── assets/                # 资源文件
-│   └── logo-v3.svg       # 项目Logo
-│
+├── frontend/              # React前端应用
+├── backend/               # FastAPI后端服务
+├── tradingagents/         # AI智能体核心
+├── assets/                # 资源文件（Logo等）
 ├── docs/                  # 文档
-├── scripts/               # 脚本工具
 ├── docker-compose.yml     # Docker编排
 └── README.md             # 本文件
 ```
-
----
-
-## � 界多面预览
-
-### 登录页面
-<img src="docs/images/login.png" alt="登录页面" width="600"/>
-
-### 分析仪表板
-<img src="docs/images/dashboard.png" alt="仪表板" width="600"/>
-
-### 分析结果
-<img src="docs/images/analysis-result.png" alt="分析结果" width="600"/>
-
----
-
-## 🛠️ 开发指南
-
-### 代码规范
-
-- **前端**: ESLint + Prettier
-- **后端**: Black + isort + flake8
-- **提交**: Conventional Commits
-
-### 运行测试
-
-```bash
-# 前端测试
-cd frontend
-npm run test
-
-# 后端测试
-cd backend
-pytest
-```
-
-### 构建生产版本
-
-```bash
-# 前端构建
-cd frontend
-npm run build
-
-# Docker构建
-docker-compose -f docker-compose.yml build
-```
-
----
-
-## 📚 文档
-
-- [安装指南](docs/installation.md)
-- [使用教程](docs/usage.md)
-- [API文档](docs/api.md)
-- [架构设计](docs/architecture.md)
-- [开发指南](docs/development.md)
-- [常见问题](docs/faq.md)
 
 ---
 
@@ -341,22 +181,11 @@ docker-compose -f docker-compose.yml build
 
 我们欢迎所有形式的贡献！
 
-### 如何贡献
-
 1. Fork 本项目
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交更改 (`git commit -m 'feat: Add some AmazingFeature'`)
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启 Pull Request
-
-### 贡献类型
-
-- 🐛 Bug修复
-- ✨ 新功能开发
-- 📝 文档改进
-- 🎨 UI/UX优化
-- ⚡ 性能优化
-- 🌐 国际化支持
 
 ---
 
@@ -368,34 +197,14 @@ docker-compose -f docker-compose.yml build
 
 ## 🙏 致谢
 
-### 基于项目
-
 本项目基于 [TauricResearch/TradingAgents](https://github.com/TauricResearch/TradingAgents) 进行深度定制和增强开发。
-
-### 技术栈
-
-感谢以下开源项目：
-
-- [LangChain](https://github.com/langchain-ai/langchain) - LLM应用框架
-- [React](https://reactjs.org/) - 前端框架
-- [FastAPI](https://fastapi.tiangolo.com/) - 后端框架
-- [Ant Design](https://ant.design/) - UI组件库
 
 ---
 
-## � 联系我们
+## 📞 联系我们
 
 - **项目主页**: https://github.com/Robin021/FactorAI
 - **问题反馈**: https://github.com/Robin021/FactorAI/issues
-- **讨论区**: https://github.com/Robin021/FactorAI/discussions
-
----
-
-## ⭐ Star History
-
-如果这个项目对你有帮助，请给我们一个 Star ⭐️
-
-[![Star History Chart](https://api.star-history.com/svg?repos=Robin021/FactorAI&type=Date)](https://star-history.com/#Robin021/FactorAI&Date)
 
 ---
 
