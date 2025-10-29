@@ -9,8 +9,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
   flex-wrap: wrap;
   gap: 12px;
@@ -161,7 +161,8 @@
     align-items: flex-start;
     gap: 10px;
     margin-bottom: 12px;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
   }
   
   .results-header .header-content {
@@ -292,8 +293,9 @@
   
   .results-header {
     margin-bottom: 10px;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
     gap: 8px;
+    border-bottom-width: 0.5px;
   }
   
   .results-header h3 {

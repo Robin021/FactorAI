@@ -31,6 +31,11 @@
   top: auto;
   z-index: auto;
   background: transparent;
+  margin-bottom: 0;
+}
+
+.analysis-tabs .ant-tabs-nav::before {
+  border-bottom: none !important;
 }
 
 .analysis-tabs .ant-tabs-tab {
@@ -119,6 +124,7 @@
   .analysis-tabs {
     padding: 4px;
     border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .analysis-tabs .ant-tabs-tab {
@@ -130,11 +136,15 @@
   }
 
   .analysis-tabs .ant-tabs-nav {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+  }
+  
+  .analysis-tabs .ant-tabs-nav::before {
+    border-bottom: none !important;
   }
 
   .analysis-tabs .ant-tabs-content-holder {
-    padding-top: 8px;
+    padding-top: 6px;
   }
 
   /* 历史记录卡片优化 */
@@ -253,6 +263,7 @@
 
 /* 移动端优化 */
 @media (max-width: 992px) {
+
   .analysis-form-container,
   .analysis-results-container {
     padding: 14px;
