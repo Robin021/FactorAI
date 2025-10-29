@@ -241,7 +241,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
               </div>
             </Col>
             <Col xs={24} sm={8}>
-              <div className="metric-item">
+              <div className="metric-item metric-item-recommendation">
                 <div 
                   className="metric-icon" 
                   style={{ 
@@ -254,17 +254,16 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
                 </div>
                 <div className="metric-content">
                   <Text type="secondary" className="metric-label">投资建议</Text>
-                  <Title 
-                    level={3} 
-                    className="metric-value"
-                    style={{ 
-                      color: getRecommendation() === '买入' ? '#52c41a' : 
-                             getRecommendation() === '卖出' ? '#ff4d4f' : 
-                             'var(--accent-color)' 
-                    }}
+                  <Tag 
+                    className="recommendation-tag-large"
+                    color={
+                      getRecommendation() === '买入' ? 'success' : 
+                      getRecommendation() === '卖出' ? 'error' : 
+                      'default'
+                    }
                   >
                     {getRecommendation()}
-                  </Title>
+                  </Tag>
                 </div>
               </div>
             </Col>
