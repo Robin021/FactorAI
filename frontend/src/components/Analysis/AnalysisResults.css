@@ -145,17 +145,20 @@
   color: var(--text-secondary);
 }
 
-/* Responsive design */
+/* 移动端字体系统 */
 @media (max-width: 768px) {
+  /* 基础字体大小 */
   .results-card {
     border-radius: 8px;
     min-height: auto;
+    font-size: 14px;
   }
   
   .results-card .ant-card-body {
     padding: 12px;
   }
   
+  /* 标题层级 */
   .results-header {
     flex-direction: column;
     align-items: flex-start;
@@ -170,15 +173,19 @@
     margin-bottom: 10px;
   }
   
+  /* H3 标题 - 18px */
   .results-header h3 {
-    font-size: 18px;
+    font-size: 18px !important;
     margin: 0 0 4px 0 !important;
+    line-height: 1.3;
   }
   
+  /* 次要文字 - 13px */
   .results-header .ant-typography {
     font-size: 13px;
   }
   
+  /* 按钮区域 */
   .results-header .header-content {
     margin-bottom: 8px;
   }
@@ -195,6 +202,7 @@
     margin: 0 !important;
   }
   
+  /* 按钮 - 14px */
   .results-header .ant-btn {
     width: 100%;
     min-height: 38px;
@@ -209,6 +217,7 @@
     margin-right: 4px;
   }
   
+  /* 统计卡片 */
   .summary-cards {
     grid-template-columns: 1fr;
     gap: 8px;
@@ -228,49 +237,24 @@
     gap: 10px !important;
   }
   
+  /* 统计卡片图标 - 20px */
   .summary-cards .anticon {
     font-size: 20px !important;
   }
   
+  /* 统计卡片标签 - 13px */
   .summary-cards .ant-typography {
-    font-size: 12px;
+    font-size: 13px;
   }
   
+  /* 统计卡片数值 - 20px */
   .summary-cards h4 {
-    font-size: 18px !important;
+    font-size: 20px !important;
   }
   
+  /* 分析师报告卡片 */
   .analyst-report-card {
     border-radius: 6px;
-    margin-bottom: 10px;
-  }
-  
-  .analyst-report-card .ant-card-body {
-    padding: 12px;
-  }
-  
-  .key-points li {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 8px;
-  }
-  
-  /* Tabs 优化 */
-  .results-tabs .ant-tabs-tab {
-    font-size: 14px;
-    padding: 8px 10px;
-    min-height: 40px;
-  }
-  
-  .results-tabs .ant-tabs-tab .anticon {
-    margin-right: 4px;
-  }
-  
-  .results-tabs .ant-tabs-content-holder {
-    padding-top: 12px;
-  }
-  
-  .analyst-report-card {
     margin-bottom: 10px;
   }
   
@@ -279,8 +263,40 @@
     min-height: auto;
   }
   
+  /* 卡片标题 - 15px */
   .analyst-report-card .ant-card-head-title {
     font-size: 15px;
+  }
+  
+  .analyst-report-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  /* 正文内容 - 14px */
+  .analyst-report-card .ant-typography,
+  .key-points li {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  
+  .key-points li {
+    margin-bottom: 8px;
+  }
+  
+  /* Tabs 标签 - 14px */
+  .results-tabs .ant-tabs-tab {
+    font-size: 14px;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  
+  .results-tabs .ant-tabs-tab .anticon {
+    font-size: 14px;
+    margin-right: 4px;
+  }
+  
+  .results-tabs .ant-tabs-content-holder {
+    padding-top: 12px;
   }
   
   /* 表格横向滚动 */
@@ -294,16 +310,20 @@
   }
 }
 
+/* 小屏幕字体系统 (576px以下) */
 @media (max-width: 576px) {
+  /* 基础字体 - 13px */
   .results-card {
     margin: 0;
     border-radius: 6px;
+    font-size: 13px;
   }
   
   .results-card .ant-card-body {
     padding: 10px;
   }
   
+  /* 标题层级 */
   .results-header {
     margin-bottom: 10px;
     padding-bottom: 8px;
@@ -311,15 +331,19 @@
     border-bottom-width: 0.5px;
   }
   
+  /* H3 标题 - 16px */
   .results-header h3 {
-    font-size: 16px;
+    font-size: 16px !important;
     margin: 0 0 3px 0 !important;
+    line-height: 1.3;
   }
   
+  /* 次要文字 - 12px */
   .results-header .ant-typography {
     font-size: 12px;
   }
   
+  /* 按钮区域 */
   .results-header .header-content {
     margin-bottom: 6px;
   }
@@ -336,6 +360,7 @@
     margin: 0 !important;
   }
   
+  /* 按钮 - 13px */
   .results-header .ant-btn {
     width: 100%;
     min-height: 36px;
@@ -351,6 +376,7 @@
     margin-right: 3px;
   }
   
+  /* 统计卡片 */
   .summary-cards {
     gap: 6px;
     margin-bottom: 10px;
@@ -364,32 +390,51 @@
     gap: 8px !important;
   }
   
+  /* 统计卡片图标 - 18px */
   .summary-cards .anticon {
     font-size: 18px !important;
   }
   
+  /* 统计卡片标签 - 12px */
   .summary-cards .ant-typography {
-    font-size: 11px;
+    font-size: 12px;
   }
   
+  /* 统计卡片数值 - 18px */
   .summary-cards h4 {
-    font-size: 16px !important;
+    font-size: 18px !important;
   }
   
+  /* 分析师报告卡片 */
   .analyst-report-card {
     margin-bottom: 8px;
+  }
+  
+  .analyst-report-card .ant-card-head {
+    padding: 8px 10px;
+  }
+  
+  /* 卡片标题 - 14px */
+  .analyst-report-card .ant-card-head-title {
+    font-size: 14px;
   }
   
   .analyst-report-card .ant-card-body {
     padding: 10px;
   }
   
+  /* 正文内容 - 13px */
+  .analyst-report-card .ant-typography,
   .key-points li {
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.6;
+  }
+  
+  .key-points li {
     margin-bottom: 6px;
   }
   
+  /* Tabs 标签 - 13px */
   .results-tabs .ant-tabs-tab {
     font-size: 13px;
     padding: 6px 8px;
@@ -397,23 +442,11 @@
   }
   
   .results-tabs .ant-tabs-tab .anticon {
+    font-size: 13px;
     margin-right: 3px;
-    font-size: 14px;
   }
   
   .results-tabs .ant-tabs-content-holder {
     padding-top: 10px;
-  }
-  
-  .analyst-report-card .ant-card-head {
-    padding: 8px 10px;
-  }
-  
-  .analyst-report-card .ant-card-head-title {
-    font-size: 14px;
-  }
-  
-  .analyst-report-card .ant-card-body {
-    padding: 10px;
   }
 }

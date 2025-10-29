@@ -264,8 +264,13 @@
   .ant-card, .summary-card, .recommendation-stat { break-inside: avoid; page-break-inside: avoid; }
 }
 
-/* Responsive Styles */
+/* 移动端字体系统 */
 @media (max-width: 768px) {
+  /* 基础字体 - 14px */
+  .analysis-report {
+    font-size: 14px;
+  }
+  
   .report-header {
     flex-direction: column;
     gap: 0.75rem;
@@ -282,8 +287,15 @@
     gap: 0.125rem;
   }
   
+  /* H3 标题 - 18px (1.125rem) */
   .report-title {
-    font-size: 1.125rem !important;
+    font-size: 18px !important;
+    line-height: 1.3;
+  }
+  
+  /* 次要文字 - 13px */
+  .header-info .ant-typography {
+    font-size: 13px;
   }
   
   .header-actions {
@@ -297,6 +309,7 @@
     gap: 6px !important;
   }
   
+  /* 按钮 - 图标14px */
   .header-actions .ant-btn {
     flex: 1 1 calc(33.333% - 4px);
     min-width: 0;
@@ -343,11 +356,13 @@
     padding: 10px;
   }
   
+  /* 统计卡片标签 - 13px */
   .stat-card .ant-statistic-title {
     font-size: 13px;
     margin-bottom: 4px;
   }
   
+  /* 统计卡片数值 - 20px */
   .stat-card .ant-statistic-content {
     font-size: 20px;
   }
@@ -356,6 +371,7 @@
     padding: 0.75rem;
   }
   
+  /* 投资建议标签 - 14px */
   .recommendation-tag {
     margin-top: 4px;
     font-size: 14px;
@@ -377,14 +393,27 @@
   }
 }
 
+/* 小屏幕字体系统 (480px以下) */
 @media (max-width: 480px) {
+  /* 基础字体 - 13px */
+  .analysis-report {
+    font-size: 13px;
+  }
+  
   .report-header {
     padding: 0.5rem;
     gap: 0.5rem;
   }
   
+  /* H3 标题 - 16px */
   .report-title {
-    font-size: 1rem !important;
+    font-size: 16px !important;
+    line-height: 1.3;
+  }
+  
+  /* 次要文字 - 12px */
+  .header-info .ant-typography {
+    font-size: 12px;
   }
   
   .back-button {
@@ -446,15 +475,18 @@
     padding: 8px;
   }
   
+  /* 统计卡片标签 - 12px */
   .stat-card .ant-statistic-title {
-    font-size: 11px;
+    font-size: 12px;
     margin-bottom: 2px;
   }
   
+  /* 统计卡片数值 - 18px */
   .stat-card .ant-statistic-content {
-    font-size: 16px;
+    font-size: 18px;
   }
   
+  /* 统计卡片图标 - 16px */
   .stat-card .anticon {
     font-size: 16px;
   }
@@ -463,9 +495,10 @@
     padding: 0.5rem;
   }
   
+  /* 投资建议标签 - 13px */
   .recommendation-tag {
     margin-top: 2px;
-    font-size: 12px;
+    font-size: 13px;
     padding: 2px 8px;
   }
 }
