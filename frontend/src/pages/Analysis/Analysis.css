@@ -107,7 +107,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .analysis-page {
-    padding: 12px 8px;
+    padding: 8px 4px;
   }
   
   .analysis-header h2 {
@@ -115,29 +115,33 @@
   }
   
   .analysis-tabs {
-    padding: 8px;
+    padding: 4px;
     border-radius: 8px;
   }
   
   .analysis-tabs .ant-tabs-tab {
-    font-size: 15px;
-    padding: 10px 12px;
-    min-height: 44px;
+    font-size: 14px;
+    padding: 8px 10px;
+    min-height: 40px;
     display: flex;
     align-items: center;
   }
   
   .analysis-tabs .ant-tabs-nav {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .analysis-tabs .ant-tabs-content-holder {
+    padding-top: 8px;
   }
   
   /* 历史记录卡片优化 */
   .history-list .ant-card {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   
   .history-list .ant-card-body {
-    padding: 12px;
+    padding: 10px;
   }
   
   /* 批量操作工具栏 */
@@ -145,57 +149,85 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    padding: 12px;
+    padding: 10px;
   }
   
   .batch-operations {
     width: 100%;
     justify-content: flex-end;
   }
+  
+  /* 历史记录按钮优化 */
+  .history-list .ant-btn {
+    min-height: 36px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 576px) {
   .analysis-page {
-    padding: 8px 4px;
+    padding: 4px 2px;
   }
   
   .analysis-header {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
   
   .analysis-header h2 {
-    font-size: 20px;
+    font-size: 18px;
   }
   
   .analysis-tabs {
-    padding: 4px;
+    padding: 2px;
     margin: 0;
+    border-radius: 6px;
   }
   
   .analysis-tabs .ant-tabs-tab {
-    font-size: 14px;
-    padding: 8px 8px;
+    font-size: 13px;
+    padding: 6px 6px;
     flex: 1;
     justify-content: center;
+    min-height: 38px;
   }
   
   .analysis-tabs .ant-tabs-tab .anticon {
-    margin-right: 4px;
+    margin-right: 3px;
+    font-size: 14px;
+  }
+  
+  .analysis-tabs .ant-tabs-nav {
+    margin-bottom: 6px;
+  }
+  
+  .analysis-tabs .ant-tabs-content-holder {
+    padding-top: 6px;
   }
   
   .no-progress-message,
   .no-history-message {
-    padding: 40px 12px;
+    padding: 30px 10px;
   }
   
-  /* 历史记录操作按钮堆叠 */
+  /* 历史记录操作按钮优化 */
   .history-list .ant-space {
-    flex-direction: column;
+    flex-wrap: wrap;
     width: 100%;
+    gap: 6px !important;
   }
   
   .history-list .ant-btn {
-    width: 100%;
+    min-height: 32px;
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+  
+  .history-list .ant-card {
+    margin-bottom: 6px;
+  }
+  
+  .history-list .ant-card-body {
+    padding: 8px;
   }
 }
 /*
@@ -225,60 +257,60 @@
 /* 移动端优化 */
 @media (max-width: 992px) {
   .analysis-tabs .ant-col {
-    padding-left: 8px;
-    padding-right: 8px;
-    margin-bottom: 16px;
-  }
-  
-  .analysis-form-container,
-  .analysis-results-container {
-    padding: 16px;
-    min-height: 300px;
-  }
-}
-
-@media (max-width: 768px) {
-  .analysis-page {
-    padding: 16px 8px;
-  }
-  
-  .analysis-tabs {
-    padding: 12px 8px;
-    border-radius: 8px;
-  }
-  
-  .analysis-tabs .ant-col {
-    padding-left: 4px;
-    padding-right: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
     margin-bottom: 12px;
   }
   
   .analysis-form-container,
   .analysis-results-container {
     padding: 12px;
-    min-height: 250px;
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .analysis-page {
+    padding: 8px 4px;
+  }
+  
+  .analysis-tabs {
+    padding: 4px;
+    border-radius: 8px;
+  }
+  
+  .analysis-tabs .ant-col {
+    padding-left: 2px;
+    padding-right: 2px;
+    margin-bottom: 8px;
+  }
+  
+  .analysis-form-container,
+  .analysis-results-container {
+    padding: 10px;
+    min-height: auto;
   }
 }
 
 @media (max-width: 576px) {
   .analysis-page {
-    padding: 12px 4px;
+    padding: 4px 2px;
   }
   
   .analysis-tabs {
-    padding: 8px 4px;
+    padding: 2px;
     margin: 0;
   }
   
   .analysis-tabs .ant-tabs-tab {
-    font-size: 12px;
-    padding: 8px 6px;
+    font-size: 13px;
+    padding: 6px 4px;
   }
   
   .analysis-form-container,
   .analysis-results-container {
     padding: 8px;
-    min-height: 200px;
+    min-height: auto;
   }
 }
 
@@ -312,6 +344,14 @@
 .analysis-history .history-list .ant-card:hover {
   border-color: var(--accent-color);
   box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* 移动端触摸优化 */
+@media (max-width: 768px) {
+  .analysis-history .history-list .ant-card:active {
+    transform: scale(0.98);
+    background-color: var(--shadow-color);
+  }
 }
 
 .analysis-history .history-list .ant-card.selected {
@@ -395,6 +435,7 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    padding: 10px;
   }
   
   .batch-operations {
@@ -403,16 +444,23 @@
   }
   
   .analysis-history .history-list .ant-card .ant-card-body {
-    padding: 12px;
+    padding: 10px;
   }
   
   .analysis-history .history-list .ant-row {
-    flex-direction: column;
     gap: 8px;
   }
   
-  .analysis-history .history-list .ant-col:last-child {
-    align-self: flex-end;
+  .analysis-history .history-list .ant-space-vertical {
+    gap: 4px !important;
+  }
+  
+  .analysis-history .history-list .ant-typography {
+    font-size: 14px;
+  }
+  
+  .analysis-history .history-list .ant-tag {
+    font-size: 12px;
   }
 }
 
@@ -428,5 +476,26 @@
   
   .batch-operations .ant-btn {
     width: 100%;
+  }
+  
+  .batch-delete-toolbar {
+    padding: 8px;
+  }
+  
+  .analysis-history .history-list .ant-card .ant-card-body {
+    padding: 8px;
+  }
+  
+  .analysis-history .history-list .ant-typography {
+    font-size: 13px;
+  }
+  
+  .analysis-history .history-list .ant-tag {
+    font-size: 11px;
+    padding: 0 6px;
+  }
+  
+  .analysis-history h4 {
+    font-size: 16px;
   }
 }

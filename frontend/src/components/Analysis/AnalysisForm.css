@@ -113,15 +113,15 @@
   }
   
   .analysis-form-card .ant-card-body {
-    padding: 16px;
+    padding: 12px;
   }
   
   .form-header {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   
   .form-header h4 {
-    font-size: 20px;
+    font-size: 18px;
   }
   
   .analyst-checkbox-group .ant-col {
@@ -129,13 +129,17 @@
   }
   
   .analyst-checkbox {
-    margin-bottom: 12px;
-    padding: 14px;
-    font-size: 16px;
+    margin-bottom: 10px;
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .analysis-form .ant-form-item {
+    margin-bottom: 16px;
   }
   
   .analysis-form .ant-form-item-label > label {
-    font-size: 16px;
+    font-size: 15px;
     height: auto;
     line-height: 1.5;
   }
@@ -143,31 +147,68 @@
   .analysis-form .ant-select-selector,
   .analysis-form .ant-input,
   .analysis-form .ant-picker {
-    min-height: 44px;
-    font-size: 16px;
+    min-height: 42px;
+    font-size: 15px;
   }
   
   .ant-btn-primary {
-    height: 48px;
-    font-size: 17px;
+    height: 44px;
+    font-size: 16px;
+  }
+  
+  .analyst-team-display {
+    padding: 12px;
   }
 }
 
 @media (max-width: 576px) {
   .analysis-form-card {
     margin: 0;
-    border-radius: 8px;
+    border-radius: 6px;
   }
   
   .analysis-form-card .ant-card-body {
-    padding: 12px;
+    padding: 10px;
+  }
+  
+  .form-header {
+    margin-bottom: 12px;
   }
   
   .form-header h4 {
-    font-size: 18px;
+    font-size: 16px;
   }
   
   .analyst-checkbox {
-    padding: 12px;
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .analysis-form .ant-form-item {
+    margin-bottom: 12px;
+  }
+  
+  .analysis-form .ant-form-item-label > label {
+    font-size: 14px;
+  }
+  
+  .analysis-form .ant-select-selector,
+  .analysis-form .ant-input,
+  .analysis-form .ant-picker {
+    min-height: 40px;
+    font-size: 14px;
+  }
+  
+  .ant-btn-primary {
+    height: 42px;
+    font-size: 15px;
+  }
+  
+  .analyst-team-display {
+    padding: 10px;
+  }
+  
+  .analyst-card .ant-card-body {
+    padding: 8px;
   }
 }
