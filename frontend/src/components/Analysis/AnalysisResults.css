@@ -22,15 +22,62 @@
   gap: 8px;
 }
 
-.summary-highlight-card {
+/* 关键指标卡片 */
+.key-metrics-card {
   border: 2px solid var(--accent-color);
-  box-shadow: 0 4px 16px rgba(15, 118, 110, 0.1);
-  background: linear-gradient(to bottom, rgba(15, 118, 110, 0.02), transparent);
+  box-shadow: 0 6px 20px rgba(15, 118, 110, 0.15);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.03), rgba(15, 118, 110, 0.01));
 }
 
-.summary-highlight-card .ant-card-head {
-  background: rgba(15, 118, 110, 0.05);
-  border-bottom: 1px solid var(--accent-color);
+.key-metrics-card .ant-card-body {
+  padding: 24px;
+}
+
+.metric-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.metric-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.metric-icon {
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.metric-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: 14px;
+  margin: 0;
+}
+
+.metric-value {
+  margin: 0 !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
 }
 
 .loading-container {
@@ -354,49 +401,28 @@
     margin-right: 4px;
   }
   
-  /* 快速操作按钮 */
-  .overview-section .ant-space {
-    width: 100%;
+  /* 关键指标卡片 */
+  .key-metrics-card .ant-card-body {
+    padding: 12px;
   }
   
-  .overview-section .ant-space .ant-btn {
-    flex: 1;
-    min-width: 0;
+  .metric-item {
+    padding: 12px;
+    gap: 12px;
   }
   
-  /* 统计卡片 */
-  .summary-cards {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    margin-bottom: 12px;
-    flex-direction: column;
+  .metric-icon {
+    font-size: 32px;
+    width: 50px;
+    height: 50px;
   }
   
-  .summary-cards > .ant-card {
-    margin-bottom: 0;
-  }
-  
-  .summary-cards .ant-card-body {
-    padding: 10px;
-  }
-  
-  .summary-cards .ant-card-body > div {
-    gap: 10px !important;
-  }
-  
-  /* 统计卡片图标 - 20px */
-  .summary-cards .anticon {
-    font-size: 20px !important;
-  }
-  
-  /* 统计卡片标签 - 13px */
-  .summary-cards .ant-typography {
+  .metric-label {
     font-size: 13px;
   }
   
-  /* 统计卡片数值 - 20px */
-  .summary-cards h4 {
-    font-size: 20px !important;
+  .metric-value {
+    font-size: 22px !important;
   }
   
   /* 分析师报告卡片 */
@@ -517,43 +543,28 @@
     margin-right: 3px;
   }
   
-  /* 快速操作按钮 */
-  .overview-section .ant-space {
-    width: 100%;
-    flex-direction: column;
+  /* 关键指标卡片 */
+  .key-metrics-card .ant-card-body {
+    padding: 10px;
   }
   
-  .overview-section .ant-space .ant-btn {
-    width: 100%;
+  .metric-item {
+    padding: 10px;
+    gap: 10px;
   }
   
-  /* 统计卡片 */
-  .summary-cards {
-    gap: 6px;
-    margin-bottom: 10px;
+  .metric-icon {
+    font-size: 28px;
+    width: 45px;
+    height: 45px;
   }
   
-  .summary-cards .ant-card-body {
-    padding: 8px;
-  }
-  
-  .summary-cards .ant-card-body > div {
-    gap: 8px !important;
-  }
-  
-  /* 统计卡片图标 - 18px */
-  .summary-cards .anticon {
-    font-size: 18px !important;
-  }
-  
-  /* 统计卡片标签 - 12px */
-  .summary-cards .ant-typography {
+  .metric-label {
     font-size: 12px;
   }
   
-  /* 统计卡片数值 - 18px */
-  .summary-cards h4 {
-    font-size: 18px !important;
+  .metric-value {
+    font-size: 20px !important;
   }
   
   /* 分析师报告卡片 */

@@ -11,6 +11,8 @@ import {
   Alert,
   Spin,
   message,
+  Row,
+  Col,
 } from 'antd';
 import { 
   BarChartOutlined,
@@ -22,7 +24,6 @@ import {
   DollarOutlined,
   LineChartOutlined,
   EyeOutlined,
-  HistoryOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -210,14 +211,69 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
 
     return (
       <div className="overview-section">
-        {/* 投资建议摘要 - 最重要，放在最上面并高亮 */}
+        {/* 关键指标 - 最重要，一眼就能看到 */}
+        <Card className="key-metrics-card" style={{ marginBottom: '24px' }}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={8}>
+              <div className="metric-item">
+                <div className="metric-icon" style={{ color: 'var(--success-color)' }}>
+                  <TrophyOutlined />
+                </div>
+                <div className="metric-content">
+                  <Text type="secondary" className="metric-label">置信度</Text>
+                  <Title level={3} className="metric-value" style={{ color: 'var(--success-color)' }}>
+                    {getConfidence()}
+                  </Title>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} sm={8}>
+              <div className="metric-item">
+                <div className="metric-icon" style={{ color: 'var(--warning-color)' }}>
+                  <DollarOutlined />
+                </div>
+                <div className="metric-content">
+                  <Text type="secondary" className="metric-label">目标价格</Text>
+                  <Title level={3} className="metric-value" style={{ color: 'var(--warning-color)' }}>
+                    ¥{getTargetPrice()}
+                  </Title>
+                </div>
+              </div>
+            </Col>
+            <Col xs={24} sm={8}>
+              <div className="metric-item">
+                <div 
+                  className="metric-icon" 
+                  style={{ 
+                    color: getRecommendation() === '买入' ? '#52c41a' : 
+                           getRecommendation() === '卖出' ? '#ff4d4f' : 
+                           'var(--accent-color)' 
+                  }}
+                >
+                  <LineChartOutlined />
+                </div>
+                <div className="metric-content">
+                  <Text type="secondary" className="metric-label">投资建议</Text>
+                  <Title 
+                    level={3} 
+                    className="metric-value"
+                    style={{ 
+                      color: getRecommendation() === '买入' ? '#52c41a' : 
+                             getRecommendation() === '卖出' ? '#ff4d4f' : 
+                             'var(--accent-color)' 
+                    }}
+                  >
+                    {getRecommendation()}
+                  </Title>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </Card>
+
+        {/* 投资建议摘要 */}
         <Card 
-          title={
-            <span style={{ fontSize: '16px', fontWeight: 600 }}>
-              💡 投资建议摘要
-            </span>
-          }
-          className="summary-highlight-card" 
+          title="💡 投资建议摘要"
           style={{ marginBottom: '24px' }}
         >
           <div className="markdown-content">
@@ -227,64 +283,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
           </div>
         </Card>
 
-        {/* 关键指标卡片 */}
-        <div
-          className="summary-cards"
-          style={{ display: 'flex', gap: '16px', marginBottom: '24px', justifyContent: 'center' }}
-        >
-          <Card size="small" style={{ flex: 1, maxWidth: '280px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
-              <TrophyOutlined style={{ fontSize: '32px', color: 'var(--success-color)' }} />
-              <Text type="secondary">置信度</Text>
-              <Title level={4} style={{ margin: 0, color: 'var(--success-color)' }}>
-                {getConfidence()}
-              </Title>
-            </div>
-          </Card>
-
-          <Card size="small" style={{ flex: 1, maxWidth: '280px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
-              <DollarOutlined style={{ fontSize: '32px', color: 'var(--warning-color)' }} />
-              <Text type="secondary">目标价格</Text>
-              <Title level={4} style={{ margin: 0, color: 'var(--warning-color)' }}>
-                ¥{getTargetPrice()}
-              </Title>
-            </div>
-          </Card>
-
-          <Card size="small" style={{ flex: 1, maxWidth: '280px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
-              <LineChartOutlined
-                style={{
-                  fontSize: '32px',
-                  color:
-                    getRecommendation() === '买入'
-                      ? '#52c41a'
-                      : getRecommendation() === '卖出'
-                        ? '#ff4d4f'
-                        : 'var(--accent-color)',
-                }}
-              />
-              <Text type="secondary">投资建议</Text>
-              <Title
-                level={4}
-                style={{
-                  margin: 0,
-                  color:
-                    getRecommendation() === '买入'
-                      ? '#52c41a'
-                      : getRecommendation() === '卖出'
-                        ? '#ff4d4f'
-                        : 'var(--accent-color)',
-                }}
-              >
-                {getRecommendation()}
-              </Title>
-            </div>
-          </Card>
-        </div>
-
-        <Descriptions title="基本信息" bordered column={2} style={{ marginBottom: '24px' }}>
+        <Descriptions title="基本信息" bordered column={2}>
           <Descriptions.Item label="股票代码">{analysis.stockCode}</Descriptions.Item>
           <Descriptions.Item label="分析时间">
             {new Date(analysis.createdAt).toLocaleString()}
@@ -296,40 +295,6 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             <Tag color="success">已完成</Tag>
           </Descriptions.Item>
         </Descriptions>
-
-        {/* 快速操作区域 */}
-        <Card title="⚡ 快速操作" size="small">
-          <Space wrap>
-            <Button 
-              icon={<BarChartOutlined />}
-              onClick={() => {
-                // 滚动到顶部，让用户可以修改参数
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              修改参数重新分析
-            </Button>
-            <Button 
-              icon={<HistoryOutlined />}
-              onClick={() => {
-                // 切换到历史记录 tab
-                const tabElement = document.querySelector('[data-node-key="history"]') as HTMLElement;
-                if (tabElement) {
-                  tabElement.click();
-                }
-              }}
-            >
-              查看历史分析
-            </Button>
-            <Button 
-              icon={<EyeOutlined />}
-              type="primary"
-              onClick={() => navigate(`/analysis/report/${analysis.id}`)}
-            >
-              查看完整报告
-            </Button>
-          </Space>
-        </Card>
       </div>
     );
   };
