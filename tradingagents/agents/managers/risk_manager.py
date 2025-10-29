@@ -22,7 +22,7 @@ def create_risk_manager(llm, memory):
         risk_debate_state = state["risk_debate_state"]
         market_research_report = state["market_report"]
         news_report = state["news_report"]
-        fundamentals_report = state["news_report"]
+        fundamentals_report = state["fundamentals_report"]  # 🐛 修复：应该是 fundamentals_report 而不是 news_report
         sentiment_report = state["sentiment_report"]
         trader_plan = state["investment_plan"]
 
@@ -39,6 +39,28 @@ def create_risk_manager(llm, memory):
         for i, rec in enumerate(past_memories, 1):
             past_memory_str += rec["recommendation"] + "\n\n"
 
+        # 获取市场热度信息（如果有的话）
+        market_heat_info = ""
+        if "market_heat_score" in state and "market_heat_level" in state:
+            heat_score = state["market_heat_score"]
+            heat_level = state["market_heat_level"]
+            heat_data = state.get("market_heat_data", {})
+            risk_adj = heat_data.get("risk_adjustment", {})
+            
+            market_heat_info = f"""
+**当前市场热度：**
+- 热度评分：{heat_score:.1f} / 100
+- 热度等级：{heat_level}
+- 建议仓位倍数：{risk_adj.get('position_multiplier', 1.0):.2f}x
+- 建议止损收紧系数：{risk_adj.get('stop_loss_tightness', 1.0):.2f}x
+
+**市场热度说明：**
+{heat_data.get('recommendation', '无市场热度建议')}
+
+请在制定最终决策时，充分考虑当前市场热度状态。
+"""
+            logger.info(f"🌡️ [Risk Manager] 市场热度: {heat_score:.1f}（{heat_level}）")
+
         prompt = f"""作为风险管理委员会主席和辩论主持人，您的目标是评估三位风险分析师——激进、中性和安全/保守——之间的辩论，并确定交易员的最佳行动方案。您的决策必须产生明确的建议：买入、卖出或持有。只有在有具体论据强烈支持时才选择持有，而不是在所有方面都似乎有效时作为后备选择。力求清晰和果断。
 
 决策指导原则：
@@ -46,10 +68,14 @@ def create_risk_manager(llm, memory):
 2. **提供理由**：用辩论中的直接引用和反驳论点支持您的建议。
 3. **完善交易员计划**：从交易员的原始计划**{trader_plan}**开始，根据分析师的见解进行调整。
 4. **从过去的错误中学习**：使用**{past_memory_str}**中的经验教训来解决先前的误判，改进您现在做出的决策，确保您不会做出错误的买入/卖出/持有决定而亏损。
+5. **考虑市场热度**：根据当前市场整体热度状态，调整仓位和止损建议。
+
+{market_heat_info}
 
 交付成果：
 - 明确且可操作的建议：买入、卖出或持有。
 - 基于辩论和过去反思的详细推理。
+- 根据市场热度调整后的具体仓位和止损建议。
 
 ---
 

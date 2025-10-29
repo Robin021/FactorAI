@@ -67,6 +67,15 @@ class AgentState(MessagesState):
         str, "Report from the News Researcher of current world affairs"
     ]
     fundamentals_report: Annotated[str, "Report from the Fundamentals Researcher"]
+    
+    # market sentiment analysis
+    market_sentiment_report: Annotated[str, "Report from the Market Sentiment Analyst"]
+    sentiment_score: Annotated[float, "Market sentiment score (0-100)"]
+
+    # market heat analysis (新增)
+    market_heat_score: Annotated[float, "Market heat score (0-100)"]
+    market_heat_level: Annotated[str, "Market heat level (极冷/冷淡/正常/火热/沸腾)"]
+    market_heat_data: Annotated[dict, "Market heat raw data"]
 
     # researcher team discussion step
     investment_debate_state: Annotated[

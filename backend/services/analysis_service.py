@@ -141,7 +141,7 @@ class AnalysisService:
             return self._trading_graphs[config_key]
         
         # Create new TradingAgentsGraph instance
-        selected_analysts = analysis_request.analysts or ["market", "news", "fundamentals"]
+        selected_analysts = analysis_request.analysts or ["market", "news", "fundamentals", "market_sentiment"]
         
         trading_graph = TradingAgentsGraph(
             selected_analysts=selected_analysts,

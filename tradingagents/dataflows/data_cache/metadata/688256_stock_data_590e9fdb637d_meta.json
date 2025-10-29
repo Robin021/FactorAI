@@ -1,0 +1,12 @@
+{
+  "symbol": "688256",
+  "data_type": "stock_data",
+  "market_type": "china",
+  "start_date": null,
+  "end_date": null,
+  "data_source": "tushare",
+  "file_path": "/Users/robin/VSCode/BigA/TradingAgents-CN/tradingagents/dataflows/data_cache/china_stocks/688256_stock_data_590e9fdb637d.csv",
+  "file_format": "csv",
+  "content_length": 1774,
+  "cached_at": "2025-10-29T11:54:46.608777"
+}

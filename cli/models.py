@@ -12,3 +12,4 @@ class AnalystType(str, Enum):
     SOCIAL = "social"
     NEWS = "news"
     FUNDAMENTALS = "fundamentals"
+    MARKET_SENTIMENT = "market_sentiment"  # 市场情绪分析师

@@ -358,6 +358,17 @@ class TradingAgentsGraph:
                     self.toolkit.get_google_news,
                 ]
             ),
+            "market_sentiment": ToolNode(
+                [
+                    # 市场情绪分析工具
+                    self.toolkit.get_stock_news_openai,
+                    self.toolkit.get_reddit_stock_info,
+                    self.toolkit.get_global_news_openai,
+                    self.toolkit.get_google_news,
+                    self.toolkit.get_stock_market_data_unified,
+                    self.toolkit.get_YFin_data_online,
+                ]
+            ),
             "risk": ToolNode(
                 [
                     # 风险分析工具，复用基本面工具
@@ -447,6 +458,8 @@ class TradingAgentsGraph:
             "sentiment_report": final_state["sentiment_report"],
             "news_report": final_state["news_report"],
             "fundamentals_report": final_state["fundamentals_report"],
+            "market_sentiment_report": final_state.get("market_sentiment_report", ""),
+            "sentiment_score": final_state.get("sentiment_score", 0.0),
             "investment_debate_state": {
                 "bull_history": final_state["investment_debate_state"]["bull_history"],
                 "bear_history": final_state["investment_debate_state"]["bear_history"],

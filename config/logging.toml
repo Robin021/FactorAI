@@ -53,6 +53,18 @@ level = "INFO"
 [logging.loggers.llm_adapters]
 level = "INFO"
 
+# 市场情绪分析师日志
+[logging.loggers.sentiment_analyst]
+level = "INFO"
+
+# 情绪数据源日志
+[logging.loggers.sentiment_data_sources]
+level = "INFO"
+
+# 情绪计算器日志
+[logging.loggers.sentiment_calculator]
+level = "DEBUG"
+
 # 第三方库日志（通常设置为WARNING减少噪音）
 [logging.loggers.streamlit]
 level = "WARNING"

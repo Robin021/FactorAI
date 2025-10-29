@@ -8,6 +8,7 @@ from langgraph.prebuilt import ToolNode
 from tradingagents.agents import *
 from tradingagents.agents.utils.agent_states import AgentState
 from tradingagents.agents.utils.agent_utils import Toolkit
+from tradingagents.agents.utils.market_heat_node import create_market_heat_evaluator
 
 from .conditional_logic import ConditionalLogic
 
@@ -106,6 +107,13 @@ class GraphSetup:
             delete_nodes["social"] = create_msg_delete()
             tool_nodes["social"] = self.tool_nodes["social"]
 
+        if "market_sentiment" in selected_analysts:
+            analyst_nodes["market_sentiment"] = create_market_sentiment_analyst(
+                self.quick_thinking_llm, self.toolkit, self.progress_callback
+            )
+            delete_nodes["market_sentiment"] = create_msg_delete()
+            tool_nodes["market_sentiment"] = self.tool_nodes["market_sentiment"]
+
         if "news" in selected_analysts:
             analyst_nodes["news"] = create_news_analyst(
                 self.quick_thinking_llm, self.toolkit, self.progress_callback
@@ -187,14 +195,31 @@ class GraphSetup:
         # Create workflow
         workflow = StateGraph(AgentState)
 
+        # Create proper display names for analysts
+        analyst_display_names = {
+            "market": "Market",
+            "social": "Social",
+            "news": "News",
+            "fundamentals": "Fundamentals",
+            "technical": "Technical",
+            "sentiment": "Sentiment",
+            "market_sentiment": "Market_sentiment",
+            "risk": "Risk"
+        }
+
         # Add analyst nodes to the graph
         for analyst_type, node in analyst_nodes.items():
-            workflow.add_node(f"{analyst_type.capitalize()} Analyst", node)
+            display_name = analyst_display_names.get(analyst_type, analyst_type.capitalize())
+            workflow.add_node(f"{display_name} Analyst", node)
             workflow.add_node(
-                f"Msg Clear {analyst_type.capitalize()}", delete_nodes[analyst_type]
+                f"Msg Clear {display_name}", delete_nodes[analyst_type]
             )
             workflow.add_node(f"tools_{analyst_type}", tool_nodes[analyst_type])
 
+        # Add market heat evaluator node (新增)
+        market_heat_evaluator = create_market_heat_evaluator()
+        workflow.add_node("Market Heat Evaluator", market_heat_evaluator)
+        
         # Add other nodes
         workflow.add_node("Bull Researcher", bull_researcher_node)
         workflow.add_node("Bear Researcher", bear_researcher_node)
@@ -206,15 +231,20 @@ class GraphSetup:
         workflow.add_node("Risk Judge", risk_manager_node)
 
         # Define edges
-        # Start with the first analyst
+        # Start with market heat evaluation (修改：先评估市场热度)
+        workflow.add_edge(START, "Market Heat Evaluator")
+        
+        # Then proceed to the first analyst
         first_analyst = selected_analysts[0]
-        workflow.add_edge(START, f"{first_analyst.capitalize()} Analyst")
+        first_display_name = analyst_display_names.get(first_analyst, first_analyst.capitalize())
+        workflow.add_edge("Market Heat Evaluator", f"{first_display_name} Analyst")
 
         # Connect analysts in sequence
         for i, analyst_type in enumerate(selected_analysts):
-            current_analyst = f"{analyst_type.capitalize()} Analyst"
+            display_name = analyst_display_names.get(analyst_type, analyst_type.capitalize())
+            current_analyst = f"{display_name} Analyst"
             current_tools = f"tools_{analyst_type}"
-            current_clear = f"Msg Clear {analyst_type.capitalize()}"
+            current_clear = f"Msg Clear {display_name}"
 
             # Add conditional edges for current analyst（显式名称映射，避免歧义）
             condition_fn = getattr(self.conditional_logic, f"should_continue_{analyst_type}")
@@ -237,7 +267,9 @@ class GraphSetup:
 
             # Connect to next analyst or to Bull Researcher if this is the last analyst
             if i < len(selected_analysts) - 1:
-                next_analyst = f"{selected_analysts[i+1].capitalize()} Analyst"
+                next_analyst_type = selected_analysts[i+1]
+                next_display_name = analyst_display_names.get(next_analyst_type, next_analyst_type.capitalize())
+                next_analyst = f"{next_display_name} Analyst"
                 workflow.add_edge(current_clear, next_analyst)
             else:
                 workflow.add_edge(current_clear, "Bull Researcher")

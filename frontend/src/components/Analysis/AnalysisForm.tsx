@@ -35,7 +35,6 @@ interface AnalysisFormData {
   stockCode: string;
   marketType: string;
   analysisDate: dayjs.Dayjs;
-  analysts: string[];
   researchDepth: number;
 }
 
@@ -51,32 +50,31 @@ const AnalysisForm: React.FC = () => {
     { value: '港股', label: '🇭🇰 港股市场', description: '香港股票市场' },
   ];
 
-  // Analyst options
-  const analystOptions = [
+  // Analyst team - 固定的分析师团队，不再让用户选择
+  const analystTeam = [
     {
       value: 'market',
       label: '市场分析师',
       icon: '📈',
-      description: '专注于技术面分析、价格趋势、技术指标',
-    },
-    {
-      value: 'fundamentals',
-      label: '基本面分析师',
-      icon: '💰',
-      description: '分析财务数据、公司基本面、估值水平',
+      description: '技术面分析、价格趋势、技术指标',
     },
     {
       value: 'news',
       label: '新闻分析师',
       icon: '📰',
-      description: '分析相关新闻事件、市场动态影响',
+      description: '新闻事件分析、市场动态影响',
     },
     {
-      value: 'social',
-      label: '社交媒体分析师',
-      icon: '💭',
-      description: '分析社交媒体情绪、投资者情绪指标',
-      disabled: selectedMarket === 'A股',
+      value: 'fundamentals',
+      label: '基本面分析师',
+      icon: '💰',
+      description: '财务数据、公司基本面、估值水平',
+    },
+    {
+      value: 'market_sentiment',
+      label: '市场情绪分析师',
+      icon: '📊',
+      description: '多维度情绪评估、综合情绪评分',
     },
   ];
 
@@ -94,14 +92,6 @@ const AnalysisForm: React.FC = () => {
     
     // Clear stock code when market changes
     form.setFieldValue('stockCode', '');
-    
-    // Adjust analysts when switching to/from A股
-    const currentAnalysts = form.getFieldValue('analysts') || [];
-    if (value === 'A股') {
-      // Remove social media analyst for A股
-      const filteredAnalysts = currentAnalysts.filter((analyst: string) => analyst !== 'social');
-      form.setFieldValue('analysts', filteredAnalysts);
-    }
   };
 
   const getStockCodePlaceholder = (market: string) => {
@@ -135,11 +125,12 @@ const AnalysisForm: React.FC = () => {
 
   const handleSubmit = async (values: AnalysisFormData) => {
     try {
+      // 使用固定的分析师团队，不再从表单获取
       const analysisRequest: AnalysisRequest = {
         symbol: values.stockCode.toUpperCase(),
         market_type: values.marketType === 'A股' ? 'CN' : values.marketType === '美股' ? 'US' : 'HK',
         analysis_type: 'comprehensive',
-        analysts: values.analysts,
+        analysts: ['market', 'news', 'fundamentals', 'market_sentiment'], // 固定的分析师团队
         research_depth: values.researchDepth,
       };
 
@@ -165,7 +156,6 @@ const AnalysisForm: React.FC = () => {
         initialValues={{
           marketType: 'A股',
           analysisDate: dayjs(),
-          analysts: ['market', 'fundamentals'],
           researchDepth: 3,
         }}
         className="analysis-form"
@@ -272,59 +262,41 @@ const AnalysisForm: React.FC = () => {
           </Col>
 
           <Col span={24}>
-            <Form.Item
-              name="analysts"
-              label={
+            <div className="analyst-team-display">
+              <div className="analyst-team-header">
                 <Space>
                   <TeamOutlined />
-                  选择分析师团队
+                  <Text strong>分析师团队</Text>
                 </Space>
-              }
-              rules={[
-                { required: true, message: '请至少选择一个分析师' },
-                { type: 'array', min: 1, message: '请至少选择一个分析师' },
-              ]}
-            >
-              <Checkbox.Group className="analyst-checkbox-group">
-                <Row gutter={[16, 16]}>
-                  {analystOptions.map((analyst) => (
-                    <Col span={12} key={analyst.value}>
-                      <Tooltip 
-                        title={analyst.disabled ? 'A股市场暂不支持社交媒体分析' : analyst.description}
-                      >
-                        <Checkbox
-                          value={analyst.value}
-                          disabled={analyst.disabled}
-                          className="analyst-checkbox"
-                        >
-                          <Space direction="vertical" size={0}>
-                            <Text strong>
-                              {analyst.icon} {analyst.label}
-                            </Text>
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
-                              {analyst.description}
-                            </Text>
-                          </Space>
-                        </Checkbox>
-                      </Tooltip>
-                    </Col>
-                  ))}
-                </Row>
-              </Checkbox.Group>
-            </Form.Item>
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  系统将自动调用以下专业分析师团队进行全面分析
+                </Text>
+              </div>
+              <Row gutter={[16, 16]} style={{ marginTop: 12 }}>
+                {analystTeam.map((analyst) => (
+                  <Col span={12} key={analyst.value}>
+                    <Card 
+                      size="small" 
+                      className="analyst-card"
+                      style={{ 
+                        background: 'var(--card-bg)',
+                        border: '1px solid var(--border-color)',
+                      }}
+                    >
+                      <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                        <Text strong style={{ fontSize: '14px' }}>
+                          {analyst.icon} {analyst.label}
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          {analyst.description}
+                        </Text>
+                      </Space>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            </div>
           </Col>
-
-          {selectedMarket === 'A股' && (
-            <Col span={24}>
-              <Alert
-                message="A股市场说明"
-                description="A股市场暂不支持社交媒体分析，因为国内数据源限制。"
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-            </Col>
-          )}
 
           <Col span={24}>
             <Form.Item>

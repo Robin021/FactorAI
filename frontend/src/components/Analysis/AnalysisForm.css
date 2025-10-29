@@ -46,32 +46,36 @@
   box-shadow: 0 0 0 2px rgba(212, 165, 116, 0.2);
 }
 
-.analyst-checkbox-group {
+/* 分析师团队展示样式 */
+.analyst-team-display {
   width: 100%;
-}
-
-.analyst-checkbox {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #f0f0f0;
+  padding: 16px;
   border-radius: 8px;
+  background: rgba(244, 241, 222, 0.03);
+  border: 1px solid rgba(244, 241, 222, 0.15);
+}
+
+.analyst-team-header {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.analyst-card {
+  height: 100%;
   transition: all 0.3s ease;
-  background: #fafafa;
+  cursor: default;
 }
 
-.analyst-checkbox:hover {
-  border-color: var(--accent-color);
-  background: #f6ffed;
+.analyst-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.2);
+  border-color: rgba(212, 165, 116, 0.3) !important;
 }
 
-.analyst-checkbox.ant-checkbox-wrapper-checked {
-  border-color: var(--accent-color);
-  background: #e6f7ff;
-}
-
-.analyst-checkbox .ant-checkbox {
-  align-self: flex-start;
-  margin-top: 2px;
+.analyst-card .ant-card-body {
+  padding: 12px;
 }
 
 .ant-slider-mark-text {
