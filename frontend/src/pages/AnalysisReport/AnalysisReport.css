@@ -327,7 +327,8 @@
   }
   
   .overview-stats {
-    gap: 12px !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
   }
   
   .overview-stats .ant-col {
@@ -339,7 +340,26 @@
   }
   
   .stat-card .ant-card-body {
-    padding: 12px;
+    padding: 10px;
+  }
+  
+  .stat-card .ant-statistic-title {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  
+  .stat-card .ant-statistic-content {
+    font-size: 20px;
+  }
+  
+  .recommendation-stat {
+    padding: 0.75rem;
+  }
+  
+  .recommendation-tag {
+    margin-top: 4px;
+    font-size: 14px;
+    padding: 4px 10px;
   }
   
   .history-controls {
@@ -406,18 +426,47 @@
   
   .report-tabs .ant-tabs-tab .anticon {
     font-size: 14px;
+    margin-right: 4px;
+  }
+  
+  .summary-card {
+    margin-bottom: 12px;
+  }
+  
+  .summary-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  .overview-stats {
+    gap: 6px !important;
+    margin-bottom: 10px !important;
   }
   
   .stat-card .ant-card-body {
-    padding: 10px;
+    padding: 8px;
   }
   
   .stat-card .ant-statistic-title {
-    font-size: 12px;
+    font-size: 11px;
+    margin-bottom: 2px;
   }
   
   .stat-card .ant-statistic-content {
-    font-size: 18px;
+    font-size: 16px;
+  }
+  
+  .stat-card .anticon {
+    font-size: 16px;
+  }
+  
+  .recommendation-stat {
+    padding: 0.5rem;
+  }
+  
+  .recommendation-tag {
+    margin-top: 2px;
+    font-size: 12px;
+    padding: 2px 8px;
   }
 }
 

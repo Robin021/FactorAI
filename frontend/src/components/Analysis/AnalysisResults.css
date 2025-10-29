@@ -197,25 +197,33 @@
   
   .summary-cards {
     grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 16px;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-direction: column;
   }
   
-  .summary-card {
-    border-radius: 6px;
+  .summary-cards > .ant-card {
+    margin-bottom: 0;
   }
   
-  .summary-card .ant-card-body {
+  .summary-cards .ant-card-body {
     padding: 10px;
   }
   
-  .summary-item {
-    padding: 0;
+  .summary-cards .ant-card-body > div {
+    gap: 10px !important;
   }
   
-  .summary-icon {
-    font-size: 24px;
-    padding: 6px;
+  .summary-cards .anticon {
+    font-size: 20px !important;
+  }
+  
+  .summary-cards .ant-typography {
+    font-size: 12px;
+  }
+  
+  .summary-cards h4 {
+    font-size: 18px !important;
   }
   
   .analyst-report-card {
@@ -240,8 +248,25 @@
     min-height: 40px;
   }
   
+  .results-tabs .ant-tabs-tab .anticon {
+    margin-right: 4px;
+  }
+  
   .results-tabs .ant-tabs-content-holder {
     padding-top: 12px;
+  }
+  
+  .analyst-report-card {
+    margin-bottom: 10px;
+  }
+  
+  .analyst-report-card .ant-card-head {
+    padding: 10px 12px;
+    min-height: auto;
+  }
+  
+  .analyst-report-card .ant-card-head-title {
+    font-size: 15px;
   }
   
   /* 表格横向滚动 */
@@ -295,17 +320,28 @@
   }
   
   .summary-cards {
-    gap: 8px;
-    margin-bottom: 12px;
+    gap: 6px;
+    margin-bottom: 10px;
   }
   
-  .summary-card .ant-card-body {
+  .summary-cards .ant-card-body {
     padding: 8px;
   }
   
-  .summary-icon {
-    font-size: 20px;
-    padding: 5px;
+  .summary-cards .ant-card-body > div {
+    gap: 8px !important;
+  }
+  
+  .summary-cards .anticon {
+    font-size: 18px !important;
+  }
+  
+  .summary-cards .ant-typography {
+    font-size: 11px;
+  }
+  
+  .summary-cards h4 {
+    font-size: 16px !important;
   }
   
   .analyst-report-card {
@@ -328,7 +364,24 @@
     min-height: 38px;
   }
   
+  .results-tabs .ant-tabs-tab .anticon {
+    margin-right: 3px;
+    font-size: 14px;
+  }
+  
   .results-tabs .ant-tabs-content-holder {
     padding-top: 10px;
+  }
+  
+  .analyst-report-card .ant-card-head {
+    padding: 8px 10px;
+  }
+  
+  .analyst-report-card .ant-card-head-title {
+    font-size: 14px;
+  }
+  
+  .analyst-report-card .ant-card-body {
+    padding: 10px;
   }
 }
