@@ -24,6 +24,7 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { Analysis } from '@/types';
 import { useAnalysis } from '@/hooks/useAnalysis';
 import './AnalysisResults.css';
@@ -210,37 +211,33 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
       <div className="overview-section">
         <div
           className="summary-cards"
-          style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}
+          style={{ display: 'flex', gap: '16px', marginBottom: '24px', justifyContent: 'center' }}
         >
-          <Card size="small" style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <TrophyOutlined style={{ fontSize: '24px', color: 'var(--success-color)' }} />
-              <div>
-                <Text type="secondary">置信度</Text>
-                <Title level={4} style={{ margin: 0, color: 'var(--success-color)' }}>
-                  {getConfidence()}
-                </Title>
-              </div>
+          <Card size="small" style={{ flex: 1, maxWidth: '280px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
+              <TrophyOutlined style={{ fontSize: '32px', color: 'var(--success-color)' }} />
+              <Text type="secondary">置信度</Text>
+              <Title level={4} style={{ margin: 0, color: 'var(--success-color)' }}>
+                {getConfidence()}
+              </Title>
             </div>
           </Card>
 
-          <Card size="small" style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <DollarOutlined style={{ fontSize: '24px', color: 'var(--warning-color)' }} />
-              <div>
-                <Text type="secondary">目标价格</Text>
-                <Title level={4} style={{ margin: 0, color: 'var(--warning-color)' }}>
-                  ¥{getTargetPrice()}
-                </Title>
-              </div>
+          <Card size="small" style={{ flex: 1, maxWidth: '280px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
+              <DollarOutlined style={{ fontSize: '32px', color: 'var(--warning-color)' }} />
+              <Text type="secondary">目标价格</Text>
+              <Title level={4} style={{ margin: 0, color: 'var(--warning-color)' }}>
+                ¥{getTargetPrice()}
+              </Title>
             </div>
           </Card>
 
-          <Card size="small" style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Card size="small" style={{ flex: 1, maxWidth: '280px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', textAlign: 'center' }}>
               <LineChartOutlined
                 style={{
-                  fontSize: '24px',
+                  fontSize: '32px',
                   color:
                     getRecommendation() === '买入'
                       ? '#52c41a'
@@ -249,31 +246,29 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
                         : 'var(--accent-color)',
                 }}
               />
-              <div>
-                <Text type="secondary">投资建议</Text>
-                <Title
-                  level={4}
-                  style={{
-                    margin: 0,
-                    color:
-                      getRecommendation() === '买入'
-                        ? '#52c41a'
-                        : getRecommendation() === '卖出'
-                          ? '#ff4d4f'
-                          : 'var(--accent-color)',
-                  }}
-                >
-                  {getRecommendation()}
-                </Title>
-              </div>
+              <Text type="secondary">投资建议</Text>
+              <Title
+                level={4}
+                style={{
+                  margin: 0,
+                  color:
+                    getRecommendation() === '买入'
+                      ? '#52c41a'
+                      : getRecommendation() === '卖出'
+                        ? '#ff4d4f'
+                        : 'var(--accent-color)',
+                }}
+              >
+                {getRecommendation()}
+              </Title>
             </div>
           </Card>
         </div>
 
         <Card title="投资建议摘要" style={{ marginBottom: '24px' }}>
-          <Paragraph style={{ whiteSpace: 'pre-wrap' }}>
-            {resultData.trader_investment_plan || '暂无投资建议'}
-          </Paragraph>
+          <div className="markdown-content">
+            <ReactMarkdown>{resultData.trader_investment_plan || '暂无投资建议'}</ReactMarkdown>
+          </div>
         </Card>
 
         <Descriptions title="基本信息" bordered column={2}>
@@ -333,9 +328,9 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             }
             style={{ marginBottom: 16 }}
           >
-            <Paragraph style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-              {report.content || '暂无相关分析报告'}
-            </Paragraph>
+            <div className="markdown-content">
+              <ReactMarkdown>{report.content || '暂无相关分析报告'}</ReactMarkdown>
+            </div>
           </Card>
         ))}
       </div>
@@ -345,16 +340,16 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
   const renderCharts = () => (
     <div className="charts-section">
       <Card title="📊 投资决策分析">
-        <Paragraph style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-          {resultData.investment_plan || '暂无投资决策分析'}
-        </Paragraph>
+        <div className="markdown-content">
+          <ReactMarkdown>{resultData.investment_plan || '暂无投资决策分析'}</ReactMarkdown>
+        </div>
       </Card>
 
       {resultData.final_trade_decision && (
         <Card title="🎯 最终交易决策" style={{ marginTop: 16 }}>
-          <Paragraph style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-            {resultData.final_trade_decision}
-          </Paragraph>
+          <div className="markdown-content">
+            <ReactMarkdown>{resultData.final_trade_decision}</ReactMarkdown>
+          </div>
         </Card>
       )}
 
