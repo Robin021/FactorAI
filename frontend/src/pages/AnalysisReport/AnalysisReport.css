@@ -313,17 +313,23 @@
   .header-actions .ant-btn {
     flex: 1 1 calc(33.333% - 4px);
     min-width: 0;
-    font-size: 13px;
-    padding: 4px 8px;
-    height: 32px;
+    font-size: 0;
+    padding: 6px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .header-actions .ant-btn .anticon {
-    font-size: 14px;
+    font-size: 16px;
+    margin: 0;
   }
   
-  .header-actions .ant-btn span:not(.anticon) {
-    display: none;
+  .header-actions .ant-btn > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .report-content {
@@ -430,14 +436,24 @@
   }
   
   .header-actions .ant-btn {
-    font-size: 12px;
-    padding: 2px 6px;
-    height: 28px;
+    font-size: 0;
+    padding: 5px;
+    height: 34px;
     flex: 1 1 calc(50% - 2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .header-actions .ant-btn .anticon {
-    font-size: 13px;
+    font-size: 15px;
+    margin: 0;
+  }
+  
+  .header-actions .ant-btn > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .report-content {
