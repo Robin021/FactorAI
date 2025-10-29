@@ -22,6 +22,7 @@ import {
   DollarOutlined,
   LineChartOutlined,
   EyeOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -209,6 +210,24 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
 
     return (
       <div className="overview-section">
+        {/* 投资建议摘要 - 最重要，放在最上面并高亮 */}
+        <Card 
+          title={
+            <span style={{ fontSize: '16px', fontWeight: 600 }}>
+              💡 投资建议摘要
+            </span>
+          }
+          className="summary-highlight-card" 
+          style={{ marginBottom: '24px' }}
+        >
+          <div className="markdown-content">
+            <ReactMarkdown>
+              {resultData.trader_investment_plan || '暂无投资建议'}
+            </ReactMarkdown>
+          </div>
+        </Card>
+
+        {/* 关键指标卡片 */}
         <div
           className="summary-cards"
           style={{ display: 'flex', gap: '16px', marginBottom: '24px', justifyContent: 'center' }}
@@ -265,13 +284,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
           </Card>
         </div>
 
-        <Card title="投资建议摘要" style={{ marginBottom: '24px' }}>
-          <div className="markdown-content">
-            <ReactMarkdown>{resultData.trader_investment_plan || '暂无投资建议'}</ReactMarkdown>
-          </div>
-        </Card>
-
-        <Descriptions title="基本信息" bordered column={2}>
+        <Descriptions title="基本信息" bordered column={2} style={{ marginBottom: '24px' }}>
           <Descriptions.Item label="股票代码">{analysis.stockCode}</Descriptions.Item>
           <Descriptions.Item label="分析时间">
             {new Date(analysis.createdAt).toLocaleString()}
@@ -283,6 +296,40 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             <Tag color="success">已完成</Tag>
           </Descriptions.Item>
         </Descriptions>
+
+        {/* 快速操作区域 */}
+        <Card title="⚡ 快速操作" size="small">
+          <Space wrap>
+            <Button 
+              icon={<BarChartOutlined />}
+              onClick={() => {
+                // 滚动到顶部，让用户可以修改参数
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              修改参数重新分析
+            </Button>
+            <Button 
+              icon={<HistoryOutlined />}
+              onClick={() => {
+                // 切换到历史记录 tab
+                const tabElement = document.querySelector('[data-node-key="history"]') as HTMLElement;
+                if (tabElement) {
+                  tabElement.click();
+                }
+              }}
+            >
+              查看历史分析
+            </Button>
+            <Button 
+              icon={<EyeOutlined />}
+              type="primary"
+              onClick={() => navigate(`/analysis/report/${analysis.id}`)}
+            >
+              查看完整报告
+            </Button>
+          </Space>
+        </Card>
       </div>
     );
   };
@@ -294,24 +341,28 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
         title: '📊 基本面分析',
         content: resultData.fundamentals_report,
         icon: <DollarOutlined />,
+        description: '公司财务状况、盈利能力、成长性等基本面指标分析'
       },
       {
         key: 'technical',
         title: '📈 技术面分析',
         content: resultData.market_report,
         icon: <LineChartOutlined />,
+        description: '价格走势、技术指标、支撑阻力位等技术分析'
       },
       {
         key: 'sentiment',
         title: '💭 市场情绪分析',
         content: resultData.sentiment_report,
         icon: <BarChartOutlined />,
+        description: '市场情绪、投资者信心、舆论热度等情绪指标'
       },
       {
         key: 'risk',
         title: '⚠️ 风险评估',
         content: resultData.risk_assessment,
         icon: <EyeOutlined />,
+        description: '潜在风险、风险等级、风险控制建议'
       },
     ];
 
@@ -328,22 +379,54 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             }
             style={{ marginBottom: 16 }}
           >
-            <div className="markdown-content">
-              <ReactMarkdown>{report.content || '暂无相关分析报告'}</ReactMarkdown>
-            </div>
+            {report.content ? (
+              <div className="markdown-content">
+                <ReactMarkdown>{report.content}</ReactMarkdown>
+              </div>
+            ) : (
+              <Empty 
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <div>
+                    <Text type="secondary">暂无{report.title.replace(/[📊📈💭⚠️]/g, '').trim()}数据</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {report.description}
+                    </Text>
+                  </div>
+                }
+              />
+            )}
           </Card>
         ))}
       </div>
     );
   };
 
-  const renderCharts = () => (
-    <div className="charts-section">
-      <Card title="📊 投资决策分析">
-        <div className="markdown-content">
-          <ReactMarkdown>{resultData.investment_plan || '暂无投资决策分析'}</ReactMarkdown>
-        </div>
-      </Card>
+  const renderDecisionAnalysis = () => (
+    <div className="decision-section">
+      {resultData.investment_plan ? (
+        <Card title="📊 投资决策分析">
+          <div className="markdown-content">
+            <ReactMarkdown>{resultData.investment_plan}</ReactMarkdown>
+          </div>
+        </Card>
+      ) : (
+        <Card title="📊 投资决策分析">
+          <Empty 
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <div>
+                <Text type="secondary">暂无投资决策分析数据</Text>
+                <br />
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  投资决策分析包含多维度的投资建议和策略分析
+                </Text>
+              </div>
+            }
+          />
+        </Card>
+      )}
 
       {resultData.final_trade_decision && (
         <Card title="🎯 最终交易决策" style={{ marginTop: 16 }}>
@@ -354,7 +437,18 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
       )}
 
       {!resultData.investment_plan && !resultData.final_trade_decision && (
-        <Empty description="暂无图表数据" />
+        <Empty 
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={
+            <div>
+              <Text type="secondary">暂无决策分析数据</Text>
+              <br />
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                决策分析将在分析完成后显示，包含详细的投资建议和交易策略
+              </Text>
+            </div>
+          }
+        />
       )}
     </div>
   );
@@ -372,12 +466,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
           </Text>
         </div>
 
-        <Space>
+        <Space wrap className="header-actions-space">
           <Button
             icon={<EyeOutlined />}
+            type="primary"
             onClick={() => navigate(`/analysis/report/${analysis.id}`)}
           >
-            详细报告
+            查看详细报告
           </Button>
           <Button icon={<DownloadOutlined />} onClick={handleExport}>
             导出PDF
@@ -385,7 +480,7 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
           <Button icon={<ShareAltOutlined />} onClick={handleShare}>
             分享
           </Button>
-          <Button icon={<ReloadOutlined />} type="primary">
+          <Button icon={<ReloadOutlined />}>
             重新分析
           </Button>
         </Space>
@@ -414,13 +509,13 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({ analysis }) => {
             children: renderAnalystReports(),
           },
           {
-            key: 'charts',
+            key: 'decision',
             label: (
               <span>
-                <LineChartOutlined /> 图表分析
+                <LineChartOutlined /> 投资决策
               </span>
             ),
-            children: renderCharts(),
+            children: renderDecisionAnalysis(),
           },
         ]}
       />
