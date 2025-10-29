@@ -67,10 +67,12 @@
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.5;
     transform: scale(1.2);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -109,16 +111,16 @@
   .analysis-page {
     padding: 8px 4px;
   }
-  
+
   .analysis-header h2 {
     font-size: 22px;
   }
-  
+
   .analysis-tabs {
     padding: 4px;
     border-radius: 8px;
   }
-  
+
   .analysis-tabs .ant-tabs-tab {
     font-size: 14px;
     padding: 8px 10px;
@@ -126,24 +128,24 @@
     display: flex;
     align-items: center;
   }
-  
+
   .analysis-tabs .ant-tabs-nav {
     margin-bottom: 8px;
   }
-  
+
   .analysis-tabs .ant-tabs-content-holder {
     padding-top: 8px;
   }
-  
+
   /* 历史记录卡片优化 */
   .history-list .ant-card {
     margin-bottom: 8px;
   }
-  
+
   .history-list .ant-card-body {
     padding: 10px;
   }
-  
+
   /* 批量操作工具栏 */
   .batch-delete-toolbar {
     flex-direction: column;
@@ -151,12 +153,12 @@
     gap: 8px;
     padding: 10px;
   }
-  
+
   .batch-operations {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   /* 历史记录按钮优化 */
   .history-list .ant-btn {
     min-height: 36px;
@@ -168,21 +170,21 @@
   .analysis-page {
     padding: 4px 2px;
   }
-  
+
   .analysis-header {
     margin-bottom: 12px;
   }
-  
+
   .analysis-header h2 {
     font-size: 18px;
   }
-  
+
   .analysis-tabs {
     padding: 2px;
     margin: 0;
     border-radius: 6px;
   }
-  
+
   .analysis-tabs .ant-tabs-tab {
     font-size: 13px;
     padding: 6px 6px;
@@ -190,58 +192,53 @@
     justify-content: center;
     min-height: 38px;
   }
-  
+
   .analysis-tabs .ant-tabs-tab .anticon {
     margin-right: 3px;
     font-size: 14px;
   }
-  
+
   .analysis-tabs .ant-tabs-nav {
     margin-bottom: 6px;
   }
-  
+
   .analysis-tabs .ant-tabs-content-holder {
     padding-top: 6px;
   }
-  
+
   .no-progress-message,
   .no-history-message {
     padding: 30px 10px;
   }
-  
+
   /* 历史记录操作按钮优化 */
   .history-list .ant-space {
     flex-wrap: wrap;
     width: 100%;
     gap: 6px !important;
   }
-  
+
   .history-list .ant-btn {
     min-height: 32px;
     font-size: 13px;
     padding: 4px 10px;
   }
-  
+
   .history-list .ant-card {
     margin-bottom: 6px;
   }
-  
+
   .history-list .ant-card-body {
     padding: 8px;
   }
 }
+
 /*
  防止组件重叠的额外样式 */
 .analysis-tabs .ant-row {
   margin-left: 0 !important;
   margin-right: 0 !important;
   width: 100%;
-}
-
-.analysis-tabs .ant-col {
-  padding-left: 12px;
-  padding-right: 12px;
-  margin-bottom: 24px;
 }
 
 /* 确保表单和结果区域有足够的间距 */
@@ -256,60 +253,48 @@
 
 /* 移动端优化 */
 @media (max-width: 992px) {
-  .analysis-tabs .ant-col {
-    padding-left: 6px;
-    padding-right: 6px;
-    margin-bottom: 12px;
-  }
-  
   .analysis-form-container,
   .analysis-results-container {
-    padding: 12px;
+    padding: 14px;
     min-height: 300px;
   }
 }
 
 @media (max-width: 768px) {
   .analysis-page {
-    padding: 8px 4px;
+    padding: 8px 6px;
   }
-  
+
   .analysis-tabs {
-    padding: 4px;
+    padding: 6px;
     border-radius: 8px;
   }
-  
-  .analysis-tabs .ant-col {
-    padding-left: 2px;
-    padding-right: 2px;
-    margin-bottom: 8px;
-  }
-  
+
   .analysis-form-container,
   .analysis-results-container {
-    padding: 10px;
+    padding: 12px;
     min-height: auto;
   }
 }
 
 @media (max-width: 576px) {
   .analysis-page {
-    padding: 4px 2px;
+    padding: 6px 4px;
   }
-  
+
   .analysis-tabs {
-    padding: 2px;
+    padding: 4px;
     margin: 0;
   }
-  
+
   .analysis-tabs .ant-tabs-tab {
     font-size: 13px;
     padding: 6px 4px;
   }
-  
+
   .analysis-form-container,
   .analysis-results-container {
-    padding: 8px;
+    padding: 10px;
     min-height: auto;
   }
 }
@@ -335,6 +320,7 @@
   padding: 0;
   margin: 0;
 }
+
 /* 删除功能相关样式 */
 .analysis-history .history-list .ant-card {
   transition: all 0.3s ease;
@@ -437,28 +423,28 @@
     gap: 8px;
     padding: 10px;
   }
-  
+
   .batch-operations {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .analysis-history .history-list .ant-card .ant-card-body {
     padding: 10px;
   }
-  
+
   .analysis-history .history-list .ant-row {
     gap: 8px;
   }
-  
+
   .analysis-history .history-list .ant-space-vertical {
     gap: 4px !important;
   }
-  
+
   .analysis-history .history-list .ant-typography {
     font-size: 14px;
   }
-  
+
   .analysis-history .history-list .ant-tag {
     font-size: 12px;
   }
@@ -468,33 +454,33 @@
   .delete-confirm-content {
     max-height: 200px;
   }
-  
+
   .batch-operations {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .batch-operations .ant-btn {
     width: 100%;
   }
-  
+
   .batch-delete-toolbar {
     padding: 8px;
   }
-  
+
   .analysis-history .history-list .ant-card .ant-card-body {
     padding: 8px;
   }
-  
+
   .analysis-history .history-list .ant-typography {
     font-size: 13px;
   }
-  
+
   .analysis-history .history-list .ant-tag {
     font-size: 11px;
     padding: 0 6px;
   }
-  
+
   .analysis-history h4 {
     font-size: 16px;
   }

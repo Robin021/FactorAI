@@ -180,13 +180,20 @@ const Analysis: React.FC = () => {
   }, [currentAnalysis, activeTab]);
 
   const renderAnalysisContent = () => (
-    <Row gutter={[24, 24]} style={{ margin: 0 }}>
+    <Row 
+      gutter={[
+        { xs: 8, sm: 12, md: 16, lg: 24 }, 
+        { xs: 8, sm: 12, md: 16, lg: 24 }
+      ]} 
+      style={{ margin: 0, width: '100%' }}
+    >
       <Col 
         xs={{ span: 24, order: 2 }} 
         sm={{ span: 24, order: 2 }} 
         md={{ span: 10, order: 1 }} 
         lg={{ span: 8, order: 1 }} 
         xl={{ span: 8, order: 1 }}
+        style={{ paddingLeft: 0, paddingRight: 0 }}
       >
         <AnalysisForm />
       </Col>
@@ -197,6 +204,7 @@ const Analysis: React.FC = () => {
         md={{ span: 14, order: 2 }} 
         lg={{ span: 16, order: 2 }} 
         xl={{ span: 16, order: 2 }}
+        style={{ paddingLeft: 0, paddingRight: 0 }}
       >
         <AnalysisResults analysis={currentAnalysis} />
       </Col>
