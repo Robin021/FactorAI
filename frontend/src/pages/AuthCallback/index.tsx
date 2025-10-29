@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { Spin, Result, Button } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/stores/authStore';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
+  const { getCurrentUser } = useAuthStore();
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = React.useState('');
 
@@ -33,14 +33,17 @@ const AuthCallback: React.FC = () => {
         const data = await response.json();
         
         if (response.ok) {
-          // 保存 token 并跳转
+          // 保存 token
           localStorage.setItem('auth_token', data.access_token);
-          setStatus('success');
+          if (data.refresh_token) {
+            localStorage.setItem('refresh_token', data.refresh_token);
+          }
           
-          // 延迟跳转到首页
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
+          // 更新认证状态
+          await getCurrentUser();
+          
+          // 直接跳转，不需要等待
+          navigate('/dashboard', { replace: true });
         } else {
           throw new Error(data.detail || 'SSO 登录失败');
         }
@@ -52,7 +55,7 @@ const AuthCallback: React.FC = () => {
     };
 
     handleAuthCallback();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, getCurrentUser]);
 
   if (status === 'loading') {
     return (
@@ -75,28 +78,7 @@ const AuthCallback: React.FC = () => {
     );
   }
 
-  if (status === 'success') {
-    return (
-      <div style={{ 
-        minHeight: '100vh', 
-        background: 'var(--primary-bg)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <Result
-          status="success"
-          title="SSO 登录成功！"
-          subTitle="正在跳转到系统首页..."
-          extra={[
-            <Button type="primary" key="dashboard" onClick={() => navigate('/dashboard')}>
-              立即进入系统
-            </Button>
-          ]}
-        />
-      </div>
-    );
-  }
+
 
   return (
     <div style={{ 

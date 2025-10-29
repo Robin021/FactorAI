@@ -304,8 +304,8 @@
   .login-container {
     padding: 16px;
     min-height: 100vh;
-    align-items: flex-start;
-    padding-top: 40px;
+    align-items: center;
+    padding-top: 16px;
   }
   
   .login-card {
@@ -350,7 +350,6 @@
 @media (max-width: 480px) {
   .login-container {
     padding: 12px;
-    padding-top: 30px;
   }
   
   .login-card {
@@ -518,6 +517,10 @@
 
 /* 响应式优化 */
 @media (max-width: 768px) {
+  .login-container {
+    align-items: center;
+  }
+  
   .login-card {
     margin-left: 0;
     max-width: 100%;
@@ -540,6 +543,7 @@
 @media (max-width: 480px) {
   .login-container {
     padding: 12px;
+    align-items: center;
   }
   
   .login-card {
