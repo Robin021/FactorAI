@@ -1,8 +1,8 @@
 fastapi==0.104.1
 uvicorn==0.24.0
 redis==5.0.1
-pydantic==2.5.0
-pydantic-settings==2.1.0
+pydantic>=2.7.4
+pydantic-settings>=2.1.0
 
 # Database drivers
 motor==3.3.2
@@ -19,14 +19,14 @@ email-validator==2.1.0
 # Additional FastAPI dependencies
 python-multipart==0.0.6
 
-# TradingAgents 核心依赖 - Docker 环境
-langchain-openai>=0.3.23
-langchain-anthropic>=0.3.15
-langchain-google-genai>=2.0.0
+# TradingAgents 核心依赖 - Docker 环境 (兼容版本)
+langchain-openai>=1.0.0
+langchain-anthropic>=1.0.0
+langchain-google-genai>=3.0.0
 langchain-experimental>=0.3.4
-langgraph>=0.4.8
+langgraph>=1.0.0
 dashscope>=1.20.0
-openai>=1.0.0,<2.0.0
+openai>=2.0.0
 toml>=0.10.2
 python-dotenv>=1.0.0
 pandas>=2.3.0
