@@ -18,3 +18,7 @@ email-validator==2.1.0
 
 # Additional FastAPI dependencies
 python-multipart==0.0.6
+
+# 安装完整的 TradingAgents 项目（包含所有依赖）
+# 注意：在 Docker 中，这将通过 pyproject.toml 安装
+-e ../.

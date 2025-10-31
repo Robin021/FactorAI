@@ -94,8 +94,10 @@ export class AnalysisService {
                 // 从state字段中提取分析结果
                 trader_investment_plan: results.state?.trader_investment_plan || '',
                 market_report: results.state?.market_report || '',
+                china_market_report: results.state?.china_market_report || '', // 中国市场分析报告
                 sentiment_report: results.state?.sentiment_report || '',
                 fundamentals_report: results.state?.fundamentals_report || '',
+                news_report: results.state?.news_report || '', // 新闻分析报告
                 risk_assessment: results.state?.risk_assessment || '',
                 investment_plan: results.state?.investment_plan || '',
                 final_trade_decision: results.state?.final_trade_decision || '',

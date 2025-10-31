@@ -6,6 +6,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+        - VITE_ENABLE_DEV_LOGIN=false
+        - VITE_API_BASE_URL=http://localhost:8000
+        - VITE_AUTHING_APP_ID=${AUTHING_APP_ID}
+        - VITE_AUTHING_APP_HOST=${AUTHING_APP_HOST}
+        - VITE_AUTHING_REDIRECT_URI=${AUTHING_REDIRECT_URI}
     image: tradingagents-frontend:latest
     container_name: tradingagents-frontend
     ports:
@@ -17,6 +24,8 @@ services:
       - ./frontend/nginx-https.conf:/etc/nginx/nginx.conf:ro
     environment:
       - NODE_ENV=production
+      - VITE_ENABLE_DEV_LOGIN=false
+      - VITE_API_BASE_URL=http://localhost:8000
     depends_on:
       - backend
     networks:

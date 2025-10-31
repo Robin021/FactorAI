@@ -75,20 +75,29 @@ def safe_mongodb_operation(operation_func, *args, **kwargs):
             # 同步操作
             return operation_func(*args, **kwargs)
         else:
-            # 异步操作 - 在新线程中运行以避免事件循环冲突
-            def run_async_in_thread():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    result = loop.run_until_complete(operation_func(*args, **kwargs))
-                    return result
-                finally:
-                    loop.close()
-            
-            # 使用线程池执行器在独立线程中运行
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(run_async_in_thread)
-                return future.result(timeout=10)  # 10秒超时
+            # 异步操作 - 检查当前是否在事件循环中
+            try:
+                # 如果当前在事件循环中，直接执行
+                current_loop = asyncio.get_running_loop()
+                # 在当前循环中执行异步操作
+                import asyncio
+                task = asyncio.create_task(operation_func(*args, **kwargs))
+                return asyncio.run_coroutine_threadsafe(task, current_loop).result(timeout=10)
+            except RuntimeError:
+                # 没有运行的事件循环，创建新的
+                def run_async_in_thread():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    try:
+                        result = loop.run_until_complete(operation_func(*args, **kwargs))
+                        return result
+                    finally:
+                        loop.close()
+                
+                # 使用线程池执行器在独立线程中运行
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(run_async_in_thread)
+                    return future.result(timeout=10)  # 10秒超时
                 
     except concurrent.futures.TimeoutError:
         logger.error("MongoDB操作超时")
@@ -2052,6 +2061,9 @@ def start_real_analysis(
                     def format_analysis_results(results):
                         return results
                 
+                USE_BACKEND_SERVICE = True
+                logger.info("✅ 使用真实TradingAgents分析引擎")
+                
                 def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
                     """真正的TradingAgents股票分析函数"""
                     
@@ -2146,18 +2158,26 @@ def start_real_analysis(
                             'stock_symbol': stock_symbol
                         }
                 
-                USE_BACKEND_SERVICE = True
-                logger.info("✅ 使用真实TradingAgents分析引擎")
-                
             except ImportError as e:
                 logger.error(f"❌ 无法导入TradingAgents: {e}")
-                result = {
-                    "success": False,
-                    "error": f"TradingAgents分析引擎导入失败: {str(e)}",
-                    "stock_symbol": symbol
-                }
-                
                 USE_BACKEND_SERVICE = False
+                
+                # 创建一个简单的模拟分析函数
+                def run_stock_analysis(stock_symbol, analysis_date, analysts, research_depth, llm_provider, llm_model, market_type="美股", progress_callback=None):
+                    """模拟分析函数，当TradingAgents不可用时使用"""
+                    if progress_callback:
+                        progress_callback("🔍 TradingAgents不可用，使用模拟分析", 0, 7)
+                        progress_callback("📊 模拟数据分析中...", 3, 7)
+                        progress_callback("✅ 模拟分析完成", 6, 7)
+                    
+                    return {
+                        'success': False,
+                        'error': f'TradingAgents分析引擎不可用: {str(e)}',
+                        'stock_symbol': stock_symbol,
+                        'stock_name': stock_symbol,
+                        'analysis_date': analysis_date,
+                        'message': '请安装完整的TradingAgents依赖以启用真实分析功能'
+                    }
             
             # 进度回调函数 - 支持7步真实进度系统
             def progress_callback(message, step=None, total_steps=None, llm_result=None, analyst_type=None, *extra_args, **extra_kwargs):
@@ -2418,16 +2438,24 @@ def start_real_analysis(
                 return
             
             # 执行真实分析
-            result = run_stock_analysis(
-                stock_symbol=symbol,
-                analysis_date=analysis_date,
-                analysts=analysts_list,
-                research_depth=depth,
-                llm_provider=llm_provider,
-                llm_model=llm_model,
-                market_type=market_type_name,
-                progress_callback=progress_callback
-            )
+            if USE_BACKEND_SERVICE:
+                result = run_stock_analysis(
+                    stock_symbol=symbol,
+                    analysis_date=analysis_date,
+                    analysts=analysts_list,
+                    research_depth=depth,
+                    llm_provider=llm_provider,
+                    llm_model=llm_model,
+                    market_type=market_type_name,
+                    progress_callback=progress_callback
+                )
+            else:
+                # 如果TradingAgents不可用，返回错误结果
+                result = {
+                    "success": False,
+                    "error": "TradingAgents分析引擎不可用",
+                    "stock_symbol": symbol
+                }
             
             # 保存分析结果
             final_status = "completed" if result.get("success", False) else "failed"

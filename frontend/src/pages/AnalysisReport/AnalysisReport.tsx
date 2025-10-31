@@ -230,8 +230,8 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
   // 从后端返回的数据结构中提取信息
   const decision = resultData.decision || {};
   const reports = {
-    market: resultData.market_report || '',
-    technical: resultData.market_report || '', // 技术分析包含在市场报告中
+    market: resultData.china_market_report || '', // 中国市场分析（A股特点、政策影响等）
+    technical: resultData.market_report || '', // 技术分析（价格走势、技术指标等）
     fundamental: resultData.fundamentals_report || '',
     sentiment: resultData.sentiment_report || '',
     news: resultData.news_report || ''
@@ -326,7 +326,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
     return analysis?.stockCode || '未指定';
   };
 
-  // 报告分类和组织
+  // 报告分类和组织（按照后端分析顺序排列）
   const reportSections = {
     overview: {
       title: '概览',
@@ -341,27 +341,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
         duration: calculateDuration()
       }
     },
-    fundamental: {
-      title: '基本面分析',
-      icon: <LineChartOutlined />,
-      data: {
-        report: reports.fundamental
-      }
-    },
-    research: {
-      title: '研究团队决策',
-      icon: <FileTextOutlined />,
-      data: {
-        report: buildResearchTeamDecision()
-      }
-    },
-    risk_management: {
-      title: '风险管理团队决策',
-      icon: <ExclamationCircleOutlined />,
-      data: {
-        report: buildRiskManagementDecision()
-      }
-    },
+    // 阶段1：分析师团队报告（按执行顺序）
     technical: {
       title: '技术分析',
       icon: <RiseOutlined />,
@@ -369,11 +349,18 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
         report: reports.technical
       }
     },
-    market: {
-      title: '市场分析',
-      icon: <PieChartOutlined />,
+    news: {
+      title: '新闻分析',
+      icon: <FileTextOutlined />,
       data: {
-        report: reports.market
+        report: reports.news
+      }
+    },
+    fundamental: {
+      title: '基本面分析',
+      icon: <LineChartOutlined />,
+      data: {
+        report: reports.fundamental
       }
     },
     sentiment: {
@@ -381,6 +368,30 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
       icon: <FileTextOutlined />,
       data: {
         report: reports.sentiment
+      }
+    },
+    // 阶段2：研究团队决策
+    research: {
+      title: '研究团队决策',
+      icon: <FileTextOutlined />,
+      data: {
+        report: buildResearchTeamDecision()
+      }
+    },
+    // 阶段3：风险管理团队决策
+    risk_management: {
+      title: '风险管理团队决策',
+      icon: <ExclamationCircleOutlined />,
+      data: {
+        report: buildRiskManagementDecision()
+      }
+    },
+    // 可选：中国市场分析（如果有）
+    market: {
+      title: '市场分析',
+      icon: <PieChartOutlined />,
+      data: {
+        report: reports.market
       }
     }
   };
@@ -904,17 +915,24 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
               children: renderOverview(),
               forceRender: true,
             },
-            ...Object.entries(reportSections).slice(1).map(([key, section]) => ({
-              key,
-              label: (
-                <span>
-                  {section.icon}
-                  {section.title}
-                </span>
-              ),
-              children: renderDetailedAnalysis(key),
-              forceRender: true,
-            })),
+            ...Object.entries(reportSections)
+              .slice(1)
+              .filter(([key, section]) => {
+                // 过滤掉空的报告部分
+                const report = section.data?.report;
+                return report && report.trim().length > 0;
+              })
+              .map(([key, section]) => ({
+                key,
+                label: (
+                  <span>
+                    {section.icon}
+                    {section.title}
+                  </span>
+                ),
+                children: renderDetailedAnalysis(key),
+                forceRender: true,
+              })),
           ]}
         />
       </div>
