@@ -36,9 +36,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件（从项目根目录）
+# 复制依赖文件
 COPY backend/requirements.txt ./backend/requirements.txt
-COPY pyproject.toml ./
 
 # 多源轮询安装Python依赖
 RUN set -e; \
@@ -51,11 +50,8 @@ RUN set -e; \
       echo "Try installing from $src"; \
       if uv pip install --system --no-cache -r backend/requirements.txt -i $src; then \
         echo "Backend requirements installed from $src"; \
-        if uv pip install --system --no-cache -e . -i $src; then \
-          echo "Project dependencies installed from $src"; \
-          installed=true; \
-          break; \
-        fi; \
+        installed=true; \
+        break; \
       fi; \
       echo "Failed at $src, try next"; \
     done; \

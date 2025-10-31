@@ -19,6 +19,40 @@ email-validator==2.1.0
 # Additional FastAPI dependencies
 python-multipart==0.0.6
 
-# 安装完整的 TradingAgents 项目（包含所有依赖）
-# 注意：在 Docker 中，这将通过 pyproject.toml 安装
--e ../.
+# TradingAgents 核心依赖 - Docker 环境
+langchain-openai>=0.3.23
+langchain-anthropic>=0.3.15
+langchain-google-genai>=2.0.0
+langchain-experimental>=0.3.4
+langgraph>=0.4.8
+dashscope>=1.20.0
+openai>=1.0.0,<2.0.0
+toml>=0.10.2
+python-dotenv>=1.0.0
+pandas>=2.3.0
+requests>=2.32.4
+akshare>=1.16.98
+tushare>=1.4.21
+yfinance>=0.2.66
+finnhub-python>=2.4.23
+feedparser>=6.0.11
+rich>=14.0.0
+tqdm>=4.67.1
+typing-extensions>=4.14.0
+chromadb>=1.0.12
+google-genai>=0.1.0
+google-generativeai>=0.8.0
+markdown>=3.4.0
+parsel>=1.10.0
+plotly>=5.0.0
+praw>=7.8.1
+psutil>=6.1.0
+pypandoc>=1.11
+pytdx>=1.72
+pytz>=2025.2
+questionary>=2.1.0
+setuptools>=80.9.0
+stockstats>=0.6.5
+backtrader>=1.9.78.123
+baostock>=0.8.8
+eodhd>=1.0.32
