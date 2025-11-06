@@ -9,7 +9,8 @@ services:
       args:
         - NODE_ENV=production
         - VITE_ENABLE_DEV_LOGIN=false
-        - VITE_API_BASE_URL=http://localhost:8000
+        # Use same-origin API path; nginx proxies /api/ to backend
+        - VITE_API_BASE_URL=/api/v1
         - VITE_AUTHING_APP_ID=${AUTHING_APP_ID}
         - VITE_AUTHING_APP_HOST=${AUTHING_APP_HOST}
         - VITE_AUTHING_REDIRECT_URI=${AUTHING_REDIRECT_URI}
@@ -25,7 +26,7 @@ services:
     environment:
       - NODE_ENV=production
       - VITE_ENABLE_DEV_LOGIN=false
-      - VITE_API_BASE_URL=http://localhost:8000
+      - VITE_API_BASE_URL=/api/v1
     depends_on:
       - backend
     networks:
