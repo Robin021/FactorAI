@@ -80,7 +80,25 @@ def safe_mongodb_operation(operation_func, *args, loop=None, **kwargs):
                 # 优先使用传入的事件循环（例如应用主循环）
                 target_loop = loop or asyncio.get_running_loop()
                 # 在目标循环中执行异步操作
-                coro = operation_func(*args, **kwargs)
+                awaitable = operation_func(*args, **kwargs)
+                # run_coroutine_threadsafe 需要的是一个 coroutine 对象；
+                # 若返回的是 Task/Future，包装成协程
+                if asyncio.iscoroutine(awaitable):
+                    coro = awaitable
+                elif asyncio.isfuture(awaitable):
+                    async def _await_future(f):
+                        return await f
+                    coro = _await_future(awaitable)  # type: ignore
+                else:
+                    # 其他可等待对象（如实现了 __await__）
+                    import inspect
+                    if inspect.isawaitable(awaitable):
+                        async def _await_any(a):
+                            return await a
+                        coro = _await_any(awaitable)
+                    else:
+                        # 非协程/非可等待：直接返回（防御）
+                        return awaitable
                 return asyncio.run_coroutine_threadsafe(coro, target_loop).result(timeout=10)
             except RuntimeError:
                 # 没有运行的事件循环，创建新的
@@ -2054,6 +2072,15 @@ def start_real_analysis(
             # 尝试导入并使用真正的TradingAgents分析引擎
             try:
                 # 导入TradingAgents核心组件
+                # 调试输出 langgraph 版本，辅助排查 "langgraph._internal" 导入问题
+                try:
+                    import importlib, importlib.util as _ils
+                    import langgraph as _lg
+                    logger.info(f"🧩 langgraph version: {getattr(_lg, '__version__', 'unknown')}")
+                    logger.info(f"🧩 langgraph._internal present: {bool(_ils.find_spec('langgraph._internal'))}")
+                except Exception as _log_e:
+                    logger.debug(f"langgraph 诊断日志失败: {_log_e}")
+
                 from tradingagents.graph.trading_graph import TradingAgentsGraph
                 from tradingagents.default_config import DEFAULT_CONFIG
                 

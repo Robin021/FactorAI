@@ -36,28 +36,48 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     procps \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
+# 复制依赖文件与锁文件（优先使用锁文件确保版本一致）
+COPY pyproject.toml ./
+COPY uv.lock ./
 COPY backend/requirements.txt ./backend/requirements.txt
 
-# 多源轮询安装Python依赖
+# 优先使用 uv sync --frozen（按锁文件安装）。若失败则回退到 requirements 多源安装。
 RUN set -e; \
-    installed=false; \
-    for src in \
+    echo "Attempting uv sync --frozen using mirrors..."; \
+    synced=false; \
+    for idx in \
         https://mirrors.aliyun.com/pypi/simple \
         https://pypi.tuna.tsinghua.edu.cn/simple \
-        https://pypi.doubanio.com/simple \
         https://pypi.org/simple; do \
-      echo "Try installing from $src"; \
-      if uv pip install --system --no-cache -r backend/requirements.txt -i $src; then \
-        echo "Backend requirements installed from $src"; \
-        installed=true; \
+      echo "Trying uv sync with index: $idx"; \
+      if UV_INDEX_URL=$idx uv sync --frozen --system --no-dev; then \
+        echo "uv sync succeeded with $idx"; \
+        synced=true; \
         break; \
+      else \
+        echo "uv sync failed with $idx, trying next"; \
       fi; \
-      echo "Failed at $src, try next"; \
     done; \
-    if [ "$installed" = "false" ]; then \
-      echo "Failed to install dependencies from all sources"; \
-      exit 1; \
+    if [ "$synced" = "false" ]; then \
+      echo "Falling back to uv pip install -r backend/requirements.txt"; \
+      installed=false; \
+      for src in \
+          https://mirrors.aliyun.com/pypi/simple \
+          https://pypi.tuna.tsinghua.edu.cn/simple \
+          https://pypi.doubanio.com/simple \
+          https://pypi.org/simple; do \
+        echo "Try installing from $src"; \
+        if uv pip install --system --no-cache -r backend/requirements.txt -i $src; then \
+          echo "Backend requirements installed from $src"; \
+          installed=true; \
+          break; \
+        fi; \
+        echo "Failed at $src, try next"; \
+      done; \
+      if [ "$installed" = "false" ]; then \
+        echo "Failed to install dependencies from all sources"; \
+        exit 1; \
+      fi; \
     fi
 
 # 复制tradingagents模块（共享模块）
