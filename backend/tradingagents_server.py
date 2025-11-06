@@ -65,7 +65,7 @@ except ImportError:
         logger.warning("⚠️ MongoDB driver not available, analysis history will not be saved")
 
 # 定义统一的MongoDB操作函数（放在外面，两种驱动都能用）
-def safe_mongodb_operation(operation_func, *args, **kwargs):
+def safe_mongodb_operation(operation_func, *args, loop=None, **kwargs):
     """安全执行MongoDB操作，自动处理同步/异步"""
     import asyncio
     import concurrent.futures
@@ -77,12 +77,11 @@ def safe_mongodb_operation(operation_func, *args, **kwargs):
         else:
             # 异步操作 - 检查当前是否在事件循环中
             try:
-                # 如果当前在事件循环中，直接执行
-                current_loop = asyncio.get_running_loop()
-                # 在当前循环中执行异步操作
-                import asyncio
-                task = asyncio.create_task(operation_func(*args, **kwargs))
-                return asyncio.run_coroutine_threadsafe(task, current_loop).result(timeout=10)
+                # 优先使用传入的事件循环（例如应用主循环）
+                target_loop = loop or asyncio.get_running_loop()
+                # 在目标循环中执行异步操作
+                coro = operation_func(*args, **kwargs)
+                return asyncio.run_coroutine_threadsafe(coro, target_loop).result(timeout=10)
             except RuntimeError:
                 # 没有运行的事件循环，创建新的
                 def run_async_in_thread():
@@ -697,6 +696,7 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
     }
     
     # 启动真实分析（start_real_analysis 内部会创建后台线程）
+    import asyncio
     start_real_analysis(
         analysis_id,
         request.symbol.upper(),
@@ -705,6 +705,7 @@ async def start_analysis(request: AnalysisRequest, current_user: dict = Depends(
         current_user["username"],
         analysts=request.analysts or [],
         research_depth=request.research_depth or 2,
+        app_loop=asyncio.get_running_loop(),
     )
     
     return AnalysisResponse(
@@ -2011,6 +2012,7 @@ def start_real_analysis(
     username: str,
     analysts: Optional[list] = None,
     research_depth: Optional[int] = None,
+    app_loop=None,
 ):
     """启动真实的股票分析 - 修复重复执行问题"""
     import threading
@@ -2510,50 +2512,30 @@ def start_real_analysis(
             # 更新MongoDB数据库状态
             if mongodb_db is not None:
                 try:
-                    import asyncio
                     from bson import ObjectId
-                    
                     update_data = {
                         "status": final_status,
                         "progress": 100.0,
                         "completed_at": datetime.utcnow()
                     }
-                    
                     # 如果分析成功，保存结果和股票名称
                     if result.get('success', False):
                         update_data["result_data"] = result
-                        # 从结果中提取股票名称
                         if result.get('stock_name'):
                             update_data["stock_name"] = result.get('stock_name')
                     else:
                         update_data["error_message"] = result.get('error', '未知错误')
-                    
-                    # 使用统一的MongoDB操作函数
-                    if hasattr(mongodb_client, '_is_sync') and mongodb_client._is_sync:
-                        # 同步操作
-                        result_update = mongodb_db.analyses.update_one(
-                            {"_id": ObjectId(analysis_id)},
-                            {"$set": update_data}
-                        )
-                    else:
-                        # 异步操作 - 在新事件循环中执行
-                        import asyncio
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        try:
-                            result_update = loop.run_until_complete(
-                                mongodb_db.analyses.update_one(
-                                    {"_id": ObjectId(analysis_id)},
-                                    {"$set": update_data}
-                                )
-                            )
-                        finally:
-                            loop.close()
-                    
+
+                    result_update = safe_mongodb_operation(
+                        mongodb_db.analyses.update_one,
+                        {"_id": ObjectId(analysis_id)},
+                        {"$set": update_data},
+                        loop=app_loop,
+                    )
                     if result_update is not None:
                         logger.info(f"✅ 分析完成状态已更新到数据库: {analysis_id}")
                     else:
-                        logger.warning(f"⚠️ MongoDB更新返回None，可能更新失败")
+                        logger.warning("⚠️ MongoDB更新返回None，可能更新失败")
                 except Exception as db_error:
                     logger.warning(f"⚠️ 更新数据库状态失败: {db_error}", exc_info=False)
             
@@ -2586,10 +2568,7 @@ def start_real_analysis(
             # 更新MongoDB数据库状态
             if mongodb_db is not None:
                 try:
-                    import asyncio
                     from bson import ObjectId
-                    
-                    # 使用统一的MongoDB操作函数
                     result_update = safe_mongodb_operation(
                         mongodb_db.analyses.update_one,
                         {"_id": ObjectId(analysis_id)},
@@ -2597,13 +2576,13 @@ def start_real_analysis(
                             "status": "failed",
                             "error_message": str(e),
                             "completed_at": datetime.utcnow()
-                        }}
+                        }},
+                        loop=app_loop,
                     )
-                    
                     if result_update is not None:
                         logger.info(f"✅ 分析失败状态已更新到数据库: {analysis_id}")
                     else:
-                        logger.warning(f"⚠️ MongoDB更新返回None，可能更新失败")
+                        logger.warning("⚠️ MongoDB更新返回None，可能更新失败")
                 except Exception as db_error:
                     logger.warning(f"⚠️ 更新数据库状态失败: {db_error}", exc_info=False)
     
