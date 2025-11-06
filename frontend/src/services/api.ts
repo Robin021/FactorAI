@@ -8,6 +8,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 class ApiClient {
   private instance: AxiosInstance;
   private isRedirecting: boolean = false;
+  private lastNetworkErrorAt = 0;
+  private networkErrorSilenceMs = 10000; // 防抖：10秒内只提示一次
 
   constructor() {
     this.instance = axios.create({
@@ -101,10 +103,14 @@ class ApiClient {
               }
           }
         } else if (error.request) {
-          // Network error - only show once if not already redirecting
+          // Network error - throttle message to avoid spamming
           if (!this.isRedirecting) {
-            message.destroy();
-            message.error('网络连接失败，请检查网络设置');
+            const now = Date.now();
+            if (now - this.lastNetworkErrorAt > this.networkErrorSilenceMs) {
+              message.destroy();
+              message.error('网络连接失败，请检查网络设置');
+              this.lastNetworkErrorAt = now;
+            }
           }
         } else {
           // Other errors

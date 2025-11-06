@@ -150,11 +150,13 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000", 
+        "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://47.239.62.97",  # 生产环境前端
-        "http://47.239.62.97:80",  # 明确指定端口
-        "https://47.239.62.97",  # 如果使用 HTTPS
+        # 生产环境域名
+        "https://www.cc1p.com",
+        "http://www.cc1p.com",
+        "https://cc1p.com",
+        "http://cc1p.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
