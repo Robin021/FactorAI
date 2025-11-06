@@ -68,6 +68,15 @@ RUN set -e; \
       fi; \
     fi
 
+# 强制从 PyPI 官方源校正 LangGraph 相关包，避免镜像源残缺导致 _internal 缺失
+RUN set -eux; \
+    uv pip install --system --no-cache \
+      'langgraph==0.4.8' \
+      'langgraph-prebuilt==0.2.2' \
+      'langgraph-checkpoint==2.0.26' \
+      'langgraph-sdk==0.1.70' \
+      -i https://pypi.org/simple
+
 # 复制tradingagents模块（共享模块）
 COPY tradingagents/ ./tradingagents/
 
@@ -80,16 +89,9 @@ COPY .env* ./
 # 暴露端口
 EXPOSE 8000
 
-# 健康检查（使用Python避免依赖curl）
+# 健康检查（使用 Python 单行脚本，无需外部依赖）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python - << 'PY' || exit 1
-import sys, urllib.request
-try:
-    with urllib.request.urlopen('http://localhost:8000/health', timeout=8) as r:
-        sys.exit(0 if r.status == 200 else 1)
-except Exception:
-    sys.exit(1)
-PY
+    CMD ["python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health', timeout=8)"]
 
 # 启动应用
 CMD ["python", "backend/tradingagents_server.py"]
