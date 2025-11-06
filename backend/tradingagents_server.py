@@ -75,31 +75,14 @@ def safe_mongodb_operation(operation_func, *args, loop=None, **kwargs):
             # 同步操作
             return operation_func(*args, **kwargs)
         else:
-            # 异步操作 - 检查当前是否在事件循环中
+            # 异步操作：统一包装成协程对象再投递到指定事件循环
             try:
-                # 优先使用传入的事件循环（例如应用主循环）
                 target_loop = loop or asyncio.get_running_loop()
-                # 在目标循环中执行异步操作
-                awaitable = operation_func(*args, **kwargs)
-                # run_coroutine_threadsafe 需要的是一个 coroutine 对象；
-                # 若返回的是 Task/Future，包装成协程
-                if asyncio.iscoroutine(awaitable):
-                    coro = awaitable
-                elif asyncio.isfuture(awaitable):
-                    async def _await_future(f):
-                        return await f
-                    coro = _await_future(awaitable)  # type: ignore
-                else:
-                    # 其他可等待对象（如实现了 __await__）
-                    import inspect
-                    if inspect.isawaitable(awaitable):
-                        async def _await_any(a):
-                            return await a
-                        coro = _await_any(awaitable)
-                    else:
-                        # 非协程/非可等待：直接返回（防御）
-                        return awaitable
-                return asyncio.run_coroutine_threadsafe(coro, target_loop).result(timeout=10)
+
+                async def _run_async():
+                    return await operation_func(*args, **kwargs)
+
+                return asyncio.run_coroutine_threadsafe(_run_async(), target_loop).result(timeout=10)
             except RuntimeError:
                 # 没有运行的事件循环，创建新的
                 def run_async_in_thread():

@@ -21,20 +21,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app
 
-# 配置阿里云镜像源
-RUN echo 'deb http://mirrors.aliyun.com/debian/ bookworm main' > /etc/apt/sources.list && \
-    echo 'deb-src http://mirrors.aliyun.com/debian/ bookworm main' >> /etc/apt/sources.list && \
-    echo 'deb http://mirrors.aliyun.com/debian/ bookworm-updates main' >> /etc/apt/sources.list && \
-    echo 'deb-src http://mirrors.aliyun.com/debian/ bookworm-updates main' >> /etc/apt/sources.list && \
-    echo 'deb http://mirrors.aliyun.com/debian-security bookworm-security main' >> /etc/apt/sources.list && \
-    echo 'deb-src http://mirrors.aliyun.com/debian-security bookworm-security main' >> /etc/apt/sources.list
-
-# 安装系统依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    procps \
-    && rm -rf /var/lib/apt/lists/*
+# 删除自定义APT镜像配置与系统包安装，避免GPG签名问题；
+# Python依赖使用预编译轮子，无需额外系统库。
 
 # 复制依赖文件与锁文件（优先使用锁文件确保版本一致）
 COPY pyproject.toml ./
@@ -92,9 +80,16 @@ COPY .env* ./
 # 暴露端口
 EXPOSE 8000
 
-# 健康检查
+# 健康检查（使用Python避免依赖curl）
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python - << 'PY' || exit 1
+import sys, urllib.request
+try:
+    with urllib.request.urlopen('http://localhost:8000/health', timeout=8) as r:
+        sys.exit(0 if r.status == 200 else 1)
+except Exception:
+    sys.exit(1)
+PY
 
 # 启动应用
 CMD ["python", "backend/tradingagents_server.py"]
