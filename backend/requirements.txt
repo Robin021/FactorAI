@@ -19,15 +19,16 @@ email-validator==2.1.0
 # Additional FastAPI dependencies
 python-multipart==0.0.6
 
-# TradingAgents 核心依赖 - Docker 环境 (兼容版本)
-langchain-core>=1.0.0,<2.0.0
-langchain-openai>=1.0.0
-langchain-anthropic>=1.0.0
-langchain-google-genai>=3.0.0
+# TradingAgents 核心依赖 - Docker 环境（与项目锁文件对齐）
+# langchain 系列保持 0.3.x 生态版本，以避免依赖冲突
+langchain-core>=0.3.28,<0.4.0
+langchain-openai>=0.3.23,<0.4.0
+langchain-anthropic>=0.3.15,<0.4.0
+langchain-google-genai>=2.0.0,<2.1.0
 langchain-experimental>=0.3.4,<0.4.0
-langgraph>=1.0.0
+langgraph>=0.4.8,<0.5.0
 dashscope>=1.20.0
-openai>=2.0.0
+openai>=1.0.0,<2.0.0
 toml>=0.10.2
 python-dotenv>=1.0.0
 pandas>=2.3.0
