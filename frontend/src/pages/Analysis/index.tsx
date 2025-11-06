@@ -1,5 +1,6 @@
 import React from 'react';
-import { Row, Col, Typography, Tabs, Card, Tag, Button, Spin, Empty, Space, Modal, message, Checkbox } from 'antd';
+import { Row, Col, Typography, Tabs, Card, Tag, Button, Spin, Empty, Space, Modal, message, Checkbox, Drawer } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BarChartOutlined, SettingOutlined, HistoryOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import AnalysisForm from '@/components/Analysis/AnalysisForm';
 import SevenStepProgress from '@/components/Analysis/SevenStepProgress';
@@ -16,6 +17,20 @@ const Analysis: React.FC = () => {
     useAnalysis();
   const [activeTab, setActiveTab] = React.useState('analysis');
   const [selectedAnalyses, setSelectedAnalyses] = React.useState<string[]>([]);
+  const [newAnalysisOpen, setNewAnalysisOpen] = React.useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // 支持通过 query 参数聚焦进度页：/analysis?focus=progress
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const focus = params.get('focus');
+    if (focus === 'progress') {
+      setActiveTab('progress');
+      // 清理 URL 中的参数，避免后续干扰
+      navigate('/analysis', { replace: true });
+    }
+  }, [location.search]);
 
   // 删除分析记录
   const handleDeleteAnalysis = (analysisId: string) => {
@@ -164,8 +179,9 @@ const Analysis: React.FC = () => {
 
     if (!currentAnalysis) return;
 
-    // 运行中 -> 不再强制切换Tab，保持用户当前视图（避免无法回到分析界面）
+    // 运行中/等待中 -> 自动切换到“实时进度”
     if (currentAnalysis.status === 'running' || currentAnalysis.status === 'pending') {
+      setActiveTab('progress');
       return;
     }
 
@@ -195,7 +211,7 @@ const Analysis: React.FC = () => {
         xl={{ span: 8, order: 1 }}
         style={{ paddingLeft: 0, paddingRight: 0 }}
       >
-        <AnalysisForm />
+        <AnalysisForm onStarted={() => setActiveTab('progress')} />
       </Col>
 
       <Col 
@@ -362,7 +378,15 @@ const Analysis: React.FC = () => {
 
   return (
     <div className="analysis-page">
-      <PageHeader title="股票分析" subTitle="选择参数并查看结果与历史" />
+      <PageHeader 
+        title="股票分析" 
+        subTitle="选择参数并查看结果与历史"
+        extra={
+          <Button type="primary" onClick={() => setNewAnalysisOpen(true)}>
+            新建分析
+          </Button>
+        }
+      />
       <Tabs
         activeKey={activeTab}
         onChange={setActiveTab}
@@ -405,6 +429,22 @@ const Analysis: React.FC = () => {
           },
         ]}
       />
+
+      {/* 快速新建分析抽屉 */}
+      <Drawer
+        title="新建股票分析"
+        open={newAnalysisOpen}
+        onClose={() => setNewAnalysisOpen(false)}
+        width={520}
+        destroyOnClose
+      >
+        <AnalysisForm 
+          onStarted={() => {
+            setNewAnalysisOpen(false);
+            setActiveTab('progress');
+          }} 
+        />
+      </Drawer>
     </div>
   );
 };

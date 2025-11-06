@@ -38,7 +38,11 @@ interface AnalysisFormData {
   researchDepth: number;
 }
 
-const AnalysisForm: React.FC = () => {
+type AnalysisFormProps = {
+  onStarted?: () => void;
+};
+
+const AnalysisForm: React.FC<AnalysisFormProps> = ({ onStarted }) => {
   const [form] = Form.useForm<AnalysisFormData>();
   const { startAnalysis, isLoading } = useAnalysis();
   const [selectedMarket, setSelectedMarket] = React.useState<string>('A股');
@@ -135,6 +139,8 @@ const AnalysisForm: React.FC = () => {
       };
 
       await startAnalysis(analysisRequest);
+      // 自动回调：开始分析后触发（用于切换到“实时进度”或关闭抽屉）
+      onStarted?.();
     } catch (error) {
       console.error('Failed to start analysis:', error);
     }

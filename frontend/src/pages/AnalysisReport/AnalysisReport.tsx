@@ -6,6 +6,7 @@ import {
   Tabs,
   Button,
   Space,
+  Drawer,
   Tag,
   Descriptions,
   Alert,
@@ -31,6 +32,7 @@ import {
   ShareAltOutlined,
   PrinterOutlined,
   HistoryOutlined,
+  SearchOutlined,
   FileTextOutlined,
   BarChartOutlined,
   LineChartOutlined,
@@ -46,6 +48,7 @@ import { Analysis } from '@/types';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { analysisService } from '@/services/analysis';
 import ChartViewer from '@/components/Charts/ChartViewer';
+import AnalysisForm from '@/components/Analysis/AnalysisForm';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './AnalysisReport.css';
@@ -76,6 +79,7 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
   const [historyVisible, setHistoryVisible] = useState(false);
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [newAnalysisOpen, setNewAnalysisOpen] = useState(false);
 
   // 辅助函数
   const getScoreColor = (score: number) => {
@@ -869,6 +873,9 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
 
         <div className="header-actions">
           <Space>
+            <Button type="primary" icon={<SearchOutlined />} onClick={() => setNewAnalysisOpen(true)}>
+              新建分析
+            </Button>
             <Button
               icon={<HistoryOutlined />}
               onClick={() => setHistoryVisible(true)}
@@ -997,6 +1004,23 @@ const AnalysisReport: React.FC<AnalysisReportProps> = () => {
           </Space>
         </div>
       </Modal>
+
+      {/* 快速新建分析抽屉（在报告页也可直接发起新的分析） */}
+      <Drawer
+        title="新建股票分析"
+        open={newAnalysisOpen}
+        onClose={() => setNewAnalysisOpen(false)}
+        width={520}
+        destroyOnClose
+      >
+        <AnalysisForm
+          onStarted={() => {
+            setNewAnalysisOpen(false);
+            // 启动后跳到“实时进度”页
+            navigate('/analysis?focus=progress');
+          }}
+        />
+      </Drawer>
 
     </div>
   );
