@@ -231,7 +231,6 @@ if __name__ == "__main__":
 ### 集成测试
 - `quick_test.py` - 快速集成测试，验证基本功能
 - `test_smart_system.py` - 智能系统完整测试
-- `demo_fallback_system.py` - 降级系统演示和测试
 
 ### 运行方法
 ```bash
@@ -241,6 +240,5 @@ python tests/quick_test.py
 # 智能系统测试
 python tests/test_smart_system.py
 
-# 降级系统演示
-python tests/demo_fallback_system.py
+# 其他示例或演示脚本请参考 docs/ 或 examples/
 ```
